@@ -15,6 +15,18 @@ under `[Unreleased]` until the next release.
   `upstream/openapi/a2a.openapi.yaml`: 9 of 22 are equal, and every difference (the `/{tenant}/`
   variants, `:cancel` and `:subscribe`, the agent-side operations) is named with its reason in
   `ess/http-unmapped.tsv`.
+- A documentation site in `website/`, Docusaurus on `@beyond10x/docs-system` 0.11.0, to be served
+  at <https://beyond10x.github.io/a2a/>. `.github/workflows/pages.yml` builds it and
+  `b10x-docs-site.yml` publishes the build of each `main` commit.
+- `crates/a2a-docs` generates the site's reference pages: the specification (`ess generate --kind
+  docs`), the HTTP+JSON routes served at A2A's path and the reasons for the others, and an index of
+  every `UNMAPPED` marker. It owns `website/docs/reference/` whole: `task docs-check`, part of
+  `task check`, fails on a missing, stale or hand-edited page there and on any page it does not
+  generate, and `task docs-generate` removes a page it no longer writes.
+- Site downloads, with `SHA256SUMS`: `a2a.proto`, the OpenAPI document derived from it, the
+  specification's two OpenAPI documents (command routes, and A2A's paths through `ess/http.yaml`),
+  its AsyncAPI document, and its JSON Schemas as one JSON Schema 2020-12 document. `task
+  docs-check` holds each to the repository files it is made from.
 
 ## [0.2.0] - 2026-10-22
 

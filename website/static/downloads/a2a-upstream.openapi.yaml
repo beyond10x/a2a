@@ -1,0 +1,2122 @@
+openapi: 3.0.0
+info:
+  title: a2a.proto
+  version: version not set
+tags:
+  - name: A2AService
+paths:
+  /extendedAgentCard:
+    get:
+      summary: Gets the extended agent card for the authenticated agent.
+      operationId: A2AService_GetExtendedAgentCard
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1AgentCard"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - A2AService
+  /message:send:
+    post:
+      summary: Sends a message to an agent.
+      operationId: A2AService_SendMessage
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1SendMessageResponse"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      requestBody:
+        $ref: "#/components/requestBodies/v1SendMessageRequest"
+      tags:
+        - A2AService
+  /message:stream:
+    post:
+      summary: >-
+        Sends a streaming message to an agent, allowing for real-time
+        interaction and status updates.
+
+        Streaming version of `SendMessage`
+      operationId: A2AService_SendStreamingMessage
+      responses:
+        "200":
+          description: A successful response.(streaming responses)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    $ref: "#/components/schemas/v1StreamResponse"
+                  error:
+                    $ref: "#/components/schemas/rpcStatus"
+                title: Stream result of v1StreamResponse
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      requestBody:
+        $ref: "#/components/requestBodies/v1SendMessageRequest"
+      tags:
+        - A2AService
+  /tasks:
+    get:
+      summary: Lists tasks that match the specified filter.
+      operationId: A2AService_ListTasks
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1ListTasksResponse"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: contextId
+          description: Filter tasks by context ID to get tasks from a specific
+            conversation or session.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          description: >-
+            Filter tasks by their current status state.
+
+             - TASK_STATE_UNSPECIFIED: The task is in an unknown or indeterminate state.
+             - TASK_STATE_SUBMITTED: Indicates that a task has been successfully submitted and acknowledged.
+             - TASK_STATE_WORKING: Indicates that a task is actively being processed by the agent.
+             - TASK_STATE_COMPLETED: Indicates that a task has finished successfully. This is a terminal state.
+             - TASK_STATE_FAILED: Indicates that a task has finished with an error. This is a terminal state.
+             - TASK_STATE_CANCELED: Indicates that a task was canceled before completion. This is a terminal state.
+             - TASK_STATE_INPUT_REQUIRED: Indicates that the agent requires additional user input to proceed. This is an interrupted state.
+             - TASK_STATE_REJECTED: Indicates that the agent has decided to not perform the task.
+            This may be done during initial task creation or later once an agent
+
+            has determined it can't or won't proceed. This is a terminal state.
+             - TASK_STATE_AUTH_REQUIRED: Indicates that authentication is required to proceed. This is an interrupted state.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - TASK_STATE_UNSPECIFIED
+              - TASK_STATE_SUBMITTED
+              - TASK_STATE_WORKING
+              - TASK_STATE_COMPLETED
+              - TASK_STATE_FAILED
+              - TASK_STATE_CANCELED
+              - TASK_STATE_INPUT_REQUIRED
+              - TASK_STATE_REJECTED
+              - TASK_STATE_AUTH_REQUIRED
+            default: TASK_STATE_UNSPECIFIED
+        - name: pageSize
+          description: >-
+            The maximum number of tasks to return. The service may return fewer
+            than this value.
+
+            If unspecified, at most 50 tasks will be returned.
+
+            The minimum value is 1.
+
+            The maximum value is 100.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: pageToken
+          description: |-
+            A page token, received from a previous `ListTasks` call.
+            `ListTasksResponse.next_page_token`.
+            Provide this to retrieve the subsequent page.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: historyLength
+          description: The maximum number of messages to include in each task's history.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: statusTimestampAfter
+          description: >-
+            Filter tasks which have a status updated after the provided
+            timestamp in ISO 8601 format (e.g., "2023-10-27T10:00:00Z").
+
+            Only tasks with a status timestamp time greater than or equal to this value will be returned.
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: includeArtifacts
+          description: |-
+            Whether to include artifacts in the returned tasks.
+            Defaults to false to reduce payload size.
+          in: query
+          required: false
+          schema:
+            type: boolean
+      tags:
+        - A2AService
+  "/tasks/{id}":
+    get:
+      summary: Gets the latest state of a task.
+      operationId: A2AService_GetTask
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1Task"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: id
+          description: The resource ID of the task to retrieve.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: historyLength
+          description: >-
+            The maximum number of most recent messages from the task's history
+            to retrieve. An
+
+            unset value means the client does not impose any limit. A value of zero is
+
+            a request to not include any messages. The server MUST NOT return more
+
+            messages than the provided value, but MAY apply a lower limit.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - A2AService
+  "/tasks/{id}:cancel":
+    post:
+      summary: Cancels a task in progress.
+      operationId: A2AService_CancelTask
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1Task"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: id
+          description: The resource ID of the task to cancel.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+      requestBody:
+        $ref: "#/components/requestBodies/A2AServiceCancelTaskBody"
+      tags:
+        - A2AService
+  "/tasks/{id}:subscribe":
+    get:
+      summary: >-
+        Subscribes to task updates for tasks not in a terminal state.
+
+        Returns `UnsupportedOperationError` if the task is already in a terminal state (completed, failed, canceled, rejected).
+      operationId: A2AService_SubscribeToTask
+      responses:
+        "200":
+          description: A successful response.(streaming responses)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    $ref: "#/components/schemas/v1StreamResponse"
+                  error:
+                    $ref: "#/components/schemas/rpcStatus"
+                title: Stream result of v1StreamResponse
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: id
+          description: The resource ID of the task to subscribe to.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - A2AService
+  "/tasks/{taskId}/pushNotificationConfigs":
+    get:
+      summary: Get a list of push notifications configured for a task.
+      operationId: A2AService_ListTaskPushNotificationConfigs
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1ListTaskPushNotificationConfigsResponse"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: taskId
+          description: The parent task resource ID.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pageSize
+          description: The maximum number of configurations to return.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: pageToken
+          description: A page token received from a previous
+            `ListTaskPushNotificationConfigsRequest` call.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - A2AService
+    post:
+      summary: Creates a push notification config for a task.
+      operationId: A2AService_CreateTaskPushNotificationConfig
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1TaskPushNotificationConfig"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: taskId
+          description: The ID of the task this configuration is associated with.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+      requestBody:
+        $ref: "#/components/requestBodies/A2AServiceCreateTaskPushNotificationConfigBod\
+          y"
+      tags:
+        - A2AService
+  "/tasks/{taskId}/pushNotificationConfigs/{id}":
+    get:
+      summary: Gets a push notification config for a task.
+      operationId: A2AService_GetTaskPushNotificationConfig
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1TaskPushNotificationConfig"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: taskId
+          description: The parent task resource ID.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: id
+          description: The resource ID of the configuration to retrieve.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - A2AService
+    delete:
+      summary: Deletes a push notification config for a task.
+      operationId: A2AService_DeleteTaskPushNotificationConfig
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: taskId
+          description: The parent task resource ID.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: id
+          description: The resource ID of the configuration to delete.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - A2AService
+  "/{tenant}/extendedAgentCard":
+    get:
+      summary: Gets the extended agent card for the authenticated agent.
+      operationId: A2AService_GetExtendedAgentCard2
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1AgentCard"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+      tags:
+        - A2AService
+  "/{tenant}/message:send":
+    post:
+      summary: Sends a message to an agent.
+      operationId: A2AService_SendMessage2
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1SendMessageResponse"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/A2AServiceSendMessageBody"
+        required: true
+      tags:
+        - A2AService
+  "/{tenant}/message:stream":
+    post:
+      summary: >-
+        Sends a streaming message to an agent, allowing for real-time
+        interaction and status updates.
+
+        Streaming version of `SendMessage`
+      operationId: A2AService_SendStreamingMessage2
+      responses:
+        "200":
+          description: A successful response.(streaming responses)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    $ref: "#/components/schemas/v1StreamResponse"
+                  error:
+                    $ref: "#/components/schemas/rpcStatus"
+                title: Stream result of v1StreamResponse
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/A2AServiceSendStreamingMessageBody"
+        required: true
+      tags:
+        - A2AService
+  "/{tenant}/tasks":
+    get:
+      summary: Lists tasks that match the specified filter.
+      operationId: A2AService_ListTasks2
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1ListTasksResponse"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contextId
+          description: Filter tasks by context ID to get tasks from a specific
+            conversation or session.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          description: >-
+            Filter tasks by their current status state.
+
+             - TASK_STATE_UNSPECIFIED: The task is in an unknown or indeterminate state.
+             - TASK_STATE_SUBMITTED: Indicates that a task has been successfully submitted and acknowledged.
+             - TASK_STATE_WORKING: Indicates that a task is actively being processed by the agent.
+             - TASK_STATE_COMPLETED: Indicates that a task has finished successfully. This is a terminal state.
+             - TASK_STATE_FAILED: Indicates that a task has finished with an error. This is a terminal state.
+             - TASK_STATE_CANCELED: Indicates that a task was canceled before completion. This is a terminal state.
+             - TASK_STATE_INPUT_REQUIRED: Indicates that the agent requires additional user input to proceed. This is an interrupted state.
+             - TASK_STATE_REJECTED: Indicates that the agent has decided to not perform the task.
+            This may be done during initial task creation or later once an agent
+
+            has determined it can't or won't proceed. This is a terminal state.
+             - TASK_STATE_AUTH_REQUIRED: Indicates that authentication is required to proceed. This is an interrupted state.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - TASK_STATE_UNSPECIFIED
+              - TASK_STATE_SUBMITTED
+              - TASK_STATE_WORKING
+              - TASK_STATE_COMPLETED
+              - TASK_STATE_FAILED
+              - TASK_STATE_CANCELED
+              - TASK_STATE_INPUT_REQUIRED
+              - TASK_STATE_REJECTED
+              - TASK_STATE_AUTH_REQUIRED
+            default: TASK_STATE_UNSPECIFIED
+        - name: pageSize
+          description: >-
+            The maximum number of tasks to return. The service may return fewer
+            than this value.
+
+            If unspecified, at most 50 tasks will be returned.
+
+            The minimum value is 1.
+
+            The maximum value is 100.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: pageToken
+          description: |-
+            A page token, received from a previous `ListTasks` call.
+            `ListTasksResponse.next_page_token`.
+            Provide this to retrieve the subsequent page.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: historyLength
+          description: The maximum number of messages to include in each task's history.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: statusTimestampAfter
+          description: >-
+            Filter tasks which have a status updated after the provided
+            timestamp in ISO 8601 format (e.g., "2023-10-27T10:00:00Z").
+
+            Only tasks with a status timestamp time greater than or equal to this value will be returned.
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: includeArtifacts
+          description: |-
+            Whether to include artifacts in the returned tasks.
+            Defaults to false to reduce payload size.
+          in: query
+          required: false
+          schema:
+            type: boolean
+      tags:
+        - A2AService
+  "/{tenant}/tasks/{id}":
+    get:
+      summary: Gets the latest state of a task.
+      operationId: A2AService_GetTask2
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1Task"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          description: The resource ID of the task to retrieve.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: historyLength
+          description: >-
+            The maximum number of most recent messages from the task's history
+            to retrieve. An
+
+            unset value means the client does not impose any limit. A value of zero is
+
+            a request to not include any messages. The server MUST NOT return more
+
+            messages than the provided value, but MAY apply a lower limit.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      tags:
+        - A2AService
+  "/{tenant}/tasks/{id}:cancel":
+    post:
+      summary: Cancels a task in progress.
+      operationId: A2AService_CancelTask2
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1Task"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          description: The resource ID of the task to cancel.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+      requestBody:
+        $ref: "#/components/requestBodies/A2AServiceCancelTaskBody"
+      tags:
+        - A2AService
+  "/{tenant}/tasks/{id}:subscribe":
+    get:
+      summary: >-
+        Subscribes to task updates for tasks not in a terminal state.
+
+        Returns `UnsupportedOperationError` if the task is already in a terminal state (completed, failed, canceled, rejected).
+      operationId: A2AService_SubscribeToTask2
+      responses:
+        "200":
+          description: A successful response.(streaming responses)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    $ref: "#/components/schemas/v1StreamResponse"
+                  error:
+                    $ref: "#/components/schemas/rpcStatus"
+                title: Stream result of v1StreamResponse
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          description: The resource ID of the task to subscribe to.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+      tags:
+        - A2AService
+  "/{tenant}/tasks/{taskId}/pushNotificationConfigs":
+    get:
+      summary: Get a list of push notifications configured for a task.
+      operationId: A2AService_ListTaskPushNotificationConfigs2
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1ListTaskPushNotificationConfigsResponse"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          description: The parent task resource ID.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: pageSize
+          description: The maximum number of configurations to return.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: pageToken
+          description: A page token received from a previous
+            `ListTaskPushNotificationConfigsRequest` call.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - A2AService
+    post:
+      summary: Creates a push notification config for a task.
+      operationId: A2AService_CreateTaskPushNotificationConfig2
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1TaskPushNotificationConfig"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          description: The ID of the task this configuration is associated with.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+      requestBody:
+        $ref: "#/components/requestBodies/A2AServiceCreateTaskPushNotificationConfigBod\
+          y"
+      tags:
+        - A2AService
+  "/{tenant}/tasks/{taskId}/pushNotificationConfigs/{id}":
+    get:
+      summary: Gets a push notification config for a task.
+      operationId: A2AService_GetTaskPushNotificationConfig2
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1TaskPushNotificationConfig"
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          description: The parent task resource ID.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: id
+          description: The resource ID of the configuration to retrieve.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+      tags:
+        - A2AService
+    delete:
+      summary: Deletes a push notification config for a task.
+      operationId: A2AService_DeleteTaskPushNotificationConfig2
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: tenant
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          description: The parent task resource ID.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+        - name: id
+          description: The resource ID of the configuration to delete.
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "[^/]+"
+      tags:
+        - A2AService
+components:
+  requestBodies:
+    v1SendMessageRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/v1SendMessageRequest"
+      description: Represents a request for the `SendMessage` method.
+      required: true
+    A2AServiceCancelTaskBody:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/A2AServiceCancelTaskBody"
+      required: true
+    A2AServiceCreateTaskPushNotificationConfigBody:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/A2AServiceCreateTaskPushNotificationConfigBody"
+      required: true
+  schemas:
+    A2AServiceCancelTaskBody:
+      type: object
+      properties:
+        metadata:
+          type: object
+          description: A flexible key-value map for passing additional context or
+            parameters.
+      description: Represents a request for the `CancelTask` method.
+    A2AServiceCreateTaskPushNotificationConfigBody:
+      type: object
+      properties:
+        id:
+          type: string
+          description: >-
+            The push notification configuration details.
+
+            A unique identifier (e.g. UUID) for this push notification configuration.
+        url:
+          type: string
+          description: The URL where the notification should be sent.
+        token:
+          type: string
+          description: A token unique for this task or session.
+        authentication:
+          $ref: "#/components/schemas/v1AuthenticationInfo"
+      description: A container associating a push notification configuration with a
+        specific task.
+      required:
+        - url
+    A2AServiceSendMessageBody:
+      type: object
+      properties:
+        message:
+          $ref: "#/components/schemas/v1Message"
+        configuration:
+          $ref: "#/components/schemas/v1SendMessageConfiguration"
+        metadata:
+          type: object
+          description: A flexible key-value map for passing additional context or
+            parameters.
+      description: Represents a request for the `SendMessage` method.
+      required:
+        - message
+    A2AServiceSendStreamingMessageBody:
+      type: object
+      properties:
+        message:
+          $ref: "#/components/schemas/v1Message"
+        configuration:
+          $ref: "#/components/schemas/v1SendMessageConfiguration"
+        metadata:
+          type: object
+          description: A flexible key-value map for passing additional context or
+            parameters.
+      description: Represents a request for the `SendMessage` method.
+      required:
+        - message
+    protobufAny:
+      type: object
+      properties:
+        "@type":
+          type: string
+      additionalProperties: {}
+    protobufNullValue:
+      type: string
+      enum:
+        - NULL_VALUE
+      default: NULL_VALUE
+      description: >-
+        `NullValue` is a singleton enumeration to represent the null value for
+        the
+
+        `Value` type union.
+
+
+        The JSON representation for `NullValue` is JSON `null`.
+
+         - NULL_VALUE: Null value.
+    rpcStatus:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/protobufAny"
+    v1APIKeySecurityScheme:
+      type: object
+      properties:
+        description:
+          type: string
+          description: An optional description for the security scheme.
+        location:
+          type: string
+          description: The location of the API key. Valid values are "query", "header", or
+            "cookie".
+        name:
+          type: string
+          description: The name of the header, query, or cookie parameter to be used.
+      description: Defines a security scheme using an API key.
+      required:
+        - location
+        - name
+    v1AgentCapabilities:
+      type: object
+      properties:
+        streaming:
+          type: boolean
+          description: Indicates if the agent supports streaming responses.
+        pushNotifications:
+          type: boolean
+          description: Indicates if the agent supports sending push notifications for
+            asynchronous task updates.
+        extensions:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1AgentExtension"
+          description: A list of protocol extensions supported by the agent.
+        extendedAgentCard:
+          type: boolean
+          description: Indicates if the agent supports providing an extended agent card
+            when authenticated.
+      description: Defines optional capabilities supported by an agent.
+    v1AgentCard:
+      type: object
+      properties:
+        name:
+          type: string
+          title: |-
+            A human readable name for the agent.
+            Example: "Recipe Agent"
+        description:
+          type: string
+          title: >-
+            A human-readable description of the agent, assisting users and other
+            agents
+
+            in understanding its purpose.
+
+            Example: "Agent that helps users with recipes and cooking."
+        supportedInterfaces:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1AgentInterface"
+          description: Ordered list of supported interfaces. The first entry is preferred.
+        provider:
+          $ref: "#/components/schemas/v1AgentProvider"
+        version:
+          type: string
+          title: |-
+            The version of the agent.
+            Example: "1.0.0"
+        documentationUrl:
+          type: string
+          description: A URL providing additional documentation about the agent.
+        capabilities:
+          $ref: "#/components/schemas/v1AgentCapabilities"
+        securitySchemes:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/v1SecurityScheme"
+          description: The security scheme details used for authenticating with this agent.
+        securityRequirements:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1SecurityRequirement"
+          description: Security requirements for contacting the agent.
+        defaultInputModes:
+          type: array
+          items:
+            type: string
+          description: >-
+            protolint:enable REPEATED_FIELD_NAMES_PLURALIZED
+
+            The set of interaction modes that the agent supports across all skills.
+
+            This can be overridden per skill. Defined as media types.
+        defaultOutputModes:
+          type: array
+          items:
+            type: string
+          description: The media types supported as outputs from this agent.
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1AgentSkill"
+          description: >-
+            Skills represent the abilities of an agent.
+
+            It is largely a descriptive concept but represents a more focused set of behaviors that the
+
+            agent is likely to succeed at.
+        signatures:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1AgentCardSignature"
+          description: JSON Web Signatures computed for this `AgentCard`.
+        iconUrl:
+          type: string
+          description: Optional. A URL to an icon for the agent.
+      title: |-
+        A self-describing manifest for an agent. It provides essential
+        metadata including the agent's identity, capabilities, skills, supported
+        communication methods, and security requirements.
+        Next ID: 20
+      required:
+        - name
+        - description
+        - supportedInterfaces
+        - version
+        - capabilities
+        - defaultInputModes
+        - defaultOutputModes
+        - skills
+    v1AgentCardSignature:
+      type: object
+      properties:
+        protected:
+          type: string
+          description: >-
+            Required. The protected JWS header for the signature. This is always
+            a
+
+            base64url-encoded JSON object.
+        signature:
+          type: string
+          description: Required. The computed signature, base64url-encoded.
+        header:
+          type: object
+          description: The unprotected JWS header values.
+      description: |-
+        AgentCardSignature represents a JWS signature of an AgentCard.
+        This follows the JSON format of an RFC 7515 JSON Web Signature (JWS).
+      required:
+        - protected
+        - signature
+    v1AgentExtension:
+      type: object
+      properties:
+        uri:
+          type: string
+          description: The unique URI identifying the extension.
+        description:
+          type: string
+          description: A human-readable description of how this agent uses the extension.
+        required:
+          type: boolean
+          description: If true, the client must understand and comply with the extension's
+            requirements.
+        params:
+          type: object
+          description: Optional. Extension-specific configuration parameters.
+      description: A declaration of a protocol extension supported by an Agent.
+    v1AgentInterface:
+      type: object
+      properties:
+        url:
+          type: string
+          title: >-
+            The URL where this interface is available. Must be a valid absolute
+            HTTPS URL in production.
+
+            Example: "https://api.example.com/a2a/v1", "https://grpc.example.com/a2a"
+        protocolBinding:
+          type: string
+          description: >-
+            The protocol binding supported at this URL. This is an open form
+            string, to be
+
+            easily extended for other protocol bindings. The core ones officially
+
+            supported are `JSONRPC`, `GRPC` and `HTTP+JSON`.
+        tenant:
+          type: string
+          description: >-
+            Optional. An opaque string used for routing requests to a specific
+            agent
+
+            or tenant when multiple agents are served behind a single A2A endpoint.
+
+            When set, clients MUST include this value in the `tenant` field of all
+
+            request messages sent to this interface. The server is responsible for
+
+            interpreting the value and routing requests accordingly; the protocol
+
+            does not define its format or semantics.
+        protocolVersion:
+          type: string
+          title: |-
+            The version of the A2A protocol this interface exposes.
+            Use the latest supported minor version per major version.
+            Examples: "0.3", "1.0"
+      description: >-
+        Declares a combination of a target URL, transport and protocol version
+        for interacting with the agent.
+
+        This allows agents to expose the same functionality over multiple protocol binding mechanisms.
+      required:
+        - url
+        - protocolBinding
+        - protocolVersion
+    v1AgentProvider:
+      type: object
+      properties:
+        url:
+          type: string
+          title: |-
+            A URL for the agent provider's website or relevant documentation.
+            Example: "https://ai.google.dev"
+        organization:
+          type: string
+          title: |-
+            The name of the agent provider's organization.
+            Example: "Google"
+      description: Represents the service provider of an agent.
+      required:
+        - url
+        - organization
+    v1AgentSkill:
+      type: object
+      properties:
+        id:
+          type: string
+          description: A unique identifier for the agent's skill.
+        name:
+          type: string
+          description: A human-readable name for the skill.
+        description:
+          type: string
+          description: A detailed description of the skill.
+        tags:
+          type: array
+          items:
+            type: string
+          description: A set of keywords describing the skill's capabilities.
+        examples:
+          type: array
+          items:
+            type: string
+          description: Example prompts or scenarios that this skill can handle.
+        inputModes:
+          type: array
+          items:
+            type: string
+          description: The set of supported input media types for this skill, overriding
+            the agent's defaults.
+        outputModes:
+          type: array
+          items:
+            type: string
+          description: The set of supported output media types for this skill, overriding
+            the agent's defaults.
+        securityRequirements:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1SecurityRequirement"
+          description: Security schemes necessary for this skill.
+      description: Represents a distinct capability or function that an agent can perform.
+      required:
+        - id
+        - name
+        - description
+        - tags
+    v1Artifact:
+      type: object
+      properties:
+        artifactId:
+          type: string
+          description: Unique identifier (e.g. UUID) for the artifact. It must be unique
+            within a task.
+        name:
+          type: string
+          description: A human readable name for the artifact.
+        description:
+          type: string
+          description: Optional. A human readable description of the artifact.
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1Part"
+          description: The content of the artifact. Must contain at least one part.
+        metadata:
+          type: object
+          description: Optional. Metadata included with the artifact.
+        extensions:
+          type: array
+          items:
+            type: string
+          description: The URIs of extensions that are present or contributed to this
+            Artifact.
+      description: Artifacts represent task outputs.
+      required:
+        - artifactId
+        - parts
+    v1AuthenticationInfo:
+      type: object
+      properties:
+        scheme:
+          type: string
+          description: >-
+            HTTP Authentication Scheme from the [IANA
+            registry](https://www.iana.org/assignments/http-authschemes/).
+
+            Examples: `Bearer`, `Basic`, `Digest`.
+
+            Scheme names are case-insensitive per [RFC 9110 Section 11.1](https://www.rfc-editor.org/rfc/rfc9110#section-11.1).
+        credentials:
+          type: string
+          description: Push Notification credentials. Format depends on the scheme (e.g.,
+            token for Bearer).
+      description: Defines authentication details, used for push notifications.
+      required:
+        - scheme
+    v1AuthorizationCodeOAuthFlow:
+      type: object
+      properties:
+        authorizationUrl:
+          type: string
+          description: The authorization URL to be used for this flow.
+        tokenUrl:
+          type: string
+          description: The token URL to be used for this flow.
+        refreshUrl:
+          type: string
+          description: The URL to be used for obtaining refresh tokens.
+        scopes:
+          type: object
+          additionalProperties:
+            type: string
+          description: The available scopes for the OAuth2 security scheme.
+        pkceRequired:
+          type: boolean
+          description: >-
+            Indicates if PKCE (RFC 7636) is required for this flow.
+
+            PKCE should always be used for public clients and is recommended for all clients.
+      description: Defines configuration details for the OAuth 2.0 Authorization Code flow.
+      required:
+        - authorizationUrl
+        - tokenUrl
+        - scopes
+    v1ClientCredentialsOAuthFlow:
+      type: object
+      properties:
+        tokenUrl:
+          type: string
+          description: The token URL to be used for this flow.
+        refreshUrl:
+          type: string
+          description: The URL to be used for obtaining refresh tokens.
+        scopes:
+          type: object
+          additionalProperties:
+            type: string
+          description: The available scopes for the OAuth2 security scheme.
+      description: Defines configuration details for the OAuth 2.0 Client Credentials flow.
+      required:
+        - tokenUrl
+        - scopes
+    v1DeviceCodeOAuthFlow:
+      type: object
+      properties:
+        deviceAuthorizationUrl:
+          type: string
+          description: The device authorization endpoint URL.
+        tokenUrl:
+          type: string
+          description: The token URL to be used for this flow.
+        refreshUrl:
+          type: string
+          description: The URL to be used for obtaining refresh tokens.
+        scopes:
+          type: object
+          additionalProperties:
+            type: string
+          description: The available scopes for the OAuth2 security scheme.
+      description: >-
+        Defines configuration details for the OAuth 2.0 Device Code flow (RFC
+        8628).
+
+        This flow is designed for input-constrained devices such as IoT devices,
+
+        and CLI tools where the user authenticates on a separate device.
+      required:
+        - deviceAuthorizationUrl
+        - tokenUrl
+        - scopes
+    v1HTTPAuthSecurityScheme:
+      type: object
+      properties:
+        description:
+          type: string
+          description: An optional description for the security scheme.
+        scheme:
+          type: string
+          description: >-
+            The name of the HTTP Authentication scheme to be used in the
+            Authorization header,
+
+            as defined in RFC7235 (e.g., "Bearer").
+
+            This value should be registered in the IANA Authentication Scheme registry.
+        bearerFormat:
+          type: string
+          description: >-
+            A hint to the client to identify how the bearer token is formatted
+            (e.g., "JWT").
+
+            Primarily for documentation purposes.
+      description: Defines a security scheme using HTTP authentication.
+      required:
+        - scheme
+    v1ImplicitOAuthFlow:
+      type: object
+      properties:
+        authorizationUrl:
+          type: string
+          title: |-
+            The authorization URL to be used for this flow. This MUST be in the
+            form of a URL. The OAuth2 standard requires the use of TLS
+        refreshUrl:
+          type: string
+          description: |-
+            The URL to be used for obtaining refresh tokens. This MUST be in the
+            form of a URL. The OAuth2 standard requires the use of TLS.
+        scopes:
+          type: object
+          additionalProperties:
+            type: string
+          description: >-
+            The available scopes for the OAuth2 security scheme. A map between
+            the
+
+            scope name and a short description for it. The map MAY be empty.
+      description: "Deprecated: Use Authorization Code + PKCE instead."
+    v1ListTaskPushNotificationConfigsResponse:
+      type: object
+      properties:
+        configs:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1TaskPushNotificationConfig"
+          description: The list of push notification configurations.
+        nextPageToken:
+          type: string
+          description: A token to retrieve the next page of results, or empty if there are
+            no more results in the list.
+      description: >-
+        Represents a successful response for the
+        `ListTaskPushNotificationConfigs`
+
+        method.
+    v1ListTasksResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1Task"
+          description: Array of tasks matching the specified criteria.
+        nextPageToken:
+          type: string
+          description: A token to retrieve the next page of results, or empty if there are
+            no more results in the list.
+        pageSize:
+          type: integer
+          format: int32
+          description: The page size used for this response.
+        totalSize:
+          type: integer
+          format: int32
+          description: Total number of tasks available (before pagination).
+      description: Result object for `ListTasks` method containing an array of tasks
+        and pagination information.
+      required:
+        - tasks
+        - nextPageToken
+        - pageSize
+        - totalSize
+    v1Message:
+      type: object
+      properties:
+        messageId:
+          type: string
+          description: The unique identifier (e.g. UUID) of the message. This is created
+            by the message creator.
+        contextId:
+          type: string
+          description: Optional. The context id of the message. If set, the message will
+            be associated with the given context.
+        taskId:
+          type: string
+          description: Optional. The task id of the message. If set, the message will be
+            associated with the given task.
+        role:
+          $ref: "#/components/schemas/v1Role"
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1Part"
+          description: Parts is the container of the message content.
+        metadata:
+          type: object
+          description: Optional. Any metadata to provide along with the message.
+        extensions:
+          type: array
+          items:
+            type: string
+          description: The URIs of extensions that are present or contributed to this
+            Message.
+        referenceTaskIds:
+          type: array
+          items:
+            type: string
+          description: A list of task IDs that this message references for additional
+            context.
+      description: >-
+        `Message` is one unit of communication between client and server. It can
+        be
+
+        associated with a context and/or a task. For server messages, `context_id` must
+
+        be provided, and `task_id` only if a task was created. For client messages, both
+
+        fields are optional, with the caveat that if both are provided, they have to
+
+        match (the `context_id` has to be the one that is set on the task). If only
+
+        `task_id` is provided, the server will infer `context_id` from it.
+      required:
+        - messageId
+        - role
+        - parts
+    v1MutualTlsSecurityScheme:
+      type: object
+      properties:
+        description:
+          type: string
+          description: An optional description for the security scheme.
+      description: Defines a security scheme using mTLS authentication.
+    v1OAuth2SecurityScheme:
+      type: object
+      properties:
+        description:
+          type: string
+          description: An optional description for the security scheme.
+        flows:
+          $ref: "#/components/schemas/v1OAuthFlows"
+        oauth2MetadataUrl:
+          type: string
+          description: >-
+            URL to the OAuth2 authorization server metadata [RFC
+            8414](https://datatracker.ietf.org/doc/html/rfc8414).
+
+            TLS is required.
+      description: Defines a security scheme using OAuth 2.0.
+      required:
+        - flows
+    v1OAuthFlows:
+      type: object
+      properties:
+        authorizationCode:
+          $ref: "#/components/schemas/v1AuthorizationCodeOAuthFlow"
+        clientCredentials:
+          $ref: "#/components/schemas/v1ClientCredentialsOAuthFlow"
+        implicit:
+          $ref: "#/components/schemas/v1ImplicitOAuthFlow"
+        password:
+          $ref: "#/components/schemas/v1PasswordOAuthFlow"
+        deviceCode:
+          $ref: "#/components/schemas/v1DeviceCodeOAuthFlow"
+      description: Defines the configuration for the supported OAuth 2.0 flows.
+    v1OpenIdConnectSecurityScheme:
+      type: object
+      properties:
+        description:
+          type: string
+          description: An optional description for the security scheme.
+        openIdConnectUrl:
+          type: string
+          description: The [OpenID Connect Discovery
+            URL](https://openid.net/specs/openid-connect-discovery-1_0.html) for
+            the OIDC provider's metadata.
+      description: Defines a security scheme using OpenID Connect.
+      required:
+        - openIdConnectUrl
+    v1Part:
+      type: object
+      properties:
+        text:
+          type: string
+          description: The string content of the `text` part.
+        raw:
+          type: string
+          format: byte
+          description: The `raw` byte content of a file. In JSON serialization, this is
+            encoded as a base64 string.
+        url:
+          type: string
+          description: A `url` pointing to the file's content.
+        data:
+          description: Arbitrary structured `data` as a JSON value (object, array, string,
+            number, boolean, or null).
+        metadata:
+          type: object
+          description: Optional. metadata associated with this part.
+        filename:
+          type: string
+          description: An optional `filename` for the file (e.g., "document.pdf").
+        mediaType:
+          type: string
+          description: >-
+            The `media_type` (MIME type) of the part content (e.g.,
+            "text/plain", "application/json", "image/png").
+
+            This field is available for all part types.
+      description: |-
+        `Part` represents a container for a section of communication content.
+        Parts can be purely textual, some sort of file (image, video, etc) or
+        a structured data blob (i.e. JSON).
+    v1PasswordOAuthFlow:
+      type: object
+      properties:
+        tokenUrl:
+          type: string
+          description: >-
+            The token URL to be used for this flow. This MUST be in the form of
+            a URL.
+
+            The OAuth2 standard requires the use of TLS.
+        refreshUrl:
+          type: string
+          description: |-
+            The URL to be used for obtaining refresh tokens. This MUST be in the
+            form of a URL. The OAuth2 standard requires the use of TLS.
+        scopes:
+          type: object
+          additionalProperties:
+            type: string
+          description: >-
+            The available scopes for the OAuth2 security scheme. A map between
+            the
+
+            scope name and a short description for it. The map MAY be empty.
+      description: "Deprecated: Use Authorization Code + PKCE or Device Code."
+    v1Role:
+      type: string
+      enum:
+        - ROLE_UNSPECIFIED
+        - ROLE_USER
+        - ROLE_AGENT
+      default: ROLE_UNSPECIFIED
+      description: |-
+        Defines the sender of a message in A2A protocol communication.
+
+         - ROLE_UNSPECIFIED: The role is unspecified.
+         - ROLE_USER: The message is from the client to the server.
+         - ROLE_AGENT: The message is from the server to the client.
+    v1SecurityRequirement:
+      type: object
+      properties:
+        schemes:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/v1StringList"
+          description: A map of security schemes to the required scopes.
+      description: Defines the security requirements for an agent.
+    v1SecurityScheme:
+      type: object
+      properties:
+        apiKeySecurityScheme:
+          $ref: "#/components/schemas/v1APIKeySecurityScheme"
+        httpAuthSecurityScheme:
+          $ref: "#/components/schemas/v1HTTPAuthSecurityScheme"
+        oauth2SecurityScheme:
+          $ref: "#/components/schemas/v1OAuth2SecurityScheme"
+        openIdConnectSecurityScheme:
+          $ref: "#/components/schemas/v1OpenIdConnectSecurityScheme"
+        mtlsSecurityScheme:
+          $ref: "#/components/schemas/v1MutualTlsSecurityScheme"
+      title: >-
+        Defines a security scheme that can be used to secure an agent's
+        endpoints.
+
+        This is a discriminated union type based on the OpenAPI 3.2 Security Scheme Object.
+
+        See: https://spec.openapis.org/oas/v3.2.0.html#security-scheme-object
+    v1SendMessageConfiguration:
+      type: object
+      properties:
+        acceptedOutputModes:
+          type: array
+          items:
+            type: string
+          description: >-
+            A list of media types the client is prepared to accept for response
+            parts.
+
+            Agents SHOULD use this to tailor their output.
+        taskPushNotificationConfig:
+          $ref: "#/components/schemas/v1TaskPushNotificationConfig"
+        historyLength:
+          type: integer
+          format: int32
+          description: >-
+            The maximum number of most recent messages from the task's history
+            to retrieve in
+
+            the response. An unset value means the client does not impose any limit. A
+
+            value of zero is a request to not include any messages. The server MUST NOT
+
+            return more messages than the provided value, but MAY apply a lower limit.
+        returnImmediately:
+          type: boolean
+          description: >-
+            If `true`, the operation returns immediately after creating the
+            task,
+
+            even if processing is still in progress.
+
+            If `false` (default), the operation MUST wait until the task reaches a
+
+            terminal (`COMPLETED`, `FAILED`, `CANCELED`, `REJECTED`) or interrupted
+
+            (`INPUT_REQUIRED`, `AUTH_REQUIRED`) state before returning.
+      description: Configuration of a send message request.
+    v1SendMessageRequest:
+      type: object
+      properties:
+        tenant:
+          type: string
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+        message:
+          $ref: "#/components/schemas/v1Message"
+        configuration:
+          $ref: "#/components/schemas/v1SendMessageConfiguration"
+        metadata:
+          type: object
+          description: A flexible key-value map for passing additional context or
+            parameters.
+      description: Represents a request for the `SendMessage` method.
+      required:
+        - message
+    v1SendMessageResponse:
+      type: object
+      properties:
+        task:
+          $ref: "#/components/schemas/v1Task"
+        message:
+          $ref: "#/components/schemas/v1Message"
+      description: Represents the response for the `SendMessage` method.
+    v1StreamResponse:
+      type: object
+      properties:
+        task:
+          $ref: "#/components/schemas/v1Task"
+        message:
+          $ref: "#/components/schemas/v1Message"
+        statusUpdate:
+          $ref: "#/components/schemas/v1TaskStatusUpdateEvent"
+        artifactUpdate:
+          $ref: "#/components/schemas/v1TaskArtifactUpdateEvent"
+      description: A wrapper object used in streaming operations to encapsulate
+        different types of response data.
+    v1StringList:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            type: string
+          description: The individual string values.
+      description: |-
+        protolint:disable REPEATED_FIELD_NAMES_PLURALIZED
+        A list of strings.
+    v1Task:
+      type: object
+      properties:
+        id:
+          type: string
+          description: >-
+            Unique identifier (e.g. UUID) for the task, generated by the server
+            for a
+
+            new task.
+        contextId:
+          type: string
+          description: >-
+            Unique identifier (e.g. UUID) for the contextual collection of
+            interactions
+
+            (tasks and messages).
+        status:
+          $ref: "#/components/schemas/v1TaskStatus"
+        artifacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1Artifact"
+          description: A set of output artifacts for a `Task`.
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1Message"
+          description: |-
+            protolint:disable REPEATED_FIELD_NAMES_PLURALIZED
+            The history of interactions from a `Task`.
+        metadata:
+          type: object
+          description: |-
+            protolint:enable REPEATED_FIELD_NAMES_PLURALIZED
+            A key/value object to store custom metadata about a task.
+      description: |-
+        `Task` is the core unit of action for A2A. It has a current status
+        and when results are created for the task they are stored in the
+        artifact. If there are multiple turns for a task, these are stored in
+        history.
+      required:
+        - id
+        - status
+    v1TaskArtifactUpdateEvent:
+      type: object
+      properties:
+        taskId:
+          type: string
+          description: The ID of the task for this artifact.
+        contextId:
+          type: string
+          description: The ID of the context that this task belongs to.
+        artifact:
+          $ref: "#/components/schemas/v1Artifact"
+        append:
+          type: boolean
+          description: >-
+            If true, the content of this artifact should be appended to a
+            previously
+
+            sent artifact with the same ID.
+        lastChunk:
+          type: boolean
+          description: If true, this is the final chunk of the artifact.
+        metadata:
+          type: object
+          description: Optional. Metadata associated with the artifact update.
+      description: A task delta where an artifact has been generated.
+      required:
+        - taskId
+        - contextId
+        - artifact
+    v1TaskPushNotificationConfig:
+      type: object
+      properties:
+        tenant:
+          type: string
+          description: >-
+            Optional. Opaque routing identifier. Must match the `tenant` value
+            from
+
+            the selected `AgentInterface` in the Agent Card when that field is set.
+        id:
+          type: string
+          description: >-
+            The push notification configuration details.
+
+            A unique identifier (e.g. UUID) for this push notification configuration.
+        taskId:
+          type: string
+          description: The ID of the task this configuration is associated with.
+        url:
+          type: string
+          description: The URL where the notification should be sent.
+        token:
+          type: string
+          description: A token unique for this task or session.
+        authentication:
+          $ref: "#/components/schemas/v1AuthenticationInfo"
+      description: A container associating a push notification configuration with a
+        specific task.
+      required:
+        - url
+    v1TaskState:
+      type: string
+      enum:
+        - TASK_STATE_UNSPECIFIED
+        - TASK_STATE_SUBMITTED
+        - TASK_STATE_WORKING
+        - TASK_STATE_COMPLETED
+        - TASK_STATE_FAILED
+        - TASK_STATE_CANCELED
+        - TASK_STATE_INPUT_REQUIRED
+        - TASK_STATE_REJECTED
+        - TASK_STATE_AUTH_REQUIRED
+      default: TASK_STATE_UNSPECIFIED
+      description: >-
+        Defines the possible lifecycle states of a `Task`.
+
+         - TASK_STATE_UNSPECIFIED: The task is in an unknown or indeterminate state.
+         - TASK_STATE_SUBMITTED: Indicates that a task has been successfully submitted and acknowledged.
+         - TASK_STATE_WORKING: Indicates that a task is actively being processed by the agent.
+         - TASK_STATE_COMPLETED: Indicates that a task has finished successfully. This is a terminal state.
+         - TASK_STATE_FAILED: Indicates that a task has finished with an error. This is a terminal state.
+         - TASK_STATE_CANCELED: Indicates that a task was canceled before completion. This is a terminal state.
+         - TASK_STATE_INPUT_REQUIRED: Indicates that the agent requires additional user input to proceed. This is an interrupted state.
+         - TASK_STATE_REJECTED: Indicates that the agent has decided to not perform the task.
+        This may be done during initial task creation or later once an agent
+
+        has determined it can't or won't proceed. This is a terminal state.
+         - TASK_STATE_AUTH_REQUIRED: Indicates that authentication is required to proceed. This is an interrupted state.
+    v1TaskStatus:
+      type: object
+      properties:
+        state:
+          $ref: "#/components/schemas/v1TaskState"
+        message:
+          $ref: "#/components/schemas/v1Message"
+        timestamp:
+          type: string
+          format: date-time
+          title: |-
+            ISO 8601 Timestamp when the status was recorded.
+            Example: "2023-10-27T10:00:00Z"
+      title: A container for the status of a task
+      required:
+        - state
+    v1TaskStatusUpdateEvent:
+      type: object
+      properties:
+        taskId:
+          type: string
+          description: The ID of the task that has changed.
+        contextId:
+          type: string
+          description: The ID of the context that the task belongs to.
+        status:
+          $ref: "#/components/schemas/v1TaskStatus"
+        metadata:
+          type: object
+          description: Optional. Metadata associated with the task update.
+      description: An event sent by the agent to notify the client of a change in a
+        task's status.
+      required:
+        - taskId
+        - contextId
+        - status

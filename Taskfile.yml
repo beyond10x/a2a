@@ -21,6 +21,7 @@ tasks:
       - task: projections-drift
       - task: drift
       - task: http-paths
+      - task: docs-check
       - cargo fmt --all --check
       - cargo clippy --workspace --all-targets --locked -- -D warnings
       - cargo test --workspace --locked
@@ -116,6 +117,23 @@ tasks:
       - cp generated/asyncapi/asyncapi/a2a-agent.yaml {{.OUT}}/a2a-{{.TAG}}.asyncapi.yaml
       - rm -rf {{.OUT}}/{{.BUNDLE}}
       - cd {{.OUT}} && find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%P\n' | sort | xargs sha256sum > SHA256SUMS && sha256sum --check --strict SHA256SUMS
+
+  docs-generate:
+    desc: Rewrite the generated pages under website/docs/reference/ and the files under website/static/downloads/.
+    cmds:
+      - cargo run -q --locked -p a2a-docs -- generate
+
+  docs-check:
+    desc: Fail when a generated page or download is missing, stale or edited by hand, or a file a2a-docs does not generate sits beside them.
+    cmds:
+      - cargo run -q --locked -p a2a-docs -- generate --check
+
+  website:
+    desc: Install the site's locked dependencies and build it, as the Pages workflow does.
+    dir: website
+    cmds:
+      - npm ci
+      - npm run build
 
   plan:
     desc: Validate the AEP planning store.

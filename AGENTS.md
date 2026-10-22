@@ -18,6 +18,9 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 | `generated/openapi-http/` | ESS projection of `ess/` through `ess/http.yaml` (`--http`) | `task projections` |
 | `generated/rust/a2a/` | Rust crate synthesized from `ess/` (model, contracts, `server` feature) | `task generate` |
 | `crates/a2a-xtask/` | Repository checks (generated-crate drift, HTTP path parity) | authored |
+| `crates/a2a-docs/` | Generator of the site's reference pages and downloads, and the build's provenance | authored |
+| `website/` | Docusaurus site on `@beyond10x/docs-system`; `docs/concepts/`, `docs/guides/`, `docs/index.md` | authored |
+| `website/docs/reference/`, `website/static/downloads/` | Specification pages, routes, marker index, downloads with `SHA256SUMS` | `task docs-generate` |
 | `.engineering/` | AEP planning store; the plan lives here, not in chat or plan files | `aep` |
 
 ## Commands
@@ -26,6 +29,8 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 |---|---|
 | `task check` | The gate: validate `ess/`, projection and synthesis drift, fmt, clippy, test, build the generated crate |
 | `task generate`, `task projections` | Rewrite `generated/` after a change to `ess/` |
+| `task docs-generate` | Rewrite `website/docs/reference/` and `website/static/downloads/`; `task docs-check` (in `task check`) fails on a missing, stale or hand-edited file there, and on any file there it does not generate |
+| `task website` | `npm ci` and `npm run build` in `website/`, as `.github/workflows/pages.yml` does. Not in `task check` |
 | `task conform-interpreted` | Synthesized suite on the ESS interpreted target. Not a gate: 14 of 120 scenarios error on ESS defects |
 | `task upstream` | Fetch the pinned tarball, verify sha256, refresh `upstream/`. Needs `buf`, `protoc-gen-openapiv2`, `npx` |
 | `task plan` | `aep plan artifact validate` |
@@ -33,6 +38,13 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 ## Rules
 
 - Change `ess/` first, then regenerate. Never edit `generated/` by hand; `task check` fails on drift.
+- After `task projections` or a change to `ess/`, `upstream/` or a released version, run
+  `task docs-generate`. Never edit `website/docs/reference/` or `website/static/downloads/` by
+  hand. Hand-written site pages are concepts and guides only, and their commands are ones that were
+  run.
+- The site is <https://beyond10x.github.io/a2a/>. `pages.yml` builds it and uploads the build on a
+  push to `main`; `b10x-docs-site.yml` publishes that exact build through
+  `beyond10x/website`'s `project-site.yml`.
 - `upstream/` changes only through `task upstream`. Moving the pin: edit `A2A_VERSION` and
   `A2A_SHA256` in `Taskfile.yml`, run `task upstream`, update `ess/` against the proto diff.
 - The OpenAPI derivation uses grpc-gateway `protoc-gen-openapiv2` and `swagger2openapi`. gnostic
@@ -58,7 +70,9 @@ nothing is on a registry.
 - `CHANGELOG.md` follows Keep a Changelog 1.1.0. Changes collect under `## [Unreleased]`.
 - A release commit on `main` sets `[workspace.package] version` in `Cargo.toml` and `Cargo.lock`,
   turns `## [Unreleased]` into `## [<version>] - <date>` under a new empty `## [Unreleased]`, and
-  moves the link references at the bottom. `task release-check TAG=<version>` passes on it.
+  moves the link references at the bottom. It also carries `task docs-generate`'s output: the
+  Downloads page names the newest released version from `CHANGELOG.md`, so without it
+  `task check` fails. `task release-check TAG=<version>` passes on it.
 - The tag is the bot's, on that commit:
   `b10x-gates bot --repository beyond10x/a2a -- tag -a <version> -m "a2a <version>" <commit>`, then
   `b10x-gates bot --repository beyond10x/a2a -- push origin <version>`.
