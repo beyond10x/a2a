@@ -11,7 +11,11 @@ relations:
 - decides: story:streaming-binding
 - decides: story:http-binding
 - decides: story:docs-site
-revision: 2
+- decides: story:server
+- decides: story:client
+- decides: story:conformance-gate
+- decides: story:testkit
+revision: 3
 ---
 ## Decision
 
@@ -35,3 +39,6 @@ and documentation site follow in waves 1-3, each closing with a minor release.
 
 Wave 2, b10x-chef-orchestrator, 2026-10-22, after verifying 0.2.0: "Wave 2 (http-binding, docs-site)
 approved under the plan of 07:3x."
+
+Wave 3, b10x-chef-orchestrator, 2026-10-22, after verifying 0.3.0: "Approved: wave 3 in your order
+(server, then client ∥ conformance-gate, then testkit, then 0.4.0). Start server now."
