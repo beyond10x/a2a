@@ -26,9 +26,9 @@ The assets of a release carry its version in their names, and the release's own 
 covers them. Set `v` to the release you want; Downloads names the latest.
 
 ```sh
-v=0.2.0
+v=0.3.0
 base=https://github.com/beyond10x/a2a/releases/download/$v
-for f in SHA256SUMS a2a.proto a2a-$v-upstream.openapi.yaml a2a-$v.openapi.yaml \
+for f in SHA256SUMS a2a.proto a2a-$v-upstream.openapi.yaml a2a-$v.openapi.yaml a2a-$v-http.openapi.yaml \
          a2a-$v.asyncapi.yaml a2a-$v-json-schema.tar.gz a2a-$v-specification.tar.gz; do
   curl -fsSLO "$base/$f"
 done

@@ -30,16 +30,17 @@ e195bf96ab630c69797851970203e1b2b6b19528f2e9803b7d904b91a5104016  a2a.proto
 a26b9f4d641ec4f4dbe7edc74d512127b9d64814af8584f7dc397e79f0ad7110  a2a.schema.json
 ```
 
-## Release 0.2.0
+## Release 0.3.0
 
-The GitHub Release [0.2.0](https://github.com/beyond10x/a2a/releases/tag/0.2.0) carries the specification as released, with its own `SHA256SUMS`. Earlier releases are on [the releases page](https://github.com/beyond10x/a2a/releases).
+The GitHub Release [0.3.0](https://github.com/beyond10x/a2a/releases/tag/0.3.0) carries the specification as released, with its own `SHA256SUMS`. Earlier releases are on [the releases page](https://github.com/beyond10x/a2a/releases).
 
 | Asset | Contents |
 |---|---|
-| [`a2a-0.2.0-specification.tar.gz`](https://github.com/beyond10x/a2a/releases/download/0.2.0/a2a-0.2.0-specification.tar.gz) | `ess/`, `upstream/`, the OpenAPI, AsyncAPI and JSON Schema projections, `LICENSE` and `CHANGELOG.md` |
-| [`a2a-0.2.0-json-schema.tar.gz`](https://github.com/beyond10x/a2a/releases/download/0.2.0/a2a-0.2.0-json-schema.tar.gz) | the JSON Schema files of `generated/schema/schema/` |
-| [`a2a.proto`](https://github.com/beyond10x/a2a/releases/download/0.2.0/a2a.proto) | `upstream/a2a.proto` |
-| [`a2a-0.2.0-upstream.openapi.yaml`](https://github.com/beyond10x/a2a/releases/download/0.2.0/a2a-0.2.0-upstream.openapi.yaml) | `upstream/openapi/a2a.openapi.yaml` |
-| [`a2a-0.2.0.openapi.yaml`](https://github.com/beyond10x/a2a/releases/download/0.2.0/a2a-0.2.0.openapi.yaml) | `generated/openapi/`'s document |
-| [`a2a-0.2.0.asyncapi.yaml`](https://github.com/beyond10x/a2a/releases/download/0.2.0/a2a-0.2.0.asyncapi.yaml) | `generated/asyncapi/`'s document |
-| [`SHA256SUMS`](https://github.com/beyond10x/a2a/releases/download/0.2.0/SHA256SUMS) | the SHA-256 of every other asset |
+| [`a2a-0.3.0-specification.tar.gz`](https://github.com/beyond10x/a2a/releases/download/0.3.0/a2a-0.3.0-specification.tar.gz) | `ess/`, `upstream/`, both OpenAPI projections, the AsyncAPI and JSON Schema projections, `LICENSE` and `CHANGELOG.md` |
+| [`a2a-0.3.0-json-schema.tar.gz`](https://github.com/beyond10x/a2a/releases/download/0.3.0/a2a-0.3.0-json-schema.tar.gz) | the JSON Schema files of `generated/schema/schema/` |
+| [`a2a.proto`](https://github.com/beyond10x/a2a/releases/download/0.3.0/a2a.proto) | `upstream/a2a.proto` |
+| [`a2a-0.3.0-upstream.openapi.yaml`](https://github.com/beyond10x/a2a/releases/download/0.3.0/a2a-0.3.0-upstream.openapi.yaml) | `upstream/openapi/a2a.openapi.yaml` |
+| [`a2a-0.3.0.openapi.yaml`](https://github.com/beyond10x/a2a/releases/download/0.3.0/a2a-0.3.0.openapi.yaml) | `generated/openapi/`'s document |
+| [`a2a-0.3.0-http.openapi.yaml`](https://github.com/beyond10x/a2a/releases/download/0.3.0/a2a-0.3.0-http.openapi.yaml) | `generated/openapi-http/`'s document, the HTTP+JSON binding |
+| [`a2a-0.3.0.asyncapi.yaml`](https://github.com/beyond10x/a2a/releases/download/0.3.0/a2a-0.3.0.asyncapi.yaml) | `generated/asyncapi/`'s document |
+| [`SHA256SUMS`](https://github.com/beyond10x/a2a/releases/download/0.3.0/SHA256SUMS) | the SHA-256 of every other asset |

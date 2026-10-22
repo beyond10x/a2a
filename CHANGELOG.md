@@ -8,6 +8,8 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-22
+
 ### Added
 
 - `ess/http.yaml`, an `ess-http/1` binding of A2A's HTTP+JSON paths, projected to
@@ -27,6 +29,8 @@ under `[Unreleased]` until the next release.
   specification's two OpenAPI documents (command routes, and A2A's paths through `ess/http.yaml`),
   its AsyncAPI document, and its JSON Schemas as one JSON Schema 2020-12 document. `task
   docs-check` holds each to the repository files it is made from.
+- Release asset `a2a-<version>-http.openapi.yaml`, the OpenAPI document of `ess/http.yaml`; the
+  specification bundle carries `generated/openapi-http/` too.
 
 ## [0.2.0] - 2026-10-22
 
@@ -77,6 +81,7 @@ ESS specification of A2A v1.0.1 and the artifacts generated from it.
 - Release assets: `a2a.proto`, both OpenAPI documents, the AsyncAPI document, the JSON Schema
   archive and the specification bundle, with `SHA256SUMS`.
 
-[Unreleased]: https://github.com/beyond10x/a2a/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/beyond10x/a2a/compare/0.3.0...HEAD
+[0.3.0]: https://github.com/beyond10x/a2a/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/beyond10x/a2a/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/beyond10x/a2a/releases/tag/0.1.0

@@ -64,10 +64,10 @@ struct Asset {
     contents: &'static str,
 }
 
-const ASSETS: [Asset; 7] = [
+const ASSETS: [Asset; 8] = [
     Asset {
         name: "a2a-{TAG}-specification.tar.gz",
-        contents: "`ess/`, `upstream/`, the OpenAPI, AsyncAPI and JSON Schema projections, `LICENSE` and `CHANGELOG.md`",
+        contents: "`ess/`, `upstream/`, both OpenAPI projections, the AsyncAPI and JSON Schema projections, `LICENSE` and `CHANGELOG.md`",
     },
     Asset {
         name: "a2a-{TAG}-json-schema.tar.gz",
@@ -84,6 +84,10 @@ const ASSETS: [Asset; 7] = [
     Asset {
         name: "a2a-{TAG}.openapi.yaml",
         contents: "`generated/openapi/`'s document",
+    },
+    Asset {
+        name: "a2a-{TAG}-http.openapi.yaml",
+        contents: "`generated/openapi-http/`'s document, the HTTP+JSON binding",
     },
     Asset {
         name: "a2a-{TAG}.asyncapi.yaml",
@@ -317,7 +321,7 @@ mod tests {
     /// still writes: the text of the task that writes it.
     #[test]
     fn every_listed_release_asset_is_written_by_release_artifacts() {
-        const WRITTEN_BY: [(&str, &str); 7] = [
+        const WRITTEN_BY: [(&str, &str); 8] = [
             (
                 "a2a-{TAG}-specification.tar.gz",
                 "BUNDLE: a2a-{{.TAG}}-specification",
@@ -332,6 +336,10 @@ mod tests {
                 "a2a-{{.TAG}}-upstream.openapi.yaml",
             ),
             ("a2a-{TAG}.openapi.yaml", "a2a-{{.TAG}}.openapi.yaml"),
+            (
+                "a2a-{TAG}-http.openapi.yaml",
+                "a2a-{{.TAG}}-http.openapi.yaml",
+            ),
             ("a2a-{TAG}.asyncapi.yaml", "a2a-{{.TAG}}.asyncapi.yaml"),
             ("SHA256SUMS", "> SHA256SUMS"),
         ];

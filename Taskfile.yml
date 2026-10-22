@@ -108,12 +108,14 @@ tasks:
       - mkdir -p {{.OUT}}/{{.BUNDLE}}/generated
       - for: [openapi, asyncapi, schema]
         cmd: cp -r generated/{{.ITEM}}/{{.ITEM}} {{.OUT}}/{{.BUNDLE}}/generated/{{.ITEM}}
+      - cp -r generated/openapi-http/openapi {{.OUT}}/{{.BUNDLE}}/generated/openapi-http
       - cp LICENSE CHANGELOG.md {{.OUT}}/{{.BUNDLE}}/
       - tar -C {{.OUT}} --sort=name --owner=0 --group=0 --numeric-owner --mtime=@0 -czf {{.OUT}}/{{.BUNDLE}}.tar.gz {{.BUNDLE}}
       - tar -C generated/schema --sort=name --owner=0 --group=0 --numeric-owner --mtime=@0 -czf {{.OUT}}/a2a-{{.TAG}}-json-schema.tar.gz schema
       - cp upstream/a2a.proto {{.OUT}}/a2a.proto
       - cp upstream/openapi/a2a.openapi.yaml {{.OUT}}/a2a-{{.TAG}}-upstream.openapi.yaml
       - cp generated/openapi/openapi/a2a-agent.yaml {{.OUT}}/a2a-{{.TAG}}.openapi.yaml
+      - cp generated/openapi-http/openapi/a2a-agent.yaml {{.OUT}}/a2a-{{.TAG}}-http.openapi.yaml
       - cp generated/asyncapi/asyncapi/a2a-agent.yaml {{.OUT}}/a2a-{{.TAG}}.asyncapi.yaml
       - rm -rf {{.OUT}}/{{.BUNDLE}}
       - cd {{.OUT}} && find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%P\n' | sort | xargs sha256sum > SHA256SUMS && sha256sum --check --strict SHA256SUMS
