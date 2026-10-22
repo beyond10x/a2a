@@ -8,6 +8,11 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+### Changed
+
+- The documentation site uses `@beyond10x/docs-system` 0.12.0 with `product: 'a2a'`: the A2A
+  mark and signature hue, a generated favicon, and `.nojekyll` in the build.
+
 ## [0.3.0] - 2026-10-22
 
 ### Added

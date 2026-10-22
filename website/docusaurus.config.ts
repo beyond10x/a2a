@@ -89,4 +89,4 @@ const config: Config = {
   } satisfies Preset.ThemeConfig,
 };
 
-export default withProductSite(config, {landing: './product.json', mark: 'A2A'});
+export default withProductSite(config, {landing: './product.json', product: 'a2a'});
