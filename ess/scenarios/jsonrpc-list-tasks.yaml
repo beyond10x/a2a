@@ -1,0 +1,36 @@
+# JSON-RPC method `ListTasks`. A2A v1.0.1 section 5.3: "| List tasks | `ListTasks` |
+# `ListTasks` | `GET /tasks` |"; section 9.4.4 `"method": "ListTasks"`, `"params": {
+# "contextId": "context-uuid", … }`. ListTasks is the view a2a.tasks.Tasks, not a command.
+# Section 3.1.4, Errors: "None specific to this operation beyond standard protocol errors."
+# So this scenario holds the method by its read: a task created in a context is listed under
+# that context and not under another.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: jsonrpc-list-tasks
+summary: ListTasks lists a task under its contextId and not under another.
+
+timeline:
+  - at: 2026-02-04T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        context_id: ctx-list-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+
+assert:
+  - view: a2a.tasks.Tasks
+    params:
+      context_id: ctx-list-1
+    contains:
+      context_id: ctx-list-1
+      state: Submitted
+  - view: a2a.tasks.Tasks
+    params:
+      context_id: ctx-list-2
+    counts:
+      at_most: 0

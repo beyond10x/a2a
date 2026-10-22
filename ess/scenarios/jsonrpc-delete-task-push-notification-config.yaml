@@ -1,0 +1,79 @@
+# JSON-RPC method `DeleteTaskPushNotificationConfig`. A2A v1.0.1 section 5.3: "| Delete push
+# notification config | `DeleteTaskPushNotificationConfig` | `DeleteTaskPushNotificationConfig` |
+# `DELETE /tasks/{id}/pushNotificationConfigs/{configId}` |"; section 9.4.7
+# "`DeleteTaskPushNotificationConfig` - Delete push notification configuration". Section 3.1.10,
+# Errors: "PushNotificationNotSupportedError: Push notifications are not supported by the
+# agent", "TaskNotFoundError: The task ID does not exist." Section 3.6.2: "If the version is not
+# supported by the interface, agents MUST return a VersionNotSupportedError"; section 3.3.4:
+# "When a server requests use of an extension marked as `required: true` in the Agent Card but
+# the client does not declare support for it, the agent MUST return
+# ExtensionSupportRequiredError". Section 5.4:
+# "| `PushNotificationNotSupportedError` | `-32003` | `FAILED_PRECONDITION` | `400 Bad Request` |",
+# "| `TaskNotFoundError` | `-32001` | `NOT_FOUND` | `404 Not Found` |",
+# "| `ExtensionSupportRequiredError` | `-32008` | `FAILED_PRECONDITION` | `400 Bad Request` |",
+# "| `VersionNotSupportedError` | `-32009` | `FAILED_PRECONDITION` | `400 Bad Request` |".
+# -32003, -32008 and -32009 answer before the task lookup (rule above outcome_groups in
+# domains/tasks.yaml), so the -32008 and -32009 acts name a task the agent does not hold.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: jsonrpc-delete-task-push-notification-config
+summary: DeleteTaskPushNotificationConfig answers -32001 for an unknown task, and -32003, -32008 and -32009 before the task lookup.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-02-10T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-02-10T09:00:01Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-1
+    outcome: push-not-supported
+    error:
+      name: a2a.tasks.PushNotificationNotSupported
+    no_events: [a2a.tasks.PushNotificationConfigDeleted]
+
+  - at: 2026-02-10T09:00:02Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      id: cfg-1
+    outcome: task-not-found
+    error:
+      name: a2a.tasks.TaskNotFound
+
+  - at: 2026-02-10T09:00:03Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      id: cfg-1
+    outcome: extension-required
+    error:
+      name: a2a.tasks.ExtensionSupportRequired
+    no_events: [a2a.tasks.PushNotificationConfigDeleted]
+
+  - at: 2026-02-10T09:00:04Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      id: cfg-1
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported

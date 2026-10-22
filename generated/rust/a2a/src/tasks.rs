@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
-// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
+// model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
+// contract digest 3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Tasks — `a2a.tasks`.
@@ -882,7 +882,7 @@ impl AnyTask {
 
 /// Cancel task — the input of `a2a.tasks.CancelTask`.
 ///
-/// Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; POST /tasks/{id}:cancel).
+/// Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; JSON-RPC CancelTask; POST /tasks/{id}:cancel).
 ///
 /// Everything it can result in is [`CancelTaskOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -909,6 +909,16 @@ pub struct CancelTaskResponse {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CancelTaskOutcome {
+    /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
+    VersionNotSupported {
+        /// Why it was refused: `a2a.tasks.VersionNotSupported`.
+        error: VersionNotSupported,
+    },
+    /// `extension-required` — externally decided (the agent card marks an extension required and the request does not declare it).
+    ExtensionRequired {
+        /// Why it was refused: `a2a.tasks.ExtensionSupportRequired`.
+        error: ExtensionSupportRequired,
+    },
     /// `not-found` — for an identity no record carries.
     NotFound {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
@@ -932,16 +942,6 @@ pub enum CancelTaskOutcome {
     NotCancelable {
         /// Why it was refused: `a2a.tasks.TaskNotCancelable`.
         error: TaskNotCancelable,
-    },
-    /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
-    VersionNotSupported {
-        /// Why it was refused: `a2a.tasks.VersionNotSupported`.
-        error: VersionNotSupported,
-    },
-    /// `extension-required` — externally decided (the agent card marks an extension required and the request does not declare it).
-    ExtensionRequired {
-        /// Why it was refused: `a2a.tasks.ExtensionSupportRequired`.
-        error: ExtensionSupportRequired,
     },
 }
 
@@ -984,7 +984,7 @@ pub enum CompleteTaskOutcome {
 
 /// Create push notification config — the input of `a2a.tasks.CreateTaskPushNotificationConfig`.
 ///
-/// Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7; POST /tasks/{task_id}/pushNotificationConfigs).
+/// Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7; JSON-RPC CreateTaskPushNotificationConfig; POST /tasks/{task_id}/pushNotificationConfigs).
 ///
 /// Everything it can result in is [`CreateTaskPushNotificationConfigOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1017,6 +1017,21 @@ pub struct CreateTaskPushNotificationConfigResponse {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CreateTaskPushNotificationConfigOutcome {
+    /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
+    VersionNotSupported {
+        /// Why it was refused: `a2a.tasks.VersionNotSupported`.
+        error: VersionNotSupported,
+    },
+    /// `extension-required` — externally decided (the agent card marks an extension required and the request does not declare it).
+    ExtensionRequired {
+        /// Why it was refused: `a2a.tasks.ExtensionSupportRequired`.
+        error: ExtensionSupportRequired,
+    },
+    /// `push-not-supported` — externally decided (the agent card does not declare capabilities.pushNotifications).
+    PushNotSupported {
+        /// Why it was refused: `a2a.tasks.PushNotificationNotSupported`.
+        error: PushNotificationNotSupported,
+    },
     /// `task-not-found` — when no `a2a.tasks.Task` carries the identity `input.task_id` names.
     TaskNotFound {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
@@ -1036,26 +1051,11 @@ pub enum CreateTaskPushNotificationConfigOutcome {
         /// The `a2a.tasks.PushNotificationConfigCreated` this outcome publishes.
         push_notification_config_created: PushNotificationConfigCreated,
     },
-    /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
-    VersionNotSupported {
-        /// Why it was refused: `a2a.tasks.VersionNotSupported`.
-        error: VersionNotSupported,
-    },
-    /// `extension-required` — externally decided (the agent card marks an extension required and the request does not declare it).
-    ExtensionRequired {
-        /// Why it was refused: `a2a.tasks.ExtensionSupportRequired`.
-        error: ExtensionSupportRequired,
-    },
-    /// `push-not-supported` — externally decided (the agent card does not declare capabilities.pushNotifications).
-    PushNotSupported {
-        /// Why it was refused: `a2a.tasks.PushNotificationNotSupported`.
-        error: PushNotificationNotSupported,
-    },
 }
 
 /// Delete push notification config — the input of `a2a.tasks.DeleteTaskPushNotificationConfig`.
 ///
-/// Remove a push-notification configuration; deleting it again has the same effect (A2A v1.0.1 section 3.1.10; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).
+/// Remove a push-notification configuration; deleting it again has the same effect (A2A v1.0.1 section 3.1.10; JSON-RPC DeleteTaskPushNotificationConfig; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).
 ///
 /// Everything it can result in is [`DeleteTaskPushNotificationConfigOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1075,16 +1075,6 @@ pub struct DeleteTaskPushNotificationConfig {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DeleteTaskPushNotificationConfigOutcome {
-    /// `task-not-found` — for an identity no record carries.
-    TaskNotFound {
-        /// Why it was refused: `a2a.tasks.TaskNotFound`.
-        error: TaskNotFound,
-    },
-    /// `deleted` — otherwise.
-    Deleted {
-        /// The `a2a.tasks.PushNotificationConfigDeleted` this outcome publishes.
-        push_notification_config_deleted: PushNotificationConfigDeleted,
-    },
     /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
     VersionNotSupported {
         /// Why it was refused: `a2a.tasks.VersionNotSupported`.
@@ -1099,6 +1089,16 @@ pub enum DeleteTaskPushNotificationConfigOutcome {
     PushNotSupported {
         /// Why it was refused: `a2a.tasks.PushNotificationNotSupported`.
         error: PushNotificationNotSupported,
+    },
+    /// `task-not-found` — for an identity no record carries.
+    TaskNotFound {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
+    /// `deleted` — otherwise.
+    Deleted {
+        /// The `a2a.tasks.PushNotificationConfigDeleted` this outcome publishes.
+        push_notification_config_deleted: PushNotificationConfigDeleted,
     },
 }
 
@@ -1141,7 +1141,7 @@ pub enum FailTaskOutcome {
 
 /// Get task — the input of `a2a.tasks.GetTask`.
 ///
-/// Read a task's current state (A2A v1.0.1 section 3.1.3; GET /tasks/{id}).
+/// Read a task's current state (A2A v1.0.1 section 3.1.3; JSON-RPC GetTask; GET /tasks/{id}).
 ///
 /// Everything it can result in is [`GetTaskOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1168,16 +1168,6 @@ pub struct GetTaskResponse {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GetTaskOutcome {
-    /// `not-found` — for an identity no record carries.
-    NotFound {
-        /// Why it was refused: `a2a.tasks.TaskNotFound`.
-        error: TaskNotFound,
-    },
-    /// `found` — otherwise.
-    Found {
-        /// Actual response returned by this branch.
-        response: GetTaskResponse,
-    },
     /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
     VersionNotSupported {
         /// Why it was refused: `a2a.tasks.VersionNotSupported`.
@@ -1188,11 +1178,21 @@ pub enum GetTaskOutcome {
         /// Why it was refused: `a2a.tasks.ExtensionSupportRequired`.
         error: ExtensionSupportRequired,
     },
+    /// `not-found` — for an identity no record carries.
+    NotFound {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
+    /// `found` — otherwise.
+    Found {
+        /// Actual response returned by this branch.
+        response: GetTaskResponse,
+    },
 }
 
 /// Get push notification config — the input of `a2a.tasks.GetTaskPushNotificationConfig`.
 ///
-/// Read one push-notification configuration (A2A v1.0.1 section 3.1.8; GET /tasks/{task_id}/pushNotificationConfigs/{id}).
+/// Read one push-notification configuration (A2A v1.0.1 section 3.1.8; JSON-RPC GetTaskPushNotificationConfig; GET /tasks/{task_id}/pushNotificationConfigs/{id}).
 ///
 /// Everything it can result in is [`GetTaskPushNotificationConfigOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1253,7 +1253,7 @@ pub enum GetTaskPushNotificationConfigOutcome {
 
 /// List push notification configs — the input of `a2a.tasks.ListTaskPushNotificationConfigs`.
 ///
-/// Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; GET /tasks/{task_id}/pushNotificationConfigs).
+/// Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; JSON-RPC ListTaskPushNotificationConfigs; GET /tasks/{task_id}/pushNotificationConfigs).
 ///
 /// Everything it can result in is [`ListTaskPushNotificationConfigsOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1284,16 +1284,6 @@ pub struct ListTaskPushNotificationConfigsResponse {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ListTaskPushNotificationConfigsOutcome {
-    /// `task-not-found` — for an identity no record carries.
-    TaskNotFound {
-        /// Why it was refused: `a2a.tasks.TaskNotFound`.
-        error: TaskNotFound,
-    },
-    /// `listed` — otherwise.
-    Listed {
-        /// Actual response returned by this branch.
-        response: ListTaskPushNotificationConfigsResponse,
-    },
     /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
     VersionNotSupported {
         /// Why it was refused: `a2a.tasks.VersionNotSupported`.
@@ -1308,6 +1298,16 @@ pub enum ListTaskPushNotificationConfigsOutcome {
     PushNotSupported {
         /// Why it was refused: `a2a.tasks.PushNotificationNotSupported`.
         error: PushNotificationNotSupported,
+    },
+    /// `task-not-found` — for an identity no record carries.
+    TaskNotFound {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
+    /// `listed` — otherwise.
+    Listed {
+        /// Actual response returned by this branch.
+        response: ListTaskPushNotificationConfigsResponse,
     },
 }
 
@@ -1424,7 +1424,7 @@ pub enum RequireInputOutcome {
 
 /// Send message — the input of `a2a.tasks.SendMessage`.
 ///
-/// Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; POST /message:send).
+/// Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; JSON-RPC SendMessage; POST /message:send).
 ///
 /// Everything it can result in is [`SendMessageOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1515,7 +1515,7 @@ pub enum SendMessageOutcome {
 
 /// Send streaming message — the input of `a2a.tasks.SendStreamingMessage`.
 ///
-/// Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).
+/// Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; JSON-RPC SendStreamingMessage; POST /message:stream).
 ///
 /// Everything it can result in is [`SendStreamingMessageOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1673,7 +1673,7 @@ pub enum StartWorkingOutcome {
 
 /// Subscribe to task — the input of `a2a.tasks.SubscribeToTask`.
 ///
-/// Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; GET /tasks/{id}:subscribe).
+/// Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; JSON-RPC SubscribeToTask; GET /tasks/{id}:subscribe).
 ///
 /// Everything it can result in is [`SubscribeToTaskOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1698,21 +1698,6 @@ pub struct SubscribeToTaskResponse {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SubscribeToTaskOutcome {
-    /// `not-found` — for an identity no record carries.
-    NotFound {
-        /// Why it was refused: `a2a.tasks.TaskNotFound`.
-        error: TaskNotFound,
-    },
-    /// `task-terminal` — when the existing subject's stored fields satisfy `state in [Completed, Failed, Canceled, Rejected]`.
-    TaskTerminal {
-        /// Why it was refused: `a2a.tasks.UnsupportedOperation`.
-        error: UnsupportedOperation,
-    },
-    /// `subscribed` — otherwise.
-    Subscribed {
-        /// Actual response returned by this branch.
-        response: SubscribeToTaskResponse,
-    },
     /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
     VersionNotSupported {
         /// Why it was refused: `a2a.tasks.VersionNotSupported`.
@@ -1727,6 +1712,21 @@ pub enum SubscribeToTaskOutcome {
     StreamingNotSupported {
         /// Why it was refused: `a2a.tasks.UnsupportedOperation`.
         error: UnsupportedOperation,
+    },
+    /// `not-found` — for an identity no record carries.
+    NotFound {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
+    /// `task-terminal` — when the existing subject's stored fields satisfy `state in [Completed, Failed, Canceled, Rejected]`.
+    TaskTerminal {
+        /// Why it was refused: `a2a.tasks.UnsupportedOperation`.
+        error: UnsupportedOperation,
+    },
+    /// `subscribed` — otherwise.
+    Subscribed {
+        /// Actual response returned by this branch.
+        response: SubscribeToTaskResponse,
     },
 }
 
@@ -1855,7 +1855,7 @@ pub struct TaskSubscriptionResponse {
 
 /// The declared error `a2a.tasks.ContentTypeNotSupported`.
 ///
-/// ContentTypeNotSupportedError (JSON-RPC -32005, HTTP 400).
+/// ContentTypeNotSupportedError (JSON-RPC -32005, gRPC INVALID_ARGUMENT, HTTP 400): a media type of the message's parts is not supported by the agent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContentTypeNotSupported;
 
@@ -1873,25 +1873,31 @@ pub struct ContextNotAccepted;
 
 /// The declared error `a2a.tasks.ExtensionSupportRequired`.
 ///
-/// ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+/// ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtensionSupportRequired;
 
+/// The declared error `a2a.tasks.InvalidAgentResponse`.
+///
+/// InvalidAgentResponseError (JSON-RPC -32006, gRPC INTERNAL, HTTP 500): an agent returned a response that does not conform to the specification for the current method.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidAgentResponse;
+
 /// The declared error `a2a.tasks.PushNotificationNotSupported`.
 ///
-/// PushNotificationNotSupportedError (JSON-RPC -32003, HTTP 400): the agent card does not declare capabilities.pushNotifications.
+/// PushNotificationNotSupportedError (JSON-RPC -32003, gRPC FAILED_PRECONDITION, HTTP 400): the agent card does not declare capabilities.pushNotifications.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushNotificationNotSupported;
 
 /// The declared error `a2a.tasks.TaskNotCancelable`.
 ///
-/// TaskNotCancelableError (JSON-RPC -32002, HTTP 400).
+/// TaskNotCancelableError (JSON-RPC -32002, gRPC FAILED_PRECONDITION, HTTP 400): the task is not in a cancelable state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskNotCancelable;
 
 /// The declared error `a2a.tasks.TaskNotFound`.
 ///
-/// TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.
+/// TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskNotFound;
 
@@ -1906,13 +1912,13 @@ pub struct TaskStateConflict {
 
 /// The declared error `a2a.tasks.UnsupportedOperation`.
 ///
-/// UnsupportedOperationError (JSON-RPC -32004, HTTP 400).
+/// UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the operation, or an aspect of it, is not supported by this agent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnsupportedOperation;
 
 /// The declared error `a2a.tasks.VersionNotSupported`.
 ///
-/// VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+/// VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VersionNotSupported;
 
@@ -2022,7 +2028,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.CancelTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `not-cancelable-now` externally decided (the agent cannot cancel the task at its current stage), error `a2a.tasks.TaskNotCancelable`; `canceled` otherwise, takes `cancel` of `a2a.tasks.Task`, emits `a2a.tasks.TaskStatusUpdated`; `not-cancelable` from a state no declared move starts in, error `a2a.tasks.TaskNotCancelable`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`.
+    /// Contract: given `a2a.tasks.CancelTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `not-cancelable-now` externally decided (the agent cannot cancel the task at its current stage), error `a2a.tasks.TaskNotCancelable`; `canceled` otherwise, takes `cancel` of `a2a.tasks.Task`, emits `a2a.tasks.TaskStatusUpdated`; `not-cancelable` from a state no declared move starts in, error `a2a.tasks.TaskNotCancelable`.
     pub trait CancelTaskBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.CancelTask`.
         ///
@@ -2046,7 +2052,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.CreateTaskPushNotificationConfig` input, decide and enact exactly one outcome. Selection precedence: on commands with `when_related:`, check `existing_instance` then `exists: false` before input-guarded refusals; choose the first declared input refusal whose guard holds; then check addressed-row existence (`unknown_instance`, and `existing_instance` on commands without `when_related:`); then the held state (`when_subject_state` and `when_subject`), with `wrong_state` only if the selected branch moves from a state the row does not hold; then accepting and external branches in declaration order. An accepting branch that moves nothing answers in every state. Related-presence predicates do not precede input-guarded refusals. Declared outcomes (declaration order, not selection precedence): `task-not-found` when no `a2a.tasks.Task` carries the identity `input.task_id` names, error `a2a.tasks.TaskNotFound`; `created` when `defined(id)`, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`; `assigned` otherwise, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`.
+    /// Contract: given `a2a.tasks.CreateTaskPushNotificationConfig` input, decide and enact exactly one outcome. Selection precedence: on commands with `when_related:`, check `existing_instance` then `exists: false` before input-guarded refusals; choose the first declared input refusal whose guard holds; then check addressed-row existence (`unknown_instance`, and `existing_instance` on commands without `when_related:`); then the held state (`when_subject_state` and `when_subject`), with `wrong_state` only if the selected branch moves from a state the row does not hold; then accepting and external branches in declaration order. An accepting branch that moves nothing answers in every state. Related-presence predicates do not precede input-guarded refusals. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`; `task-not-found` when no `a2a.tasks.Task` carries the identity `input.task_id` names, error `a2a.tasks.TaskNotFound`; `created` when `defined(id)`, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`; `assigned` otherwise, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`.
     pub trait CreateTaskPushNotificationConfigBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.CreateTaskPushNotificationConfig`.
         ///
@@ -2059,7 +2065,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by effects on filtered rows (`affects:`), in `deleted`.
     ///
-    /// Contract: given `a2a.tasks.DeleteTaskPushNotificationConfig` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `deleted` otherwise, updates `a2a.tasks.Task`, removes, beside its subject, every `a2a.tasks.PushNotificationConfig` where `(task_id == subject.id and config_id == input.id)`, emits `a2a.tasks.PushNotificationConfigDeleted`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`.
+    /// Contract: given `a2a.tasks.DeleteTaskPushNotificationConfig` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`; `task-not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `deleted` otherwise, updates `a2a.tasks.Task`, removes, beside its subject, every `a2a.tasks.PushNotificationConfig` where `(task_id == subject.id and config_id == input.id)`, emits `a2a.tasks.PushNotificationConfigDeleted`.
     pub trait DeleteTaskPushNotificationConfigBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.DeleteTaskPushNotificationConfig`.
         ///
@@ -2083,7 +2089,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.GetTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `found` otherwise, preserves `a2a.tasks.Task`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`.
+    /// Contract: given `a2a.tasks.GetTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `found` otherwise, preserves `a2a.tasks.Task`.
     pub trait GetTaskBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.GetTask`.
         ///
@@ -2109,7 +2115,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.ListTaskPushNotificationConfigs` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `listed` otherwise, preserves `a2a.tasks.Task`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`.
+    /// Contract: given `a2a.tasks.ListTaskPushNotificationConfigs` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`; `task-not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `listed` otherwise, preserves `a2a.tasks.Task`.
     pub trait ListTaskPushNotificationConfigsBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.ListTaskPushNotificationConfigs`.
         ///
@@ -2192,7 +2198,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.SubscribeToTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `task-terminal` when the existing subject's stored fields satisfy `state in [Completed, Failed, Canceled, Rejected]`, error `a2a.tasks.UnsupportedOperation`; `subscribed` otherwise, preserves `a2a.tasks.Task`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`.
+    /// Contract: given `a2a.tasks.SubscribeToTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `task-terminal` when the existing subject's stored fields satisfy `state in [Completed, Failed, Canceled, Rejected]`, error `a2a.tasks.UnsupportedOperation`; `subscribed` otherwise, preserves `a2a.tasks.Task`.
     pub trait SubscribeToTaskBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.SubscribeToTask`.
         ///

@@ -1,6 +1,38 @@
 components:
   - component: a2a-agent
     summary: An A2A server agent, reached over JSON-RPC, gRPC or HTTP+JSON (A2A v1.0.1 section 5).
+    # JSON-RPC binding (A2A v1.0.1 section 9). Section 9.1: "Protocol: JSON-RPC 2.0 over
+    # HTTP(S)", "Method Naming: PascalCase method names matching gRPC conventions (e.g.,
+    # `SendMessage`, `GetTask`)". Each method is the local name of the command it invokes, and
+    # ListTasks is the view a2a.tasks.Tasks (domains/tasks.yaml, before `commands:`); each A2A
+    # error's summary carries its section 5.4 code. One authored scenario per method,
+    # scenarios/jsonrpc-*.yaml, names the command and claims the errors that carry its codes.
+    # UNMAPPED (ESS gap): the binding itself. ESS 0.67.0 binds a command to an HTTP route
+    # (ess-http/1), one method and path each, while JSON-RPC sends every method to one endpoint
+    # and dispatches on the body's `method`. Two commands on `post /` are refused:
+    # "ESS-HTTP-010: routes[1]: two operations claim the same method and path: command
+    # `a2a.tasks.CancelTask` (`routes[1]`, `post /`) and command `a2a.tasks.GetTask`
+    # (`routes[0]`, `post /`) are one route on component `a2a-agent`, since variable names do
+    # not tell two templates apart". `ess generate --kind` offers docs, site, docs-ir, schema,
+    # openapi and asyncapi, no JSON-RPC or OpenRPC document, and ess-protospec/1 models
+    # communicating peers, not a wire binding. So no scenario reads a method name or a numeric
+    # code off the wire: an act names a command by its qualified name, and an error claim
+    # carrying the code is refused, "ESS-AUTHOR-013: the fields of `a2a.tasks.TaskNotFound`
+    # declares no `code`". Missing construct: a JSON-RPC binding naming a method per command and
+    # view and a numeric code per error, over one endpoint, that a conformance target serves.
+    # The standard codes of section 9.5 belong to that binding: "| `-32700` | `JSONParseError` |
+    # "Invalid JSON payload" | The server received invalid JSON |", "| `-32600` |
+    # `InvalidRequestError` | "Request payload validation error" | The JSON sent is not a valid
+    # Request object |", "| `-32601` | `MethodNotFoundError` | "Method not found" | The requested
+    # method does not exist or is not available |", "| `-32602` | `InvalidParamsError` |
+    # "Invalid parameters" | The method parameters are invalid |", "| `-32603` | `InternalError` |
+    # "Internal error" | An internal error occurred on the server |". -32700 and -32600 concern
+    # the request envelope before a method is read; -32601 is a method that names no command or
+    # view this component accepts; -32602 is params a command's input declaration rejects, and
+    # the errors a2a.tasks.ContextMismatch and ContextNotAccepted answer it too (section 3.3.2).
+    # UNMAPPED (ESS gap): no authored scenario holds -32601 or -32602. An act expects one
+    # refusal, `refused: not_granted`; there is none for an input the declaration rejects or for
+    # an unknown command, and a scenario naming an undeclared command is refused by name.
     owns:
       domains:
         - a2a.tasks

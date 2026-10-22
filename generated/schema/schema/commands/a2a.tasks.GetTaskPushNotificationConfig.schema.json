@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Get push notification config input",
-  "description": "Read one push-notification configuration (A2A v1.0.1 section 3.1.8; GET /tasks/{task_id}/pushNotificationConfigs/{id}).",
+  "description": "Read one push-notification configuration (A2A v1.0.1 section 3.1.8; JSON-RPC GetTaskPushNotificationConfig; GET /tasks/{task_id}/pushNotificationConfigs/{id}).",
   "x-ess-name": "a2a.tasks.GetTaskPushNotificationConfig",
   "x-ess-kind": "command-input",
   "type": "object",
@@ -25,8 +25,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf",
-    "contract_digest": "slice-sha256/2:eaff7decf698f9c9203457708e9fcd0c1aadb7a115d3d26147268859a981555d",
+    "source_digest": "d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002",
+    "contract_digest": "slice-sha256/2:daba689489f0ce19d1d98832ed16f6f108b00d6caff586576e718e77d4127ce0",
     "regenerate": "ess generate"
   },
   "$defs": {

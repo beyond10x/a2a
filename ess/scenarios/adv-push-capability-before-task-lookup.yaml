@@ -1,0 +1,32 @@
+# Adversary case. A2A v1.0.1 section 3.3.4: "If `AgentCard.capabilities.pushNotifications` is
+# `false` or not present, operations related to push notification configuration (Create, Get,
+# List, Delete) **MUST** return [`PushNotificationNotSupportedError`]". The capability is a fact
+# of the agent card, not of the task the request names. CreateTaskPushNotificationConfig and
+# GetTaskPushNotificationConfig answer it before the task is read (`before_row: true`, "they
+# depend on the request alone (sections 3.3.4 and 3.6.2)"), so an agent without push support
+# answers -32003 for a task it does not hold. List and Delete, the other two operations the same
+# sentence names, must answer it too.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: adv-push-capability-before-task-lookup
+summary: List and Delete answer -32003 without push support for a task the agent does not hold, as Create and Get do.
+
+timeline:
+  - at: 2026-02-12T09:00:00Z
+    command: a2a.tasks.ListTaskPushNotificationConfigs
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+    outcome: push-not-supported
+    error:
+      name: a2a.tasks.PushNotificationNotSupported
+
+  - at: 2026-02-12T09:00:01Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      id: cfg-1
+    outcome: push-not-supported
+    error:
+      name: a2a.tasks.PushNotificationNotSupported

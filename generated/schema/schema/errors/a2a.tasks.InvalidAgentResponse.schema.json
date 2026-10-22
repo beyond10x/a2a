@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "InvalidAgentResponse payload",
+  "description": "InvalidAgentResponseError (JSON-RPC -32006, gRPC INTERNAL, HTTP 500): an agent returned a response that does not conform to the specification for the current method.",
+  "x-ess-name": "a2a.tasks.InvalidAgentResponse",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002",
+    "contract_digest": "slice-sha256/2:0967524b07d4f935f2b0517ea7b252c284aebcb81af00ced24c12bba35bc3573",
+    "regenerate": "ess generate"
+  }
+}

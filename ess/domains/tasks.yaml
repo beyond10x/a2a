@@ -418,31 +418,68 @@ actors:
       - a2a.tasks.AllTasks
       - a2a.tasks.PushNotificationConfigs
 
+# Each A2A error carries its binding codes in its summary, from A2A v1.0.1 section 5.4, "Error
+# Code Mappings": "All A2A-specific errors defined in Section 3.3.2 MUST be mapped to
+# binding-specific error representations", and section 9.5: "Error Code: Mapped to `error.code`
+# (numeric JSON-RPC error code)". The table row is quoted beside each error.
+# UNMAPPED (ESS gap): the summary is the only place ESS 0.67.0 carries the code, and nothing
+# reads it. An error declares only `name`, `naming`, `summary` and `fields`: `code: -32002` is
+# refused, "unknown field `code`, expected one of `name`, `naming`, `summary`, `fields`", and
+# `naming: {jsonrpc: -32002}` is refused, "unknown field `jsonrpc`, expected one of `wire`,
+# `display`, `summary`, `code`" (`naming.code` is the identifier code emitters use). An error's
+# `naming.wire` is a string the synthesized server writes as the error text, not JSON-RPC's
+# numeric `error.code`. Missing construct: a numeric binding code per error, which a binding
+# document and an authored error claim can read.
 errors:
+  # "| `TaskNotFoundError` | `-32001` | `NOT_FOUND` | `404 Not Found` |"
   - name: a2a.tasks.TaskNotFound
     summary: >-
-      TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification
-      configuration, does not exist or is not accessible to the caller.
+      TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the
+      push-notification configuration, does not exist or is not accessible to the caller.
+  # "| `TaskNotCancelableError` | `-32002` | `FAILED_PRECONDITION` | `400 Bad Request` |"
   - name: a2a.tasks.TaskNotCancelable
-    summary: TaskNotCancelableError (JSON-RPC -32002, HTTP 400).
+    summary: >-
+      TaskNotCancelableError (JSON-RPC -32002, gRPC FAILED_PRECONDITION, HTTP 400): the task is
+      not in a cancelable state.
+  # "| `PushNotificationNotSupportedError` | `-32003` | `FAILED_PRECONDITION` | `400 Bad Request` |"
   - name: a2a.tasks.PushNotificationNotSupported
     summary: >-
-      PushNotificationNotSupportedError (JSON-RPC -32003, HTTP 400): the agent card does not
-      declare capabilities.pushNotifications.
+      PushNotificationNotSupportedError (JSON-RPC -32003, gRPC FAILED_PRECONDITION, HTTP 400):
+      the agent card does not declare capabilities.pushNotifications.
+  # "| `UnsupportedOperationError` | `-32004` | `FAILED_PRECONDITION` | `400 Bad Request` |"
   - name: a2a.tasks.UnsupportedOperation
-    summary: UnsupportedOperationError (JSON-RPC -32004, HTTP 400).
+    summary: >-
+      UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the
+      operation, or an aspect of it, is not supported by this agent.
+  # "| `ContentTypeNotSupportedError` | `-32005` | `INVALID_ARGUMENT` | `400 Bad Request` |"
   - name: a2a.tasks.ContentTypeNotSupported
-    summary: ContentTypeNotSupportedError (JSON-RPC -32005, HTTP 400).
+    summary: >-
+      ContentTypeNotSupportedError (JSON-RPC -32005, gRPC INVALID_ARGUMENT, HTTP 400): a media
+      type of the message's parts is not supported by the agent.
+  # "| `InvalidAgentResponseError` | `-32006` | `INTERNAL` | `500 Internal Server Error` |"
+  # Section 3.3.2: "| `InvalidAgentResponseError` | An agent returned a response that does not
+  # conform to the specification for the current method. |"
+  - name: a2a.tasks.InvalidAgentResponse
+    summary: >-
+      InvalidAgentResponseError (JSON-RPC -32006, gRPC INTERNAL, HTTP 500): an agent returned a
+      response that does not conform to the specification for the current method.
+  # "| `ExtensionSupportRequiredError` | `-32008` | `FAILED_PRECONDITION` | `400 Bad Request` |"
   - name: a2a.tasks.ExtensionSupportRequired
-    summary: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+    summary: >-
+      ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the
+      agent card marks an extension required and the request does not declare it.
+  # "| `VersionNotSupportedError` | `-32009` | `FAILED_PRECONDITION` | `400 Bad Request` |"
   - name: a2a.tasks.VersionNotSupported
-    summary: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+    summary: >-
+      VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the
+      A2A-Version the request names is not supported by the agent.
   # A2A v1.0.1 section 3.4.3: "Agents MUST reject messages containing mismatching contextId and
   # taskId", and section 3.4.1: "If an agent cannot accept a client-provided contextId, it MUST
   # reject the request with an error". Neither names an A2A error, so both answer the error of
   # the category section 3.3.2 gives invalid input: "Validation Errors: Invalid input parameters
   # or message format … JSON-RPC -32602 Invalid params", gRPC INVALID_ARGUMENT, HTTP 400
-  # (InvalidParamsError, section 9.5).
+  # (InvalidParamsError, section 9.5: "| `-32602` | `InvalidParamsError` | "Invalid parameters"
+  # | The method parameters are invalid |").
   - name: a2a.tasks.ContextMismatch
     summary: >-
       InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the message's
@@ -459,10 +496,29 @@ errors:
       - name: state
         type: a2a.tasks.Task.State
 
+# Refusals the request alone decides answer before the task lookup. VersionNotSupportedError
+# (section 3.6.2), ExtensionSupportRequiredError, PushNotificationNotSupportedError and, for
+# streaming, UnsupportedOperationError (section 3.3.4) depend on the A2A-Version and
+# A2A-Extensions service parameters and on the agent card, not on the task the request names.
+# Upstream does not order them against TaskNotFoundError; we take the request-alone refusal
+# first, so one request gets one answer across commands. A group cannot carry that order: its
+# outcomes expand after the member's own, after the task lookup, and `before_row: true` in a
+# group is refused, "unknown field `before_row`, expected one of `name`, `external`, `error`,
+# `summary`, `refs`". So every command that reads a task row (GetTask, CancelTask,
+# SubscribeToTask and the four push-notification commands) declares them itself, first, with
+# `before_row: true`. The groups below serve SendMessage and SendStreamingMessage, whose task
+# lookup is an external branch (message.taskId, UNMAPPED there), not a row read.
 outcome_groups:
   - name: protocol-negotiation
     actor: a2a.tasks.Client
-    except: [a2a.tasks.GetTaskPushNotificationConfig]
+    except:
+      - a2a.tasks.GetTask
+      - a2a.tasks.CancelTask
+      - a2a.tasks.SubscribeToTask
+      - a2a.tasks.CreateTaskPushNotificationConfig
+      - a2a.tasks.GetTaskPushNotificationConfig
+      - a2a.tasks.ListTaskPushNotificationConfigs
+      - a2a.tasks.DeleteTaskPushNotificationConfig
     outcomes:
       - name: version-not-supported
         external: the A2A-Version service parameter names a version the agent does not support
@@ -471,25 +527,24 @@ outcome_groups:
         external: the agent card marks an extension required and the request does not declare it
         error: a2a.tasks.ExtensionSupportRequired
 
-  - name: push-notifications-capability
-    commands:
-      - a2a.tasks.CreateTaskPushNotificationConfig
-      - a2a.tasks.ListTaskPushNotificationConfigs
-      - a2a.tasks.DeleteTaskPushNotificationConfig
-    outcomes:
-      - name: push-not-supported
-        external: the agent card does not declare capabilities.pushNotifications
-        error: a2a.tasks.PushNotificationNotSupported
-
   - name: streaming-capability
     commands:
       - a2a.tasks.SendStreamingMessage
-      - a2a.tasks.SubscribeToTask
     outcomes:
       - name: streaming-not-supported
         external: the agent card does not declare capabilities.streaming
         error: a2a.tasks.UnsupportedOperation
 
+# JSON-RPC method names. A2A v1.0.1 section 9.1: "Method Naming: PascalCase method names matching
+# gRPC conventions (e.g., `SendMessage`, `GetTask`)", and the section 5.3 table gives each
+# operation one name in both columns, e.g. "| Get task | `GetTask` | `GetTask` | `GET
+# /tasks/{id}` |". The JSON-RPC method is the local name of the command it invokes
+# (a2a.tasks.GetTask is `GetTask`), and each client command's summary states it; ListTasks is
+# the view a2a.tasks.Tasks. `naming.wire` (`tasks:get`) is not the method: it is the segment ESS
+# 0.67.0 routes a command under on its own command surface (`/tasks/commands/tasks:get` in
+# generated/openapi) and the AsyncAPI address of the stream events. Section 9.3's
+# `"method": "category/action"` is a placeholder that the method sections contradict (9.4.3
+# `"method": "GetTask"`). The agent-side commands (StartWorking …) are not A2A methods.
 commands:
   - name: a2a.tasks.SendMessage
     naming:
@@ -497,7 +552,7 @@ commands:
       display: Send message
       summary: >-
         Send a message to the agent, which answers with a task tracking its work or with a direct
-        message (A2A v1.0.1 section 3.1.1; POST /message:send).
+        message (A2A v1.0.1 section 3.1.1; JSON-RPC SendMessage; POST /message:send).
     # Upstream contradicts itself on when SendMessage answers. Chosen: the proto, which section
     # 1.4 makes "the single authoritative normative definition of all protocol data objects and
     # request/response messages". a2a.proto, SendMessageConfiguration.return_immediately: "If
@@ -597,7 +652,8 @@ commands:
       display: Send streaming message
       summary: >-
         Send a message and stream the answer: one message, or the task followed by its status and
-        artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).
+        artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; JSON-RPC
+        SendStreamingMessage; POST /message:stream).
     # Upstream contradicts itself on when the stream ends. Chosen: section 3.1.2, the section
     # this command cites: "The stream MUST close when the task reaches a terminal state
     # (TASK_STATE_COMPLETED, TASK_STATE_FAILED, TASK_STATE_CANCELED, TASK_STATE_REJECTED)." The
@@ -713,7 +769,9 @@ commands:
     naming:
       wire: tasks:get
       display: Get task
-      summary: Read a task's current state (A2A v1.0.1 section 3.1.3; GET /tasks/{id}).
+      summary: >-
+        Read a task's current state (A2A v1.0.1 section 3.1.3; JSON-RPC GetTask; GET
+        /tasks/{id}).
     input:
       - name: tenant
         type: Optional<String>
@@ -733,6 +791,14 @@ commands:
       - name: task
         type: a2a.tasks.TaskSnapshot
     outcomes:
+      - name: version-not-supported
+        external: the A2A-Version service parameter names a version the agent does not support
+        before_row: true
+        error: a2a.tasks.VersionNotSupported
+      - name: extension-required
+        external: the agent card marks an extension required and the request does not declare it
+        before_row: true
+        error: a2a.tasks.ExtensionSupportRequired
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -745,7 +811,9 @@ commands:
     naming:
       wire: tasks:cancel
       display: Cancel task
-      summary: Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; POST /tasks/{id}:cancel).
+      summary: >-
+        Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; JSON-RPC CancelTask; POST
+        /tasks/{id}:cancel).
     input:
       - name: tenant
         type: Optional<String>
@@ -758,6 +826,14 @@ commands:
       - name: task
         type: a2a.tasks.TaskSnapshot
     outcomes:
+      - name: version-not-supported
+        external: the A2A-Version service parameter names a version the agent does not support
+        before_row: true
+        error: a2a.tasks.VersionNotSupported
+      - name: extension-required
+        external: the agent card marks an extension required and the request does not declare it
+        before_row: true
+        error: a2a.tasks.ExtensionSupportRequired
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -796,7 +872,7 @@ commands:
       display: Subscribe to task
       summary: >-
         Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section
-        3.1.6; GET /tasks/{id}:subscribe).
+        3.1.6; JSON-RPC SubscribeToTask; GET /tasks/{id}:subscribe).
     input:
       - name: tenant
         type: Optional<String>
@@ -807,6 +883,18 @@ commands:
       - name: task
         type: a2a.tasks.TaskSnapshot
     outcomes:
+      - name: version-not-supported
+        external: the A2A-Version service parameter names a version the agent does not support
+        before_row: true
+        error: a2a.tasks.VersionNotSupported
+      - name: extension-required
+        external: the agent card marks an extension required and the request does not declare it
+        before_row: true
+        error: a2a.tasks.ExtensionSupportRequired
+      - name: streaming-not-supported
+        external: the agent card does not declare capabilities.streaming
+        before_row: true
+        error: a2a.tasks.UnsupportedOperation
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -833,8 +921,8 @@ commands:
       wire: pushNotificationConfigs:create
       display: Create push notification config
       summary: >-
-        Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7;
-        POST /tasks/{task_id}/pushNotificationConfigs).
+        Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7; JSON-RPC
+        CreateTaskPushNotificationConfig; POST /tasks/{task_id}/pushNotificationConfigs).
     input:
       - name: tenant
         type: Optional<String>
@@ -866,7 +954,26 @@ commands:
     # UNMAPPED (ESS gap): `assigned` writes `row` and `config_id` as two independent
     # `{generated: true}` values; ESS 0.67.0 has no construct to generate the id once and reuse
     # it in the stored field and the event payload, so nothing checks they agree.
+    # The three request-alone refusals come first (rule above outcome_groups). Declared after
+    # `created` they would also be shadowed: `created` (`when: defined(id)`) answers before an
+    # external branch declared after it, and jsonrpc-create-task-push-notification-config was
+    # refused, "ESS-AUTHOR-041: … `created` (defined(id)) answers it first, so
+    # `push-not-supported` is not taken". Section 3.3.4: "operations related to push
+    # notification configuration (Create, Get, List, Delete) MUST return
+    # PushNotificationNotSupportedError".
     outcomes:
+      - name: version-not-supported
+        external: the A2A-Version service parameter names a version the agent does not support
+        before_row: true
+        error: a2a.tasks.VersionNotSupported
+      - name: extension-required
+        external: the agent card marks an extension required and the request does not declare it
+        before_row: true
+        error: a2a.tasks.ExtensionSupportRequired
+      - name: push-not-supported
+        external: the agent card does not declare capabilities.pushNotifications
+        before_row: true
+        error: a2a.tasks.PushNotificationNotSupported
       - name: task-not-found
         when_related:
           via: input.task_id
@@ -913,8 +1020,8 @@ commands:
       wire: pushNotificationConfigs:get
       display: Get push notification config
       summary: >-
-        Read one push-notification configuration (A2A v1.0.1 section 3.1.8;
-        GET /tasks/{task_id}/pushNotificationConfigs/{id}).
+        Read one push-notification configuration (A2A v1.0.1 section 3.1.8; JSON-RPC
+        GetTaskPushNotificationConfig; GET /tasks/{task_id}/pushNotificationConfigs/{id}).
     input:
       - name: tenant
         type: Optional<String>
@@ -927,11 +1034,9 @@ commands:
     response:
       - name: config
         type: a2a.tasks.TaskPushNotificationConfig
-    # The groups protocol-negotiation and push-notifications-capability skip this command and
-    # their three refusals are declared here with `before_row: true`: they depend on the request
-    # alone (sections 3.3.4 and 3.6.2), and in a group (no `before_row:` key there) they answer
-    # after the config-not-found row-set guard, where synthesis refuses them ("ESS-SYNTH-001: …
-    # `config-not-found` is not decidedly passed over: its row set is True").
+    # The three request-alone refusals come first (rule above outcome_groups). After the
+    # config-not-found row-set guard synthesis refuses them, "ESS-SYNTH-001: … `config-not-found`
+    # is not decidedly passed over: its row set is True".
     outcomes:
       - name: version-not-supported
         external: the A2A-Version service parameter names a version the agent does not support
@@ -966,7 +1071,7 @@ commands:
       display: List push notification configs
       summary: >-
         Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9;
-        GET /tasks/{task_id}/pushNotificationConfigs).
+        JSON-RPC ListTaskPushNotificationConfigs; GET /tasks/{task_id}/pushNotificationConfigs).
     input:
       - name: tenant
         type: Optional<String>
@@ -999,6 +1104,18 @@ commands:
     # from the rows a view selects, so the rows are observable only through the view
     # a2a.tasks.TaskPushNotificationConfigs.
     outcomes:
+      - name: version-not-supported
+        external: the A2A-Version service parameter names a version the agent does not support
+        before_row: true
+        error: a2a.tasks.VersionNotSupported
+      - name: extension-required
+        external: the agent card marks an extension required and the request does not declare it
+        before_row: true
+        error: a2a.tasks.ExtensionSupportRequired
+      - name: push-not-supported
+        external: the agent card does not declare capabilities.pushNotifications
+        before_row: true
+        error: a2a.tasks.PushNotificationNotSupported
       - name: task-not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -1013,7 +1130,8 @@ commands:
       display: Delete push notification config
       summary: >-
         Remove a push-notification configuration; deleting it again has the same effect (A2A
-        v1.0.1 section 3.1.10; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).
+        v1.0.1 section 3.1.10; JSON-RPC DeleteTaskPushNotificationConfig; DELETE
+        /tasks/{task_id}/pushNotificationConfigs/{id}).
     input:
       - name: tenant
         type: Optional<String>
@@ -1031,6 +1149,18 @@ commands:
     # idempotent - multiple deletions of the same config have the same effect." That no-op
     # delete still emits a2a.tasks.PushNotificationConfigDeleted, though no configuration went.
     outcomes:
+      - name: version-not-supported
+        external: the A2A-Version service parameter names a version the agent does not support
+        before_row: true
+        error: a2a.tasks.VersionNotSupported
+      - name: extension-required
+        external: the agent card marks an extension required and the request does not declare it
+        before_row: true
+        error: a2a.tasks.ExtensionSupportRequired
+      - name: push-not-supported
+        external: the agent card does not declare capabilities.pushNotifications
+        before_row: true
+        error: a2a.tasks.PushNotificationNotSupported
       - name: task-not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -1445,6 +1575,16 @@ views:
   # no continuation token. Missing construct: cursor paging. Also unchecked: include_artifacts
   # ("the artifacts field MUST be omitted entirely") and history_length, which shape each row;
   # missing construct: a view field omitted by a parameter.
+  # JSON-RPC method `ListTasks` (section 5.3: "| List tasks | `ListTasks` | `ListTasks` | `GET
+  # /tasks` |"; section 9.4.4 `"method": "ListTasks"`), held by the authored scenario
+  # jsonrpc-list-tasks. Section 3.1.4, Errors: "None specific to this operation beyond standard
+  # protocol errors."
+  # UNMAPPED (ESS gap): a view answers no error, so the protocol-negotiation refusals
+  # (VersionNotSupportedError -32009, ExtensionSupportRequiredError -32008; section 3.6.2 "agents
+  # MUST return a VersionNotSupportedError") are not declared for ListTasks. `errors:` on a view
+  # is refused: "unknown field `errors`, expected one of `name`, `source`, `shape`, `fields`,
+  # `params`, `filter`, `group_by`, `order_by`, `paging`, `absent`, `consistency`, `naming`".
+  # Missing construct: a refusal a view read answers before it reads any row.
   - name: a2a.tasks.Tasks
     source: a2a.tasks.Task
     consistency: read_your_writes
@@ -1464,6 +1604,9 @@ views:
     naming:
       wire: tasks
       display: List tasks
+      summary: >-
+        The tasks visible to the client, filtered by context, state and status time (A2A v1.0.1
+        section 3.1.4; JSON-RPC ListTasks).
     fields:
       - name: id
         type: a2a.tasks.TaskId

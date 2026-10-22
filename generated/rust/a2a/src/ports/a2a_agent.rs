@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
-// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
+// model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
+// contract digest 3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! a2a-agent — the `a2a-agent` component of `a2a` v1.
@@ -91,14 +91,14 @@ where
     pub fn cancel_task(&mut self, input: crate::tasks::CancelTask) -> Result<crate::tasks::CancelTaskOutcome, crate::obligation::UnmetObligation> {
         let outcome = self.behaviors.cancel_task(input)?;
         match &outcome {
+            crate::tasks::CancelTaskOutcome::VersionNotSupported { .. } => {}
+            crate::tasks::CancelTaskOutcome::ExtensionRequired { .. } => {}
             crate::tasks::CancelTaskOutcome::NotFound { .. } => {}
             crate::tasks::CancelTaskOutcome::NotCancelableNow { .. } => {}
             crate::tasks::CancelTaskOutcome::Canceled { task_status_updated, .. } => {
                 self.outbox.push(PublishedEvent::TaskStatusUpdated(task_status_updated.clone()));
             }
             crate::tasks::CancelTaskOutcome::NotCancelable { .. } => {}
-            crate::tasks::CancelTaskOutcome::VersionNotSupported { .. } => {}
-            crate::tasks::CancelTaskOutcome::ExtensionRequired { .. } => {}
         }
         Ok(outcome)
     }
@@ -128,6 +128,9 @@ where
     pub fn create_task_push_notification_config(&mut self, input: crate::tasks::CreateTaskPushNotificationConfig) -> Result<crate::tasks::CreateTaskPushNotificationConfigOutcome, crate::obligation::UnmetObligation> {
         let outcome = self.behaviors.create_task_push_notification_config(input)?;
         match &outcome {
+            crate::tasks::CreateTaskPushNotificationConfigOutcome::VersionNotSupported { .. } => {}
+            crate::tasks::CreateTaskPushNotificationConfigOutcome::ExtensionRequired { .. } => {}
+            crate::tasks::CreateTaskPushNotificationConfigOutcome::PushNotSupported { .. } => {}
             crate::tasks::CreateTaskPushNotificationConfigOutcome::TaskNotFound { .. } => {}
             crate::tasks::CreateTaskPushNotificationConfigOutcome::Created { push_notification_config_created, .. } => {
                 self.outbox.push(PublishedEvent::PushNotificationConfigCreated(push_notification_config_created.clone()));
@@ -135,9 +138,6 @@ where
             crate::tasks::CreateTaskPushNotificationConfigOutcome::Assigned { push_notification_config_created, .. } => {
                 self.outbox.push(PublishedEvent::PushNotificationConfigCreated(push_notification_config_created.clone()));
             }
-            crate::tasks::CreateTaskPushNotificationConfigOutcome::VersionNotSupported { .. } => {}
-            crate::tasks::CreateTaskPushNotificationConfigOutcome::ExtensionRequired { .. } => {}
-            crate::tasks::CreateTaskPushNotificationConfigOutcome::PushNotSupported { .. } => {}
         }
         Ok(outcome)
     }
@@ -150,13 +150,13 @@ where
     pub fn delete_task_push_notification_config(&mut self, input: crate::tasks::DeleteTaskPushNotificationConfig) -> Result<crate::tasks::DeleteTaskPushNotificationConfigOutcome, crate::obligation::UnmetObligation> {
         let outcome = self.behaviors.delete_task_push_notification_config(input)?;
         match &outcome {
+            crate::tasks::DeleteTaskPushNotificationConfigOutcome::VersionNotSupported { .. } => {}
+            crate::tasks::DeleteTaskPushNotificationConfigOutcome::ExtensionRequired { .. } => {}
+            crate::tasks::DeleteTaskPushNotificationConfigOutcome::PushNotSupported { .. } => {}
             crate::tasks::DeleteTaskPushNotificationConfigOutcome::TaskNotFound { .. } => {}
             crate::tasks::DeleteTaskPushNotificationConfigOutcome::Deleted { push_notification_config_deleted, .. } => {
                 self.outbox.push(PublishedEvent::PushNotificationConfigDeleted(push_notification_config_deleted.clone()));
             }
-            crate::tasks::DeleteTaskPushNotificationConfigOutcome::VersionNotSupported { .. } => {}
-            crate::tasks::DeleteTaskPushNotificationConfigOutcome::ExtensionRequired { .. } => {}
-            crate::tasks::DeleteTaskPushNotificationConfigOutcome::PushNotSupported { .. } => {}
         }
         Ok(outcome)
     }
@@ -186,10 +186,10 @@ where
     pub fn get_task(&mut self, input: crate::tasks::GetTask) -> Result<crate::tasks::GetTaskOutcome, crate::obligation::UnmetObligation> {
         let outcome = self.behaviors.get_task(input)?;
         match &outcome {
-            crate::tasks::GetTaskOutcome::NotFound { .. } => {}
-            crate::tasks::GetTaskOutcome::Found { .. } => {}
             crate::tasks::GetTaskOutcome::VersionNotSupported { .. } => {}
             crate::tasks::GetTaskOutcome::ExtensionRequired { .. } => {}
+            crate::tasks::GetTaskOutcome::NotFound { .. } => {}
+            crate::tasks::GetTaskOutcome::Found { .. } => {}
         }
         Ok(outcome)
     }
@@ -220,11 +220,11 @@ where
     pub fn list_task_push_notification_configs(&mut self, input: crate::tasks::ListTaskPushNotificationConfigs) -> Result<crate::tasks::ListTaskPushNotificationConfigsOutcome, crate::obligation::UnmetObligation> {
         let outcome = self.behaviors.list_task_push_notification_configs(input)?;
         match &outcome {
-            crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { .. } => {}
-            crate::tasks::ListTaskPushNotificationConfigsOutcome::Listed { .. } => {}
             crate::tasks::ListTaskPushNotificationConfigsOutcome::VersionNotSupported { .. } => {}
             crate::tasks::ListTaskPushNotificationConfigsOutcome::ExtensionRequired { .. } => {}
             crate::tasks::ListTaskPushNotificationConfigsOutcome::PushNotSupported { .. } => {}
+            crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { .. } => {}
+            crate::tasks::ListTaskPushNotificationConfigsOutcome::Listed { .. } => {}
         }
         Ok(outcome)
     }
@@ -359,12 +359,12 @@ where
     pub fn subscribe_to_task(&mut self, input: crate::tasks::SubscribeToTask) -> Result<crate::tasks::SubscribeToTaskOutcome, crate::obligation::UnmetObligation> {
         let outcome = self.behaviors.subscribe_to_task(input)?;
         match &outcome {
-            crate::tasks::SubscribeToTaskOutcome::NotFound { .. } => {}
-            crate::tasks::SubscribeToTaskOutcome::TaskTerminal { .. } => {}
-            crate::tasks::SubscribeToTaskOutcome::Subscribed { .. } => {}
             crate::tasks::SubscribeToTaskOutcome::VersionNotSupported { .. } => {}
             crate::tasks::SubscribeToTaskOutcome::ExtensionRequired { .. } => {}
             crate::tasks::SubscribeToTaskOutcome::StreamingNotSupported { .. } => {}
+            crate::tasks::SubscribeToTaskOutcome::NotFound { .. } => {}
+            crate::tasks::SubscribeToTaskOutcome::TaskTerminal { .. } => {}
+            crate::tasks::SubscribeToTaskOutcome::Subscribed { .. } => {}
         }
         Ok(outcome)
     }

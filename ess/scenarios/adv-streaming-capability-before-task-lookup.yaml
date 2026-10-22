@@ -1,0 +1,20 @@
+# Adversary case. A2A v1.0.1 section 3.3.4: "**Streaming**: If `AgentCard.capabilities.streaming`
+# is `false` or not present, attempts to use `SendStreamingMessage` or `SubscribeToTask`
+# operations **MUST** return [`UnsupportedOperationError`]". The capability is a fact of the agent
+# card, not of the task the request names, as CreateTaskPushNotificationConfig and
+# GetTaskPushNotificationConfig hold for push support (`before_row: true`). An agent without
+# streaming answers -32004 to SubscribeToTask for a task it does not hold.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: adv-streaming-capability-before-task-lookup
+summary: SubscribeToTask answers -32004 without streaming support for a task the agent does not hold.
+
+timeline:
+  - at: 2026-02-14T09:00:00Z
+    command: a2a.tasks.SubscribeToTask
+    actor: a2a.tasks.Client
+    input:
+      id: no-such-task
+    outcome: streaming-not-supported
+    error:
+      name: a2a.tasks.UnsupportedOperation

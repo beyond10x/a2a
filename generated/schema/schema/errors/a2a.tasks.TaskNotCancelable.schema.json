@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "TaskNotCancelable payload",
-  "description": "TaskNotCancelableError (JSON-RPC -32002, HTTP 400).",
+  "description": "TaskNotCancelableError (JSON-RPC -32002, gRPC FAILED_PRECONDITION, HTTP 400): the task is not in a cancelable state.",
   "x-ess-name": "a2a.tasks.TaskNotCancelable",
   "x-ess-kind": "error-payload",
   "type": "object",
@@ -9,8 +9,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf",
-    "contract_digest": "slice-sha256/2:8bda2af291bf302abf72651f4df8c4d83b156f363ae573325fdcb87a467b5f18",
+    "source_digest": "d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002",
+    "contract_digest": "slice-sha256/2:b803e13a5f93fd06142fa7622d12ef18bc533ed78b2e643e087636a06982ccef",
     "regenerate": "ess generate"
   }
 }

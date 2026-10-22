@@ -369,19 +369,29 @@ actors:
     may:
       - a2a.discovery.GetExtendedAgentCard
 
+# Binding codes from A2A v1.0.1 section 5.4, the row quoted beside each error; the codes are
+# carried in the summary only, as in a2a.tasks (UNMAPPED there: no numeric code per error).
 errors:
+  # "| `UnsupportedOperationError` | `-32004` | `FAILED_PRECONDITION` | `400 Bad Request` |"
   - name: a2a.discovery.UnsupportedOperation
     summary: >-
-      UnsupportedOperationError (JSON-RPC -32004, HTTP 400): the agent card does not declare
-      capabilities.extendedAgentCard.
+      UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the agent
+      card does not declare capabilities.extendedAgentCard.
+  # "| `ExtendedAgentCardNotConfiguredError` | `-32007` | `FAILED_PRECONDITION` | `400 Bad Request` |"
   - name: a2a.discovery.ExtendedAgentCardNotConfigured
     summary: >-
-      ExtendedAgentCardNotConfiguredError (JSON-RPC -32007, HTTP 400): the agent declares the
-      capability but has no extended card configured.
+      ExtendedAgentCardNotConfiguredError (JSON-RPC -32007, gRPC FAILED_PRECONDITION, HTTP 400):
+      the agent declares the capability but has no extended card configured.
+  # "| `VersionNotSupportedError` | `-32009` | `FAILED_PRECONDITION` | `400 Bad Request` |"
   - name: a2a.discovery.VersionNotSupported
-    summary: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+    summary: >-
+      VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the
+      A2A-Version the request names is not supported by the agent.
+  # "| `ExtensionSupportRequiredError` | `-32008` | `FAILED_PRECONDITION` | `400 Bad Request` |"
   - name: a2a.discovery.ExtensionSupportRequired
-    summary: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+    summary: >-
+      ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the
+      agent card marks an extension required and the request does not declare it.
 
 # Section 3.2.6 sends the service parameters (A2A-Version, A2A-Extensions) with every request,
 # and section 3.6.2: "If the version is not supported by the interface, agents MUST return a
@@ -397,6 +407,10 @@ outcome_groups:
         external: the agent card marks an extension required and the request does not declare it
         error: a2a.discovery.ExtensionSupportRequired
 
+# JSON-RPC method `GetExtendedAgentCard`, the command's local name (section 5.3: "| Get extended
+# Agent Card | `GetExtendedAgentCard` | `GetExtendedAgentCard` | `GET /extendedAgentCard` |";
+# section 9.4.8 `"method": "GetExtendedAgentCard"`). `naming.wire` is the segment ESS routes the
+# command under, not the method, as in a2a.tasks.
 commands:
   - name: a2a.discovery.GetExtendedAgentCard
     naming:
@@ -404,7 +418,8 @@ commands:
       display: Get extended agent card
       summary: >-
         Return the Agent Card an authenticated client may see, possibly with more skills than the
-        public card (A2A v1.0.1 section 3.1.11; GET /extendedAgentCard).
+        public card (A2A v1.0.1 section 3.1.11; JSON-RPC GetExtendedAgentCard; GET
+        /extendedAgentCard).
     input:
       - name: tenant
         type: Optional<String>
