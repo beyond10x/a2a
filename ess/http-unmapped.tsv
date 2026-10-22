@@ -1,0 +1,25 @@
+upstream	get	/{tenant}/extendedAgentCard	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment, ESS-HTTP-011 since a literal takes no precedence over a variable: overlaps get /tasks/{id} (ess/http.yaml)
+upstream	post	/{tenant}/message:send	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment (ess/http.yaml)
+upstream	post	/{tenant}/message:stream	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment (ess/http.yaml)
+upstream	get	/{tenant}/tasks	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment, ESS-HTTP-011 since a literal takes no precedence over a variable: overlaps get /tasks/{id} (ess/http.yaml)
+upstream	get	/{tenant}/tasks/{id}	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment, ESS-HTTP-011 since a literal takes no precedence over a variable: overlaps get /tasks/{taskId}/pushNotificationConfigs and get /views/tasks/pushNotificationConfigs (ess/http.yaml)
+upstream	post	/{tenant}/tasks/{id}:cancel	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment, ESS-HTTP-007 {id}:verb is not a whole variable (ess/http.yaml)
+upstream	get	/{tenant}/tasks/{id}:subscribe	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment, ESS-HTTP-007 {id}:verb is not a whole variable (ess/http.yaml)
+upstream	get	/{tenant}/tasks/{taskId}/pushNotificationConfigs	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment, ESS-HTTP-011 since a literal takes no precedence over a variable: overlaps get /tasks/{taskId}/pushNotificationConfigs/{id} (ess/http.yaml)
+upstream	post	/{tenant}/tasks/{taskId}/pushNotificationConfigs	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment (ess/http.yaml)
+upstream	get	/{tenant}/tasks/{taskId}/pushNotificationConfigs/{id}	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment (ess/http.yaml)
+upstream	delete	/{tenant}/tasks/{taskId}/pushNotificationConfigs/{id}	UNMAPPED (ESS gap): the /{tenant}/ additional binding; ESS-HTTP-005 an operation has one route, ESS-HTTP-009 Optional<String> tenant cannot be a path segment (ess/http.yaml)
+upstream	post	/tasks/{id}:cancel	UNMAPPED (ESS gap): ESS-HTTP-007 a variable is a whole segment, so {id}:verb is refused; served on its derived route (ess/http.yaml)
+upstream	get	/tasks/{id}:subscribe	UNMAPPED (ESS gap): ESS-HTTP-007 a variable is a whole segment, so {id}:verb is refused; served on its derived route (ess/http.yaml)
+projected	post	/tasks/commands/tasks:cancel	Stand-in for UNMAPPED post /tasks/{id}:cancel: derived route of a2a.tasks.CancelTask (ESS-HTTP-007)
+projected	post	/tasks/commands/tasks:subscribe	Stand-in for UNMAPPED get /tasks/{id}:subscribe: derived route of a2a.tasks.SubscribeToTask (ESS-HTTP-007)
+projected	post	/tasks/commands/tasks:complete	Not an A2A operation: agent-side lifecycle command (ess/domains/tasks.yaml), on its derived route
+projected	post	/tasks/commands/tasks:fail	Not an A2A operation: agent-side lifecycle command (ess/domains/tasks.yaml), on its derived route
+projected	post	/tasks/commands/tasks:reject	Not an A2A operation: agent-side lifecycle command (ess/domains/tasks.yaml), on its derived route
+projected	post	/tasks/commands/tasks:require_auth	Not an A2A operation: agent-side lifecycle command (ess/domains/tasks.yaml), on its derived route
+projected	post	/tasks/commands/tasks:require_input	Not an A2A operation: agent-side lifecycle command (ess/domains/tasks.yaml), on its derived route
+projected	post	/tasks/commands/tasks:update_artifact	Not an A2A operation: agent-side lifecycle command (ess/domains/tasks.yaml), on its derived route
+projected	post	/tasks/commands/tasks:work	Not an A2A operation: agent-side lifecycle command (ess/domains/tasks.yaml), on its derived route
+projected	get	/tasks/views/allPushNotificationConfigs	Not an A2A operation: observation view (ess/domains/tasks.yaml views), on its derived route
+projected	get	/tasks/views/allTasks	Not an A2A operation: observation view (ess/domains/tasks.yaml views), on its derived route
+projected	get	/views/tasks/pushNotificationConfigs	Not an A2A operation: view a2a.tasks.TaskPushNotificationConfigs, moved off its derived route, which overlaps get /tasks/{taskId}/pushNotificationConfigs (ESS-HTTP-011)

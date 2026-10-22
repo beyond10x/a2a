@@ -8,6 +8,14 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+### Added
+
+- `ess/http.yaml`, an `ess-http/1` binding of A2A's HTTP+JSON paths, projected to
+  `generated/openapi-http/`. `task check` holds its (method, path) pairs to
+  `upstream/openapi/a2a.openapi.yaml`: 9 of 22 are equal, and every difference (the `/{tenant}/`
+  variants, `:cancel` and `:subscribe`, the agent-side operations) is named with its reason in
+  `ess/http-unmapped.tsv`.
+
 ## [0.2.0] - 2026-10-22
 
 The specification now covers A2A's JSON-RPC method names and error codes and both response streams,

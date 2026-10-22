@@ -10,12 +10,14 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 | Path | What it is | Who writes it |
 |---|---|---|
 | `ess/` | ESS source (`ess/29`), listed in `ess/ess-inputs.yaml`, pinned to `ess 0.67.0` | authored |
+| `ess/http.yaml`, `ess/http-unmapped.tsv` | `ess-http/1` binding of A2A's HTTP+JSON paths, pinned to the specification's digest; the (method, path) differences from `upstream/openapi/` it cannot close, each with its reason | authored |
 | `upstream/a2a.proto` | Normative A2A source, verbatim from tag v1.0.1 | `task upstream` |
 | `upstream/openapi/a2a.openapi.yaml` | OpenAPI 3.0 of A2A's HTTP+JSON binding, derived from the proto. Upstream publishes none | `task upstream` |
 | `upstream/buf.gen.openapiv2.yaml`, `upstream/LICENSE` | Derivation template; upstream Apache-2.0 licence | authored / `task upstream` |
 | `generated/{openapi,asyncapi,schema}/` | ESS projections of `ess/` | `task projections` |
+| `generated/openapi-http/` | ESS projection of `ess/` through `ess/http.yaml` (`--http`) | `task projections` |
 | `generated/rust/a2a/` | Rust crate synthesized from `ess/` (model, contracts, `server` feature) | `task generate` |
-| `crates/a2a-xtask/` | Repository checks (generated-crate drift) | authored |
+| `crates/a2a-xtask/` | Repository checks (generated-crate drift, HTTP path parity) | authored |
 | `.engineering/` | AEP planning store; the plan lives here, not in chat or plan files | `aep` |
 
 ## Commands
@@ -38,7 +40,12 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 - `ess/` is authored from `upstream/a2a.proto` and the A2A specification text. An `UNMAPPED:` marker
   is an open question; resolve it from an upstream source, never by guessing.
 - `generated/openapi/` is ESS's command-shaped HTTP surface, not A2A's wire paths.
-  `upstream/openapi/` is A2A's.
+  `upstream/openapi/` is A2A's; `generated/openapi-http/` is ESS's projection of it, and
+  `task http-paths` (in `task check`) fails on any (method, path) difference
+  `ess/http-unmapped.tsv` does not name, and on a named one that no longer differs.
+- `ess/http.yaml` pins the specification's `source_digest`. After any change to `ess/`'s
+  specification files, `ess specify http validate` refuses it with `ESS-HTTP-002`, naming the new
+  digest: copy that digest into `ess/http.yaml`.
 - Every commit and push is `b10x-bot[bot]` through `b10x-gates bot`. The repository is enrolled in
   the common Gates policy (`.github/workflows/shared-gates.yml`).
 - Nothing from a customer or employer outside beyond10x enters this repository.
