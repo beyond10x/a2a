@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-22T10:16:18Z",
+  "actor": "human:timo",
+  "artifact": "story:http-binding",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check on wave/2 9e1a2e1: http-paths 9 pairs equal, 25 differences named; a2a-xtask tests 13 + 3 + 2 passed; conform-interpreted 168 scenarios: 152 passed, 0 failed, 16 error",
+    "reference": "~/.cache/a2a-gen/wave2/close-check.log, close-conform.log"
+  }
+}

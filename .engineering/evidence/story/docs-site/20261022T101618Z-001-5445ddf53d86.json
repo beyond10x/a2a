@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-22T10:16:18Z",
+  "actor": "human:timo",
+  "artifact": "story:docs-site",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check on wave/2 9e1a2e1: docs-check 17 generated files current; a2a-docs tests 18 + 3 passed; task website build exit 0 in the unit (pass 2)",
+    "reference": "~/.cache/a2a-gen/wave2/close-check.log, docs-site/p2-*.log"
+  }
+}
