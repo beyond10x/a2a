@@ -9,7 +9,9 @@ relations:
 - decides: story:resolve-unmapped
 - decides: story:jsonrpc-binding
 - decides: story:streaming-binding
-revision: 1
+- decides: story:http-binding
+- decides: story:docs-site
+revision: 2
 ---
 ## Decision
 
@@ -30,3 +32,6 @@ Timo, in this session: "Yeah, and then you can cut the first new version, I thin
 
 0.1.0 ships the specification, the projections and the synthesized crate. Server, client, test kit
 and documentation site follow in waves 1-3, each closing with a minor release.
+
+Wave 2, b10x-chef-orchestrator, 2026-10-22, after verifying 0.2.0: "Wave 2 (http-binding, docs-site)
+approved under the plan of 07:3x."
