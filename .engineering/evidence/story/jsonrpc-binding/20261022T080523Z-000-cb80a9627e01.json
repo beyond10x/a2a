@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-22T08:05:23Z",
+  "actor": "human:timo",
+  "artifact": "story:jsonrpc-binding",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "b10x-build-slot task check (exit 0); task conform-interpreted (168 scenarios: 152 passed, 0 failed, 16 error)",
+    "reference": "wave/1 6bc0aa2: ~/.cache/a2a-gen/wave1/close-check3.log, close-conform2.log"
+  }
+}
