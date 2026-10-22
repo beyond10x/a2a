@@ -1,6 +1,6 @@
 # generated from a2a v1
-# model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
-# contract digest slice-sha256/2:b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
+# model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
+# contract digest slice-sha256/2:615b0c77c8a180035f814eee7b02a71dce351e297daa69d4945ed8e8a37108c4
 # do not edit: regenerate with `ess generate`
 openapi: 3.1.0
 info:
@@ -18,8 +18,8 @@ info:
   x-ess-provenance:
     system: a2a
     specification_version: v1
-    source_digest: 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
-    contract_digest: slice-sha256/2:b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
+    source_digest: d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
+    contract_digest: slice-sha256/2:615b0c77c8a180035f814eee7b02a71dce351e297daa69d4945ed8e8a37108c4
   x-ess-reached-by: network
 tags:
 - name: discovery
@@ -31,7 +31,7 @@ paths:
     post:
       operationId: a2a.discovery.GetExtendedAgentCard
       summary: Get extended agent card
-      description: Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; GET /extendedAgentCard).
+      description: Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; JSON-RPC GetExtendedAgentCard; GET /extendedAgentCard).
       tags:
       - discovery
       x-ess-may-invoke:
@@ -109,7 +109,7 @@ paths:
     post:
       operationId: a2a.tasks.SendMessage
       summary: Send message
-      description: Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; POST /message:send).
+      description: Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; JSON-RPC SendMessage; POST /message:send).
       tags:
       - tasks
       x-ess-may-invoke:
@@ -202,7 +202,7 @@ paths:
     post:
       operationId: a2a.tasks.SendStreamingMessage
       summary: Send streaming message
-      description: 'Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).'
+      description: 'Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; JSON-RPC SendStreamingMessage; POST /message:stream).'
       tags:
       - tasks
       x-ess-may-invoke:
@@ -297,7 +297,7 @@ paths:
     post:
       operationId: a2a.tasks.CreateTaskPushNotificationConfig
       summary: Create push notification config
-      description: Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7; POST /tasks/{task_id}/pushNotificationConfigs).
+      description: Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7; JSON-RPC CreateTaskPushNotificationConfig; POST /tasks/{task_id}/pushNotificationConfigs).
       tags:
       - tasks
       x-ess-may-invoke:
@@ -386,7 +386,7 @@ paths:
     post:
       operationId: a2a.tasks.DeleteTaskPushNotificationConfig
       summary: Delete push notification config
-      description: Remove a push-notification configuration; deleting it again has the same effect (A2A v1.0.1 section 3.1.10; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).
+      description: Remove a push-notification configuration; deleting it again has the same effect (A2A v1.0.1 section 3.1.10; JSON-RPC DeleteTaskPushNotificationConfig; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).
       tags:
       - tasks
       x-ess-may-invoke:
@@ -468,7 +468,7 @@ paths:
     post:
       operationId: a2a.tasks.GetTaskPushNotificationConfig
       summary: Get push notification config
-      description: Read one push-notification configuration (A2A v1.0.1 section 3.1.8; GET /tasks/{task_id}/pushNotificationConfigs/{id}).
+      description: Read one push-notification configuration (A2A v1.0.1 section 3.1.8; JSON-RPC GetTaskPushNotificationConfig; GET /tasks/{task_id}/pushNotificationConfigs/{id}).
       tags:
       - tasks
       x-ess-may-invoke:
@@ -556,7 +556,7 @@ paths:
     post:
       operationId: a2a.tasks.ListTaskPushNotificationConfigs
       summary: List push notification configs
-      description: Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; GET /tasks/{task_id}/pushNotificationConfigs).
+      description: Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; JSON-RPC ListTaskPushNotificationConfigs; GET /tasks/{task_id}/pushNotificationConfigs).
       tags:
       - tasks
       x-ess-may-invoke:
@@ -638,7 +638,7 @@ paths:
     post:
       operationId: a2a.tasks.CancelTask
       summary: Cancel task
-      description: Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; POST /tasks/{id}:cancel).
+      description: Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; JSON-RPC CancelTask; POST /tasks/{id}:cancel).
       tags:
       - tasks
       x-ess-may-invoke:
@@ -708,7 +708,7 @@ paths:
                 - committed
                 type: object
         '502':
-          description: 'Outcomes `not-cancelable-now`, `version-not-supported` and `extension-required`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.'
+          description: 'Outcomes `version-not-supported`, `extension-required` and `not-cancelable-now`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.'
           content:
             application/json:
               schema:
@@ -719,9 +719,9 @@ paths:
                     version-not-supported: '#/components/schemas/a2a.tasks.CancelTask.version-not-supported.Response'
                   propertyName: outcome
                 oneOf:
-                - $ref: '#/components/schemas/a2a.tasks.CancelTask.not-cancelable-now.Response'
                 - $ref: '#/components/schemas/a2a.tasks.CancelTask.version-not-supported.Response'
                 - $ref: '#/components/schemas/a2a.tasks.CancelTask.extension-required.Response'
+                - $ref: '#/components/schemas/a2a.tasks.CancelTask.not-cancelable-now.Response'
   /tasks/commands/tasks:complete:
     post:
       operationId: a2a.tasks.CompleteTask
@@ -872,7 +872,7 @@ paths:
     post:
       operationId: a2a.tasks.GetTask
       summary: Get task
-      description: Read a task's current state (A2A v1.0.1 section 3.1.3; GET /tasks/{id}).
+      description: Read a task's current state (A2A v1.0.1 section 3.1.3; JSON-RPC GetTask; GET /tasks/{id}).
       tags:
       - tasks
       x-ess-may-invoke:
@@ -1171,7 +1171,7 @@ paths:
     post:
       operationId: a2a.tasks.SubscribeToTask
       summary: Subscribe to task
-      description: Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; GET /tasks/{id}:subscribe).
+      description: Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; JSON-RPC SubscribeToTask; GET /tasks/{id}:subscribe).
       tags:
       - tasks
       x-ess-may-invoke:
@@ -1517,6 +1517,7 @@ paths:
     get:
       operationId: a2a.tasks.Tasks
       summary: List tasks
+      description: The tasks visible to the client, filtered by context, state and status time (A2A v1.0.1 section 3.1.4; JSON-RPC ListTasks).
       tags:
       - tasks
       x-ess-may-read:
@@ -1856,7 +1857,7 @@ components:
       additionalProperties: false
     a2a.discovery.GetExtendedAgentCard.Input:
       title: Get extended agent card input
-      description: Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; GET /extendedAgentCard).
+      description: Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; JSON-RPC GetExtendedAgentCard; GET /extendedAgentCard).
       x-ess-name: a2a.discovery.GetExtendedAgentCard
       x-ess-kind: command-input
       type: object
@@ -1866,7 +1867,7 @@ components:
       additionalProperties: false
     a2a.discovery.GetExtendedAgentCard.Result:
       title: Get extended agent card response
-      description: Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; GET /extendedAgentCard).
+      description: Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; JSON-RPC GetExtendedAgentCard; GET /extendedAgentCard).
       x-ess-name: a2a.discovery.GetExtendedAgentCard
       x-ess-kind: command-response
       type: object
@@ -1882,7 +1883,7 @@ components:
       properties:
         error:
           const: a2a.discovery.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -1902,7 +1903,7 @@ components:
       properties:
         error:
           const: a2a.discovery.ExtendedAgentCardNotConfigured
-          description: 'ExtendedAgentCardNotConfiguredError (JSON-RPC -32007, HTTP 400): the agent declares the capability but has no extended card configured.'
+          description: 'ExtendedAgentCardNotConfiguredError (JSON-RPC -32007, gRPC FAILED_PRECONDITION, HTTP 400): the agent declares the capability but has no extended card configured.'
           type: string
         outcome:
           const: not-configured
@@ -1922,7 +1923,7 @@ components:
       properties:
         error:
           const: a2a.discovery.UnsupportedOperation
-          description: 'UnsupportedOperationError (JSON-RPC -32004, HTTP 400): the agent card does not declare capabilities.extendedAgentCard.'
+          description: 'UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the agent card does not declare capabilities.extendedAgentCard.'
           type: string
         outcome:
           const: not-supported
@@ -1960,7 +1961,7 @@ components:
       properties:
         error:
           const: a2a.discovery.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -2221,7 +2222,7 @@ components:
       additionalProperties: false
     a2a.tasks.CancelTask.Input:
       title: Cancel task input
-      description: Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; POST /tasks/{id}:cancel).
+      description: Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; JSON-RPC CancelTask; POST /tasks/{id}:cancel).
       x-ess-name: a2a.tasks.CancelTask
       x-ess-kind: command-input
       type: object
@@ -2236,7 +2237,7 @@ components:
       additionalProperties: false
     a2a.tasks.CancelTask.Result:
       title: Cancel task response
-      description: Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; POST /tasks/{id}:cancel).
+      description: Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; JSON-RPC CancelTask; POST /tasks/{id}:cancel).
       x-ess-name: a2a.tasks.CancelTask
       x-ess-kind: command-response
       type: object
@@ -2284,7 +2285,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -2304,7 +2305,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotCancelable
-          description: TaskNotCancelableError (JSON-RPC -32002, HTTP 400).
+          description: 'TaskNotCancelableError (JSON-RPC -32002, gRPC FAILED_PRECONDITION, HTTP 400): the task is not in a cancelable state.'
           type: string
         outcome:
           const: not-cancelable-now
@@ -2324,7 +2325,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotCancelable
-          description: TaskNotCancelableError (JSON-RPC -32002, HTTP 400).
+          description: 'TaskNotCancelableError (JSON-RPC -32002, gRPC FAILED_PRECONDITION, HTTP 400): the task is not in a cancelable state.'
           type: string
         outcome:
           const: not-cancelable
@@ -2344,7 +2345,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -2364,7 +2365,7 @@ components:
       properties:
         error:
           const: a2a.tasks.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -2427,7 +2428,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -2472,7 +2473,7 @@ components:
       type: string
     a2a.tasks.CreateTaskPushNotificationConfig.Input:
       title: Create push notification config input
-      description: Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7; POST /tasks/{task_id}/pushNotificationConfigs).
+      description: Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7; JSON-RPC CreateTaskPushNotificationConfig; POST /tasks/{task_id}/pushNotificationConfigs).
       x-ess-name: a2a.tasks.CreateTaskPushNotificationConfig
       x-ess-kind: command-input
       type: object
@@ -2496,7 +2497,7 @@ components:
       additionalProperties: false
     a2a.tasks.CreateTaskPushNotificationConfig.Result:
       title: Create push notification config response
-      description: Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7; POST /tasks/{task_id}/pushNotificationConfigs).
+      description: Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7; JSON-RPC CreateTaskPushNotificationConfig; POST /tasks/{task_id}/pushNotificationConfigs).
       x-ess-name: a2a.tasks.CreateTaskPushNotificationConfig
       x-ess-kind: command-response
       type: object
@@ -2576,7 +2577,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -2596,7 +2597,7 @@ components:
       properties:
         error:
           const: a2a.tasks.PushNotificationNotSupported
-          description: 'PushNotificationNotSupportedError (JSON-RPC -32003, HTTP 400): the agent card does not declare capabilities.pushNotifications.'
+          description: 'PushNotificationNotSupportedError (JSON-RPC -32003, gRPC FAILED_PRECONDITION, HTTP 400): the agent card does not declare capabilities.pushNotifications.'
           type: string
         outcome:
           const: push-not-supported
@@ -2616,7 +2617,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: task-not-found
@@ -2636,7 +2637,7 @@ components:
       properties:
         error:
           const: a2a.tasks.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -2652,7 +2653,7 @@ components:
       type: object
     a2a.tasks.DeleteTaskPushNotificationConfig.Input:
       title: Delete push notification config input
-      description: Remove a push-notification configuration; deleting it again has the same effect (A2A v1.0.1 section 3.1.10; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).
+      description: Remove a push-notification configuration; deleting it again has the same effect (A2A v1.0.1 section 3.1.10; JSON-RPC DeleteTaskPushNotificationConfig; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).
       x-ess-name: a2a.tasks.DeleteTaskPushNotificationConfig
       x-ess-kind: command-input
       type: object
@@ -2703,7 +2704,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -2723,7 +2724,7 @@ components:
       properties:
         error:
           const: a2a.tasks.PushNotificationNotSupported
-          description: 'PushNotificationNotSupportedError (JSON-RPC -32003, HTTP 400): the agent card does not declare capabilities.pushNotifications.'
+          description: 'PushNotificationNotSupportedError (JSON-RPC -32003, gRPC FAILED_PRECONDITION, HTTP 400): the agent card does not declare capabilities.pushNotifications.'
           type: string
         outcome:
           const: push-not-supported
@@ -2743,7 +2744,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: task-not-found
@@ -2763,7 +2764,7 @@ components:
       properties:
         error:
           const: a2a.tasks.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -2826,7 +2827,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -2865,7 +2866,7 @@ components:
       type: object
     a2a.tasks.GetTask.Input:
       title: Get task input
-      description: Read a task's current state (A2A v1.0.1 section 3.1.3; GET /tasks/{id}).
+      description: Read a task's current state (A2A v1.0.1 section 3.1.3; JSON-RPC GetTask; GET /tasks/{id}).
       x-ess-name: a2a.tasks.GetTask
       x-ess-kind: command-input
       type: object
@@ -2882,7 +2883,7 @@ components:
       additionalProperties: false
     a2a.tasks.GetTask.Result:
       title: Get task response
-      description: Read a task's current state (A2A v1.0.1 section 3.1.3; GET /tasks/{id}).
+      description: Read a task's current state (A2A v1.0.1 section 3.1.3; JSON-RPC GetTask; GET /tasks/{id}).
       x-ess-name: a2a.tasks.GetTask
       x-ess-kind: command-response
       type: object
@@ -2898,7 +2899,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -2936,7 +2937,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -2956,7 +2957,7 @@ components:
       properties:
         error:
           const: a2a.tasks.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -2972,7 +2973,7 @@ components:
       type: object
     a2a.tasks.GetTaskPushNotificationConfig.Input:
       title: Get push notification config input
-      description: Read one push-notification configuration (A2A v1.0.1 section 3.1.8; GET /tasks/{task_id}/pushNotificationConfigs/{id}).
+      description: Read one push-notification configuration (A2A v1.0.1 section 3.1.8; JSON-RPC GetTaskPushNotificationConfig; GET /tasks/{task_id}/pushNotificationConfigs/{id}).
       x-ess-name: a2a.tasks.GetTaskPushNotificationConfig
       x-ess-kind: command-input
       type: object
@@ -2990,7 +2991,7 @@ components:
       additionalProperties: false
     a2a.tasks.GetTaskPushNotificationConfig.Result:
       title: Get push notification config response
-      description: Read one push-notification configuration (A2A v1.0.1 section 3.1.8; GET /tasks/{task_id}/pushNotificationConfigs/{id}).
+      description: Read one push-notification configuration (A2A v1.0.1 section 3.1.8; JSON-RPC GetTaskPushNotificationConfig; GET /tasks/{task_id}/pushNotificationConfigs/{id}).
       x-ess-name: a2a.tasks.GetTaskPushNotificationConfig
       x-ess-kind: command-response
       type: object
@@ -3006,7 +3007,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: config-not-found
@@ -3026,7 +3027,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -3064,7 +3065,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -3084,7 +3085,7 @@ components:
       properties:
         error:
           const: a2a.tasks.PushNotificationNotSupported
-          description: 'PushNotificationNotSupportedError (JSON-RPC -32003, HTTP 400): the agent card does not declare capabilities.pushNotifications.'
+          description: 'PushNotificationNotSupportedError (JSON-RPC -32003, gRPC FAILED_PRECONDITION, HTTP 400): the agent card does not declare capabilities.pushNotifications.'
           type: string
         outcome:
           const: push-not-supported
@@ -3104,7 +3105,7 @@ components:
       properties:
         error:
           const: a2a.tasks.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -3120,7 +3121,7 @@ components:
       type: object
     a2a.tasks.ListTaskPushNotificationConfigs.Input:
       title: List push notification configs input
-      description: Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; GET /tasks/{task_id}/pushNotificationConfigs).
+      description: Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; JSON-RPC ListTaskPushNotificationConfigs; GET /tasks/{task_id}/pushNotificationConfigs).
       x-ess-name: a2a.tasks.ListTaskPushNotificationConfigs
       x-ess-kind: command-input
       type: object
@@ -3141,7 +3142,7 @@ components:
       additionalProperties: false
     a2a.tasks.ListTaskPushNotificationConfigs.Result:
       title: List push notification configs response
-      description: Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; GET /tasks/{task_id}/pushNotificationConfigs).
+      description: Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; JSON-RPC ListTaskPushNotificationConfigs; GET /tasks/{task_id}/pushNotificationConfigs).
       x-ess-name: a2a.tasks.ListTaskPushNotificationConfigs
       x-ess-kind: command-response
       type: object
@@ -3160,7 +3161,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -3198,7 +3199,7 @@ components:
       properties:
         error:
           const: a2a.tasks.PushNotificationNotSupported
-          description: 'PushNotificationNotSupportedError (JSON-RPC -32003, HTTP 400): the agent card does not declare capabilities.pushNotifications.'
+          description: 'PushNotificationNotSupportedError (JSON-RPC -32003, gRPC FAILED_PRECONDITION, HTTP 400): the agent card does not declare capabilities.pushNotifications.'
           type: string
         outcome:
           const: push-not-supported
@@ -3218,7 +3219,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: task-not-found
@@ -3238,7 +3239,7 @@ components:
       properties:
         error:
           const: a2a.tasks.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -3468,7 +3469,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -3554,7 +3555,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -3640,7 +3641,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -3687,7 +3688,7 @@ components:
       - ROLE_AGENT
     a2a.tasks.SendMessage.Input:
       title: Send message input
-      description: Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; POST /message:send).
+      description: Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; JSON-RPC SendMessage; POST /message:send).
       x-ess-name: a2a.tasks.SendMessage
       x-ess-kind: command-input
       type: object
@@ -3704,7 +3705,7 @@ components:
       additionalProperties: false
     a2a.tasks.SendMessage.Result:
       title: Send message response
-      description: Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; POST /message:send).
+      description: Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; JSON-RPC SendMessage; POST /message:send).
       x-ess-name: a2a.tasks.SendMessage
       x-ess-kind: command-response
       type: object
@@ -3721,7 +3722,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ContentTypeNotSupported
-          description: ContentTypeNotSupportedError (JSON-RPC -32005, HTTP 400).
+          description: 'ContentTypeNotSupportedError (JSON-RPC -32005, gRPC INVALID_ARGUMENT, HTTP 400): a media type of the message''s parts is not supported by the agent.'
           type: string
         outcome:
           const: content-type-not-supported
@@ -3817,7 +3818,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -3869,7 +3870,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: task-not-found
@@ -3889,7 +3890,7 @@ components:
       properties:
         error:
           const: a2a.tasks.UnsupportedOperation
-          description: UnsupportedOperationError (JSON-RPC -32004, HTTP 400).
+          description: 'UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the operation, or an aspect of it, is not supported by this agent.'
           type: string
         outcome:
           const: task-terminal
@@ -3909,7 +3910,7 @@ components:
       properties:
         error:
           const: a2a.tasks.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -3946,7 +3947,7 @@ components:
       additionalProperties: false
     a2a.tasks.SendStreamingMessage.Input:
       title: Send streaming message input
-      description: 'Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).'
+      description: 'Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; JSON-RPC SendStreamingMessage; POST /message:stream).'
       x-ess-name: a2a.tasks.SendStreamingMessage
       x-ess-kind: command-input
       type: object
@@ -3963,7 +3964,7 @@ components:
       additionalProperties: false
     a2a.tasks.SendStreamingMessage.Result:
       title: Send streaming message response
-      description: 'Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).'
+      description: 'Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; JSON-RPC SendStreamingMessage; POST /message:stream).'
       x-ess-name: a2a.tasks.SendStreamingMessage
       x-ess-kind: command-response
       type: object
@@ -3980,7 +3981,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ContentTypeNotSupported
-          description: ContentTypeNotSupportedError (JSON-RPC -32005, HTTP 400).
+          description: 'ContentTypeNotSupportedError (JSON-RPC -32005, gRPC INVALID_ARGUMENT, HTTP 400): a media type of the message''s parts is not supported by the agent.'
           type: string
         outcome:
           const: content-type-not-supported
@@ -4104,7 +4105,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -4124,7 +4125,7 @@ components:
       properties:
         error:
           const: a2a.tasks.UnsupportedOperation
-          description: UnsupportedOperationError (JSON-RPC -32004, HTTP 400).
+          description: 'UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the operation, or an aspect of it, is not supported by this agent.'
           type: string
         outcome:
           const: streaming-not-supported
@@ -4187,7 +4188,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: task-not-found
@@ -4207,7 +4208,7 @@ components:
       properties:
         error:
           const: a2a.tasks.UnsupportedOperation
-          description: UnsupportedOperationError (JSON-RPC -32004, HTTP 400).
+          description: 'UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the operation, or an aspect of it, is not supported by this agent.'
           type: string
         outcome:
           const: task-terminal
@@ -4227,7 +4228,7 @@ components:
       properties:
         error:
           const: a2a.tasks.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -4290,7 +4291,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -4329,7 +4330,7 @@ components:
       type: object
     a2a.tasks.SubscribeToTask.Input:
       title: Subscribe to task input
-      description: Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; GET /tasks/{id}:subscribe).
+      description: Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; JSON-RPC SubscribeToTask; GET /tasks/{id}:subscribe).
       x-ess-name: a2a.tasks.SubscribeToTask
       x-ess-kind: command-input
       type: object
@@ -4343,7 +4344,7 @@ components:
       additionalProperties: false
     a2a.tasks.SubscribeToTask.Result:
       title: Subscribe to task response
-      description: Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; GET /tasks/{id}:subscribe).
+      description: Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; JSON-RPC SubscribeToTask; GET /tasks/{id}:subscribe).
       x-ess-name: a2a.tasks.SubscribeToTask
       x-ess-kind: command-response
       type: object
@@ -4359,7 +4360,7 @@ components:
       properties:
         error:
           const: a2a.tasks.ExtensionSupportRequired
-          description: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.'
           type: string
         outcome:
           const: extension-required
@@ -4379,7 +4380,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found
@@ -4399,7 +4400,7 @@ components:
       properties:
         error:
           const: a2a.tasks.UnsupportedOperation
-          description: UnsupportedOperationError (JSON-RPC -32004, HTTP 400).
+          description: 'UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the operation, or an aspect of it, is not supported by this agent.'
           type: string
         outcome:
           const: streaming-not-supported
@@ -4437,7 +4438,7 @@ components:
       properties:
         error:
           const: a2a.tasks.UnsupportedOperation
-          description: UnsupportedOperationError (JSON-RPC -32004, HTTP 400).
+          description: 'UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the operation, or an aspect of it, is not supported by this agent.'
           type: string
         outcome:
           const: task-terminal
@@ -4457,7 +4458,7 @@ components:
       properties:
         error:
           const: a2a.tasks.VersionNotSupported
-          description: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+          description: 'VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.'
           type: string
         outcome:
           const: version-not-supported
@@ -4733,6 +4734,7 @@ components:
       type: object
     a2a.tasks.Tasks.Row:
       title: List tasks row
+      description: The tasks visible to the client, filtered by context, state and status time (A2A v1.0.1 section 3.1.4; JSON-RPC ListTasks).
       x-ess-name: a2a.tasks.Tasks
       x-ess-kind: view-row
       type: object
@@ -4789,7 +4791,7 @@ components:
       properties:
         error:
           const: a2a.tasks.TaskNotFound
-          description: 'TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
           type: string
         outcome:
           const: not-found

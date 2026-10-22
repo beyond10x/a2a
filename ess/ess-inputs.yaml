@@ -19,3 +19,18 @@ scenarios:
   - scenarios/adv2-delete-config-of-completed-task.yaml
   - scenarios/stream-starts-with-task.yaml
   - scenarios/stream-message-only.yaml
+  - scenarios/jsonrpc-send-message.yaml
+  - scenarios/jsonrpc-send-streaming-message.yaml
+  - scenarios/jsonrpc-get-task.yaml
+  - scenarios/jsonrpc-list-tasks.yaml
+  - scenarios/jsonrpc-cancel-task.yaml
+  - scenarios/jsonrpc-subscribe-to-task.yaml
+  - scenarios/jsonrpc-create-task-push-notification-config.yaml
+  - scenarios/jsonrpc-get-task-push-notification-config.yaml
+  - scenarios/jsonrpc-list-task-push-notification-configs.yaml
+  - scenarios/jsonrpc-delete-task-push-notification-config.yaml
+  - scenarios/jsonrpc-get-extended-agent-card.yaml
+  - scenarios/adv-push-capability-before-task-lookup.yaml
+  - scenarios/adv-version-before-task-lookup.yaml
+  - scenarios/adv-streaming-capability-before-task-lookup.yaml
+  - scenarios/adv-create-get-before-task-lookup.yaml

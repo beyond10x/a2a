@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Get extended agent card response",
-  "description": "Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; GET /extendedAgentCard).",
+  "description": "Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; JSON-RPC GetExtendedAgentCard; GET /extendedAgentCard).",
   "x-ess-name": "a2a.discovery.GetExtendedAgentCard",
   "x-ess-kind": "command-response",
   "type": "object",
@@ -17,8 +17,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf",
-    "contract_digest": "slice-sha256/2:42fa64162e75669df61d5de66f44d7aba46a929ad86477dfb07ce55d3824e7fa",
+    "source_digest": "d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002",
+    "contract_digest": "slice-sha256/2:7517b162d14db4ecbca2cd456db32ba5672bdf0d968f71fecd351117d157e2b1",
     "regenerate": "ess generate"
   },
   "$defs": {

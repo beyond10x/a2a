@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
-// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
+// model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
+// contract digest 3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Discovery — `a2a.discovery`.
@@ -286,7 +286,7 @@ pub struct StringList {
 
 /// Get extended agent card — the input of `a2a.discovery.GetExtendedAgentCard`.
 ///
-/// Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; GET /extendedAgentCard).
+/// Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; JSON-RPC GetExtendedAgentCard; GET /extendedAgentCard).
 ///
 /// Everything it can result in is [`GetExtendedAgentCardOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -340,25 +340,25 @@ pub enum GetExtendedAgentCardOutcome {
 
 /// The declared error `a2a.discovery.ExtendedAgentCardNotConfigured`.
 ///
-/// ExtendedAgentCardNotConfiguredError (JSON-RPC -32007, HTTP 400): the agent declares the capability but has no extended card configured.
+/// ExtendedAgentCardNotConfiguredError (JSON-RPC -32007, gRPC FAILED_PRECONDITION, HTTP 400): the agent declares the capability but has no extended card configured.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtendedAgentCardNotConfigured;
 
 /// The declared error `a2a.discovery.ExtensionSupportRequired`.
 ///
-/// ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+/// ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400): the agent card marks an extension required and the request does not declare it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtensionSupportRequired;
 
 /// The declared error `a2a.discovery.UnsupportedOperation`.
 ///
-/// UnsupportedOperationError (JSON-RPC -32004, HTTP 400): the agent card does not declare capabilities.extendedAgentCard.
+/// UnsupportedOperationError (JSON-RPC -32004, gRPC FAILED_PRECONDITION, HTTP 400): the agent card does not declare capabilities.extendedAgentCard.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnsupportedOperation;
 
 /// The declared error `a2a.discovery.VersionNotSupported`.
 ///
-/// VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+/// VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400): the A2A-Version the request names is not supported by the agent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VersionNotSupported;
 

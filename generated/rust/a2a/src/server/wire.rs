@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
-// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
+// model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
+// contract digest 3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f
 // do not edit: regenerate with `ess synthesize --layout crate`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -2491,6 +2491,12 @@ pub fn encode_error_a2a_tasks_extension_support_required(_value: &crate::tasks::
     out.push('}');
 }
 
+/// Writes the declared error `a2a.tasks.InvalidAgentResponse` as JSON.
+pub fn encode_error_a2a_tasks_invalid_agent_response(_value: &crate::tasks::InvalidAgentResponse, out: &mut String) {
+    out.push('{');
+    out.push('}');
+}
+
 /// Writes the declared error `a2a.tasks.PushNotificationNotSupported` as JSON.
 pub fn encode_error_a2a_tasks_push_notification_not_supported(_value: &crate::tasks::PushNotificationNotSupported, out: &mut String) {
     out.push('{');
@@ -2884,6 +2890,34 @@ pub fn encode_response_a2a_tasks_cancel_task(value: &crate::tasks::CancelTaskRes
 pub fn encode_outcome_a2a_tasks_cancel_task(value: &crate::tasks::CancelTaskOutcome, out: &mut String) {
     out.push('{');
     match value {
+        crate::tasks::CancelTaskOutcome::VersionNotSupported { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "version-not-supported");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.VersionNotSupported");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_version_not_supported(error, out);
+            out.push('}');
+        }
+        crate::tasks::CancelTaskOutcome::ExtensionRequired { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "extension-required");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.ExtensionSupportRequired");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_extension_support_required(error, out);
+            out.push('}');
+        }
         crate::tasks::CancelTaskOutcome::NotFound { error } => {
             json::member(out, "outcome");
             json::push_text(out, "not-found");
@@ -2937,34 +2971,6 @@ pub fn encode_outcome_a2a_tasks_cancel_task(value: &crate::tasks::CancelTaskOutc
             json::push_text(out, "a2a.tasks.TaskNotCancelable");
             json::member(out, "payload");
             encode_error_a2a_tasks_task_not_cancelable(error, out);
-            out.push('}');
-        }
-        crate::tasks::CancelTaskOutcome::VersionNotSupported { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "version-not-supported");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.VersionNotSupported");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_version_not_supported(error, out);
-            out.push('}');
-        }
-        crate::tasks::CancelTaskOutcome::ExtensionRequired { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "extension-required");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.ExtensionSupportRequired");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_extension_support_required(error, out);
             out.push('}');
         }
     }
@@ -3142,46 +3148,6 @@ pub fn encode_response_a2a_tasks_create_task_push_notification_config(value: &cr
 pub fn encode_outcome_a2a_tasks_create_task_push_notification_config(value: &crate::tasks::CreateTaskPushNotificationConfigOutcome, out: &mut String) {
     out.push('{');
     match value {
-        crate::tasks::CreateTaskPushNotificationConfigOutcome::TaskNotFound { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "task-not-found");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.TaskNotFound");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_task_not_found(error, out);
-            out.push('}');
-        }
-        crate::tasks::CreateTaskPushNotificationConfigOutcome::Created { push_notification_config_created, .. } => {
-            json::member(out, "outcome");
-            json::push_text(out, "created");
-            json::member(out, "published");
-            out.push('[');
-            out.push('{');
-            json::member(out, "event");
-            json::push_text(out, "a2a.tasks.PushNotificationConfigCreated");
-            json::member(out, "payload");
-            encode_event_a2a_tasks_push_notification_config_created(push_notification_config_created, out);
-            out.push('}');
-            out.push(']');
-        }
-        crate::tasks::CreateTaskPushNotificationConfigOutcome::Assigned { push_notification_config_created, .. } => {
-            json::member(out, "outcome");
-            json::push_text(out, "assigned");
-            json::member(out, "published");
-            out.push('[');
-            out.push('{');
-            json::member(out, "event");
-            json::push_text(out, "a2a.tasks.PushNotificationConfigCreated");
-            json::member(out, "payload");
-            encode_event_a2a_tasks_push_notification_config_created(push_notification_config_created, out);
-            out.push('}');
-            out.push(']');
-        }
         crate::tasks::CreateTaskPushNotificationConfigOutcome::VersionNotSupported { error } => {
             json::member(out, "outcome");
             json::push_text(out, "version-not-supported");
@@ -3223,6 +3189,46 @@ pub fn encode_outcome_a2a_tasks_create_task_push_notification_config(value: &cra
             json::member(out, "payload");
             encode_error_a2a_tasks_push_notification_not_supported(error, out);
             out.push('}');
+        }
+        crate::tasks::CreateTaskPushNotificationConfigOutcome::TaskNotFound { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "task-not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::CreateTaskPushNotificationConfigOutcome::Created { push_notification_config_created, .. } => {
+            json::member(out, "outcome");
+            json::push_text(out, "created");
+            json::member(out, "published");
+            out.push('[');
+            out.push('{');
+            json::member(out, "event");
+            json::push_text(out, "a2a.tasks.PushNotificationConfigCreated");
+            json::member(out, "payload");
+            encode_event_a2a_tasks_push_notification_config_created(push_notification_config_created, out);
+            out.push('}');
+            out.push(']');
+        }
+        crate::tasks::CreateTaskPushNotificationConfigOutcome::Assigned { push_notification_config_created, .. } => {
+            json::member(out, "outcome");
+            json::push_text(out, "assigned");
+            json::member(out, "published");
+            out.push('[');
+            out.push('{');
+            json::member(out, "event");
+            json::push_text(out, "a2a.tasks.PushNotificationConfigCreated");
+            json::member(out, "payload");
+            encode_event_a2a_tasks_push_notification_config_created(push_notification_config_created, out);
+            out.push('}');
+            out.push(']');
         }
     }
     out.push('}');
@@ -3274,33 +3280,6 @@ pub fn decode_command_a2a_tasks_delete_task_push_notification_config(value: &jso
 pub fn encode_outcome_a2a_tasks_delete_task_push_notification_config(value: &crate::tasks::DeleteTaskPushNotificationConfigOutcome, out: &mut String) {
     out.push('{');
     match value {
-        crate::tasks::DeleteTaskPushNotificationConfigOutcome::TaskNotFound { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "task-not-found");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.TaskNotFound");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_task_not_found(error, out);
-            out.push('}');
-        }
-        crate::tasks::DeleteTaskPushNotificationConfigOutcome::Deleted { push_notification_config_deleted } => {
-            json::member(out, "outcome");
-            json::push_text(out, "deleted");
-            json::member(out, "published");
-            out.push('[');
-            out.push('{');
-            json::member(out, "event");
-            json::push_text(out, "a2a.tasks.PushNotificationConfigDeleted");
-            json::member(out, "payload");
-            encode_event_a2a_tasks_push_notification_config_deleted(push_notification_config_deleted, out);
-            out.push('}');
-            out.push(']');
-        }
         crate::tasks::DeleteTaskPushNotificationConfigOutcome::VersionNotSupported { error } => {
             json::member(out, "outcome");
             json::push_text(out, "version-not-supported");
@@ -3342,6 +3321,33 @@ pub fn encode_outcome_a2a_tasks_delete_task_push_notification_config(value: &cra
             json::member(out, "payload");
             encode_error_a2a_tasks_push_notification_not_supported(error, out);
             out.push('}');
+        }
+        crate::tasks::DeleteTaskPushNotificationConfigOutcome::TaskNotFound { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "task-not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::DeleteTaskPushNotificationConfigOutcome::Deleted { push_notification_config_deleted } => {
+            json::member(out, "outcome");
+            json::push_text(out, "deleted");
+            json::member(out, "published");
+            out.push('[');
+            out.push('{');
+            json::member(out, "event");
+            json::push_text(out, "a2a.tasks.PushNotificationConfigDeleted");
+            json::member(out, "payload");
+            encode_event_a2a_tasks_push_notification_config_deleted(push_notification_config_deleted, out);
+            out.push('}');
+            out.push(']');
         }
     }
     out.push('}');
@@ -3489,27 +3495,6 @@ pub fn encode_response_a2a_tasks_get_task(value: &crate::tasks::GetTaskResponse,
 pub fn encode_outcome_a2a_tasks_get_task(value: &crate::tasks::GetTaskOutcome, out: &mut String) {
     out.push('{');
     match value {
-        crate::tasks::GetTaskOutcome::NotFound { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "not-found");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.TaskNotFound");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_task_not_found(error, out);
-            out.push('}');
-        }
-        crate::tasks::GetTaskOutcome::Found { .. } => {
-            json::member(out, "outcome");
-            json::push_text(out, "found");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-        }
         crate::tasks::GetTaskOutcome::VersionNotSupported { error } => {
             json::member(out, "outcome");
             json::push_text(out, "version-not-supported");
@@ -3537,6 +3522,27 @@ pub fn encode_outcome_a2a_tasks_get_task(value: &crate::tasks::GetTaskOutcome, o
             json::member(out, "payload");
             encode_error_a2a_tasks_extension_support_required(error, out);
             out.push('}');
+        }
+        crate::tasks::GetTaskOutcome::NotFound { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::GetTaskOutcome::Found { .. } => {
+            json::member(out, "outcome");
+            json::push_text(out, "found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
         }
     }
     out.push('}');
@@ -3759,27 +3765,6 @@ pub fn encode_response_a2a_tasks_list_task_push_notification_configs(value: &cra
 pub fn encode_outcome_a2a_tasks_list_task_push_notification_configs(value: &crate::tasks::ListTaskPushNotificationConfigsOutcome, out: &mut String) {
     out.push('{');
     match value {
-        crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "task-not-found");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.TaskNotFound");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_task_not_found(error, out);
-            out.push('}');
-        }
-        crate::tasks::ListTaskPushNotificationConfigsOutcome::Listed { .. } => {
-            json::member(out, "outcome");
-            json::push_text(out, "listed");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-        }
         crate::tasks::ListTaskPushNotificationConfigsOutcome::VersionNotSupported { error } => {
             json::member(out, "outcome");
             json::push_text(out, "version-not-supported");
@@ -3821,6 +3806,27 @@ pub fn encode_outcome_a2a_tasks_list_task_push_notification_configs(value: &crat
             json::member(out, "payload");
             encode_error_a2a_tasks_push_notification_not_supported(error, out);
             out.push('}');
+        }
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "task-not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::Listed { .. } => {
+            json::member(out, "outcome");
+            json::push_text(out, "listed");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
         }
     }
     out.push('}');
@@ -4650,41 +4656,6 @@ pub fn encode_response_a2a_tasks_subscribe_to_task(value: &crate::tasks::Subscri
 pub fn encode_outcome_a2a_tasks_subscribe_to_task(value: &crate::tasks::SubscribeToTaskOutcome, out: &mut String) {
     out.push('{');
     match value {
-        crate::tasks::SubscribeToTaskOutcome::NotFound { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "not-found");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.TaskNotFound");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_task_not_found(error, out);
-            out.push('}');
-        }
-        crate::tasks::SubscribeToTaskOutcome::TaskTerminal { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "task-terminal");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.UnsupportedOperation");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_unsupported_operation(error, out);
-            out.push('}');
-        }
-        crate::tasks::SubscribeToTaskOutcome::Subscribed { .. } => {
-            json::member(out, "outcome");
-            json::push_text(out, "subscribed");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-        }
         crate::tasks::SubscribeToTaskOutcome::VersionNotSupported { error } => {
             json::member(out, "outcome");
             json::push_text(out, "version-not-supported");
@@ -4726,6 +4697,41 @@ pub fn encode_outcome_a2a_tasks_subscribe_to_task(value: &crate::tasks::Subscrib
             json::member(out, "payload");
             encode_error_a2a_tasks_unsupported_operation(error, out);
             out.push('}');
+        }
+        crate::tasks::SubscribeToTaskOutcome::NotFound { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::SubscribeToTaskOutcome::TaskTerminal { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "task-terminal");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.UnsupportedOperation");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_unsupported_operation(error, out);
+            out.push('}');
+        }
+        crate::tasks::SubscribeToTaskOutcome::Subscribed { .. } => {
+            json::member(out, "outcome");
+            json::push_text(out, "subscribed");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
         }
     }
     out.push('}');

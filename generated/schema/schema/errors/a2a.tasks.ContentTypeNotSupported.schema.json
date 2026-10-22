@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ContentTypeNotSupported payload",
-  "description": "ContentTypeNotSupportedError (JSON-RPC -32005, HTTP 400).",
+  "description": "ContentTypeNotSupportedError (JSON-RPC -32005, gRPC INVALID_ARGUMENT, HTTP 400): a media type of the message's parts is not supported by the agent.",
   "x-ess-name": "a2a.tasks.ContentTypeNotSupported",
   "x-ess-kind": "error-payload",
   "type": "object",
@@ -9,8 +9,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf",
-    "contract_digest": "slice-sha256/2:5dc9ba2aac32d62e13e0edd31fc83f03391d5d6be5a669731feeaba05a71001e",
+    "source_digest": "d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002",
+    "contract_digest": "slice-sha256/2:a93a9a5ad64c104889bff03c5ea743da90d9d35b1658902de5f3f720ebf3e06c",
     "regenerate": "ess generate"
   }
 }

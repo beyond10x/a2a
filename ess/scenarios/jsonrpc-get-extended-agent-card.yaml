@@ -1,0 +1,47 @@
+# JSON-RPC method `GetExtendedAgentCard`. A2A v1.0.1 section 5.3: "| Get extended Agent Card |
+# `GetExtendedAgentCard` | `GetExtendedAgentCard` | `GET /extendedAgentCard` |"; section 9.4.8
+# `"method": "GetExtendedAgentCard"`. Section 3.1.11, Errors: "UnsupportedOperationError: The
+# agent does not support authenticated extended cards", "ExtendedAgentCardNotConfiguredError: The
+# agent declares support but does not have an extended agent card configured." Section 5.4:
+# "| `UnsupportedOperationError` | `-32004` | `FAILED_PRECONDITION` | `400 Bad Request` |",
+# "| `ExtendedAgentCardNotConfiguredError` | `-32007` | `FAILED_PRECONDITION` | `400 Bad Request` |",
+# "| `ExtensionSupportRequiredError` | `-32008` | `FAILED_PRECONDITION` | `400 Bad Request` |",
+# "| `VersionNotSupportedError` | `-32009` | `FAILED_PRECONDITION` | `400 Bad Request` |".
+type: ess-scenario/1
+domain: a2a.discovery
+scenario: jsonrpc-get-extended-agent-card
+summary: GetExtendedAgentCard returns the card and answers -32004, -32007, -32008 and -32009 through their declared errors.
+
+timeline:
+  - at: 2026-02-11T09:00:00Z
+    command: a2a.discovery.GetExtendedAgentCard
+    actor: a2a.discovery.Client
+    outcome: returned
+
+  - at: 2026-02-11T09:00:01Z
+    command: a2a.discovery.GetExtendedAgentCard
+    actor: a2a.discovery.Client
+    outcome: not-supported
+    error:
+      name: a2a.discovery.UnsupportedOperation
+
+  - at: 2026-02-11T09:00:02Z
+    command: a2a.discovery.GetExtendedAgentCard
+    actor: a2a.discovery.Client
+    outcome: not-configured
+    error:
+      name: a2a.discovery.ExtendedAgentCardNotConfigured
+
+  - at: 2026-02-11T09:00:03Z
+    command: a2a.discovery.GetExtendedAgentCard
+    actor: a2a.discovery.Client
+    outcome: extension-required
+    error:
+      name: a2a.discovery.ExtensionSupportRequired
+
+  - at: 2026-02-11T09:00:04Z
+    command: a2a.discovery.GetExtendedAgentCard
+    actor: a2a.discovery.Client
+    outcome: version-not-supported
+    error:
+      name: a2a.discovery.VersionNotSupported

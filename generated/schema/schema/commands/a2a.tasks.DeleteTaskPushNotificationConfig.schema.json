@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Delete push notification config input",
-  "description": "Remove a push-notification configuration; deleting it again has the same effect (A2A v1.0.1 section 3.1.10; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).",
+  "description": "Remove a push-notification configuration; deleting it again has the same effect (A2A v1.0.1 section 3.1.10; JSON-RPC DeleteTaskPushNotificationConfig; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).",
   "x-ess-name": "a2a.tasks.DeleteTaskPushNotificationConfig",
   "x-ess-kind": "command-input",
   "type": "object",
@@ -25,8 +25,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf",
-    "contract_digest": "slice-sha256/2:fd5090f7dc1ceb0b917ad1bf191e0de0102c008656a76ff95373b87c793acb0f",
+    "source_digest": "d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002",
+    "contract_digest": "slice-sha256/2:e35471fc07feda6fb8fd62bc470c0b1a80415b80ccdf6ef07dfb228df6533bd4",
     "regenerate": "ess generate"
   },
   "$defs": {

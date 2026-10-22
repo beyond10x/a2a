@@ -1,0 +1,178 @@
+# JSON-RPC method `SendStreamingMessage`. A2A v1.0.1 section 5.3: "| Send streaming message |
+# `SendStreamingMessage` | `SendStreamingMessage` | `POST /message:stream` |"; section 9.4.2.
+# Section 3.1.2, Errors: "UnsupportedOperationError: Streaming is not supported by the agent",
+# "UnsupportedOperationError: Messages sent to Tasks that are in a terminal state … cannot accept
+# further messages", "ContentTypeNotSupportedError: A Media Type provided in the request's message
+# parts is not supported by the agent", "TaskNotFoundError: The task ID does not exist or is not
+# accessible". Section 3.4.3: "Agents MUST reject messages containing mismatching `contextId` and
+# `taskId`", and section 3.4.1: "If an agent cannot accept a client-provided `contextId`, it MUST
+# reject the request with an error"; both answer InvalidParamsError (section 9.5: "| `-32602` |
+# `InvalidParamsError` |"). Section 3.3.4: "When a server requests use of an extension marked as
+# `required: true` in the Agent Card but the client does not declare support for it, the agent
+# MUST return ExtensionSupportRequiredError". Section 5.4:
+# "| `UnsupportedOperationError` | `-32004` | `FAILED_PRECONDITION` | `400 Bad Request` |",
+# "| `ContentTypeNotSupportedError` | `-32005` | `INVALID_ARGUMENT` | `400 Bad Request` |",
+# "| `TaskNotFoundError` | `-32001` | `NOT_FOUND` | `404 Not Found` |",
+# "| `ExtensionSupportRequiredError` | `-32008` | `FAILED_PRECONDITION` | `400 Bad Request` |",
+# "| `VersionNotSupportedError` | `-32009` | `FAILED_PRECONDITION` | `400 Bad Request` |".
+# The task-terminal act names a task this scenario creates and cancels first.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: jsonrpc-send-streaming-message
+summary: SendStreamingMessage creates and continues a task, and answers -32004, -32005, -32602, -32008, -32001, -32009 and, for a task it canceled, -32004 through their declared errors.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-02-02T09:00:00Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: streaming-not-supported
+    error:
+      name: a2a.tasks.UnsupportedOperation
+    no_events: [a2a.tasks.MessageStreamResponse]
+
+  - at: 2026-02-02T09:00:01Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-2
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: extension-required
+    error:
+      name: a2a.tasks.ExtensionSupportRequired
+
+  - at: 2026-02-02T09:00:02Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-3
+        context_id: ctx-stream-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    events:
+      - event: a2a.tasks.TaskCreated
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-02-02T09:00:03Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-4
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: content-type-not-supported
+    error:
+      name: a2a.tasks.ContentTypeNotSupported
+    no_events: [a2a.tasks.TaskCreated, a2a.tasks.MessageStreamResponse]
+
+  - at: 2026-02-02T09:00:04Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-5
+        task_id: {$instance: task}
+        context_id: ctx-stream-other
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: context-mismatch
+    error:
+      name: a2a.tasks.ContextMismatch
+
+  - at: 2026-02-02T09:00:05Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-6
+        context_id: ctx-stream-refused
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: context-not-accepted
+    error:
+      name: a2a.tasks.ContextNotAccepted
+    no_events: [a2a.tasks.TaskCreated]
+
+  - at: 2026-02-02T09:00:06Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-7
+        task_id: {$instance: task}
+        role: ROLE_USER
+        parts:
+          - text: more
+    outcome: continued
+    events:
+      - event: a2a.tasks.MessageStreamResponse
+    no_events: [a2a.tasks.TaskCreated]
+
+  - at: 2026-02-02T09:00:07Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-8
+        task_id: no-such-task
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-not-found
+    error:
+      name: a2a.tasks.TaskNotFound
+    no_events: [a2a.tasks.MessageStreamResponse]
+
+  - at: 2026-02-02T09:00:08Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-9
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported
+
+  - at: 2026-02-02T09:00:09Z
+    command: a2a.tasks.CancelTask
+    actor: a2a.tasks.Client
+    input:
+      id: {$instance: task}
+    outcome: canceled
+
+  - at: 2026-02-02T09:00:10Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-10
+        task_id: {$instance: task}
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-terminal
+    error:
+      name: a2a.tasks.UnsupportedOperation
+    no_events: [a2a.tasks.MessageStreamResponse]

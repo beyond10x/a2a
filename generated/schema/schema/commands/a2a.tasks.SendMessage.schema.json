@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Send message input",
-  "description": "Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; POST /message:send).",
+  "description": "Send a message to the agent, which answers with a task tracking its work or with a direct message (A2A v1.0.1 section 3.1.1; JSON-RPC SendMessage; POST /message:send).",
   "x-ess-name": "a2a.tasks.SendMessage",
   "x-ess-kind": "command-input",
   "type": "object",
@@ -24,8 +24,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf",
-    "contract_digest": "slice-sha256/2:3dc004b49647af37479acfe6638af6b2bb384236121fe8b1f7ba8d341f747718",
+    "source_digest": "d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002",
+    "contract_digest": "slice-sha256/2:bec2770bc51dae7f88b6a7d01fa896ee65979644b10a85be54036910bf3937d6",
     "regenerate": "ess generate"
   },
   "$defs": {

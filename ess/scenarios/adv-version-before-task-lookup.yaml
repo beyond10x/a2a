@@ -1,0 +1,58 @@
+# Adversary case. A2A v1.0.1 section 3.6.2: "Agents MUST process requests using the semantics
+# of the requested `A2A-Version` (matching `Major.Minor`). If the version is not supported by the
+# interface, agents MUST return a [`VersionNotSupportedError`]". A request in an unsupported
+# version is not read under any version's semantics, so the task it names is never looked up.
+# Every command that reads a task row answers -32009 before the task is read (`before_row: true`,
+# the rule at ess/domains/tasks.yaml beside the protocol-negotiation errors); this case holds it
+# for a task the agent does not hold.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: adv-version-before-task-lookup
+summary: GetTask, CancelTask, SubscribeToTask, ListTaskPushNotificationConfigs and DeleteTaskPushNotificationConfig answer -32009 for an unsupported A2A-Version before they look the task up.
+
+timeline:
+  - at: 2026-02-13T09:00:00Z
+    command: a2a.tasks.GetTask
+    actor: a2a.tasks.Client
+    input:
+      id: no-such-task
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported
+
+  - at: 2026-02-13T09:00:01Z
+    command: a2a.tasks.CancelTask
+    actor: a2a.tasks.Client
+    input:
+      id: no-such-task
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported
+
+  - at: 2026-02-13T09:00:02Z
+    command: a2a.tasks.SubscribeToTask
+    actor: a2a.tasks.Client
+    input:
+      id: no-such-task
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported
+
+  - at: 2026-02-13T09:00:03Z
+    command: a2a.tasks.ListTaskPushNotificationConfigs
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported
+
+  - at: 2026-02-13T09:00:04Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      id: cfg-1
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported

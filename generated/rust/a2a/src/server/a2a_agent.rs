@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
-// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
+// model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
+// contract digest 3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! The `a2a-agent` component of `a2a` v1, on the wire.
@@ -61,7 +61,7 @@ pub const ROUTES: &[(&str, &str)] = &[
 /// Everything outside `runtime` is the same in every language this plan is emitted into, and
 /// `cargo xtask synth --check` starts both and compares them.
 pub const STARTUP: &[&str] = &[
-    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"a2a\",\"version\":\"v1\",\"model_digest\":\"19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf\",\"contract_digest\":\"b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58\",\"components\":[\"a2a-agent\"],\"capabilities\":{\"generated\":97,\"obligations\":12,\"refused\":0}",
+    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"a2a\",\"version\":\"v1\",\"model_digest\":\"d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002\",\"contract_digest\":\"3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f\",\"components\":[\"a2a-agent\"],\"capabilities\":{\"generated\":98,\"obligations\":12,\"refused\":0}",
     "{\"log\":\"ess/1\",\"event\":\"surface.serving\",\"component\":\"a2a-agent\",\"reached_by\":\"network\",\"transport\":\"http/1.1\",\"routes\":23,\"paths\":[{\"method\":\"POST\",\"path\":\"/discovery/commands/extendedAgentCard\",\"serves\":\"command\",\"name\":\"a2a.discovery.GetExtendedAgentCard\"},{\"method\":\"GET\",\"path\":\"/docs\",\"serves\":\"documentation\",\"name\":\"docs\"},{\"method\":\"GET\",\"path\":\"/openapi.json\",\"serves\":\"contract\",\"name\":\"openapi\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/message:send\",\"serves\":\"command\",\"name\":\"a2a.tasks.SendMessage\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/message:stream\",\"serves\":\"command\",\"name\":\"a2a.tasks.SendStreamingMessage\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/pushNotificationConfigs:create\",\"serves\":\"command\",\"name\":\"a2a.tasks.CreateTaskPushNotificationConfig\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/pushNotificationConfigs:delete\",\"serves\":\"command\",\"name\":\"a2a.tasks.DeleteTaskPushNotificationConfig\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/pushNotificationConfigs:get\",\"serves\":\"command\",\"name\":\"a2a.tasks.GetTaskPushNotificationConfig\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/pushNotificationConfigs:list\",\"serves\":\"command\",\"name\":\"a2a.tasks.ListTaskPushNotificationConfigs\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:cancel\",\"serves\":\"command\",\"name\":\"a2a.tasks.CancelTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:complete\",\"serves\":\"command\",\"name\":\"a2a.tasks.CompleteTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:fail\",\"serves\":\"command\",\"name\":\"a2a.tasks.FailTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:get\",\"serves\":\"command\",\"name\":\"a2a.tasks.GetTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:reject\",\"serves\":\"command\",\"name\":\"a2a.tasks.RejectTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:require_auth\",\"serves\":\"command\",\"name\":\"a2a.tasks.RequireAuth\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:require_input\",\"serves\":\"command\",\"name\":\"a2a.tasks.RequireInput\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:subscribe\",\"serves\":\"command\",\"name\":\"a2a.tasks.SubscribeToTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:update_artifact\",\"serves\":\"command\",\"name\":\"a2a.tasks.UpdateArtifact\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:work\",\"serves\":\"command\",\"name\":\"a2a.tasks.StartWorking\"},{\"method\":\"GET\",\"path\":\"/tasks/views/allPushNotificationConfigs\",\"serves\":\"view\",\"name\":\"a2a.tasks.PushNotificationConfigs\"},{\"method\":\"GET\",\"path\":\"/tasks/views/allTasks\",\"serves\":\"view\",\"name\":\"a2a.tasks.AllTasks\"},{\"method\":\"GET\",\"path\":\"/tasks/views/pushNotificationConfigs\",\"serves\":\"view\",\"name\":\"a2a.tasks.TaskPushNotificationConfigs\"},{\"method\":\"GET\",\"path\":\"/tasks/views/tasks\",\"serves\":\"view\",\"name\":\"a2a.tasks.Tasks\"}]",
     "{\"log\":\"ess/1\",\"event\":\"system.ready\",\"system\":\"a2a\",\"surfaces\":1",
 ];
@@ -1068,6 +1068,36 @@ where
 fn answer_a2a_tasks_create_task_push_notification_config(outcome: &crate::tasks::CreateTaskPushNotificationConfigOutcome) -> (u16, String) {
     let mut body = String::from("{");
     let status = match outcome {
+        crate::tasks::CreateTaskPushNotificationConfigOutcome::VersionNotSupported { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "version-not-supported");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.VersionNotSupported");
+            502
+        }
+        crate::tasks::CreateTaskPushNotificationConfigOutcome::ExtensionRequired { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "extension-required");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.ExtensionSupportRequired");
+            502
+        }
+        crate::tasks::CreateTaskPushNotificationConfigOutcome::PushNotSupported { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "push-not-supported");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.PushNotificationNotSupported");
+            502
+        }
         crate::tasks::CreateTaskPushNotificationConfigOutcome::TaskNotFound { .. } => {
             json::member(&mut body, "outcome");
             json::push_text(&mut body, "task-not-found");
@@ -1109,36 +1139,6 @@ fn answer_a2a_tasks_create_task_push_notification_config(outcome: &crate::tasks:
             json::member(&mut body, "response");
             wire::encode_response_a2a_tasks_create_task_push_notification_config(response, &mut body);
             200
-        }
-        crate::tasks::CreateTaskPushNotificationConfigOutcome::VersionNotSupported { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "version-not-supported");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.VersionNotSupported");
-            502
-        }
-        crate::tasks::CreateTaskPushNotificationConfigOutcome::ExtensionRequired { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "extension-required");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.ExtensionSupportRequired");
-            502
-        }
-        crate::tasks::CreateTaskPushNotificationConfigOutcome::PushNotSupported { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "push-not-supported");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.PushNotificationNotSupported");
-            502
         }
     };
     body.push('}');
@@ -1201,30 +1201,6 @@ where
 fn answer_a2a_tasks_delete_task_push_notification_config(outcome: &crate::tasks::DeleteTaskPushNotificationConfigOutcome) -> (u16, String) {
     let mut body = String::from("{");
     let status = match outcome {
-        crate::tasks::DeleteTaskPushNotificationConfigOutcome::TaskNotFound { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "task-not-found");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.TaskNotFound");
-            404
-        }
-        crate::tasks::DeleteTaskPushNotificationConfigOutcome::Deleted { push_notification_config_deleted, .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "deleted");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push('{');
-            json::member(&mut body, "event");
-            json::push_text(&mut body, "a2a.tasks.PushNotificationConfigDeleted");
-            json::member(&mut body, "payload");
-            wire::encode_event_a2a_tasks_push_notification_config_deleted(push_notification_config_deleted, &mut body);
-            body.push('}');
-            body.push(']');
-            202
-        }
         crate::tasks::DeleteTaskPushNotificationConfigOutcome::VersionNotSupported { .. } => {
             json::member(&mut body, "outcome");
             json::push_text(&mut body, "version-not-supported");
@@ -1254,6 +1230,30 @@ fn answer_a2a_tasks_delete_task_push_notification_config(outcome: &crate::tasks:
             json::member(&mut body, "error");
             json::push_text(&mut body, "a2a.tasks.PushNotificationNotSupported");
             502
+        }
+        crate::tasks::DeleteTaskPushNotificationConfigOutcome::TaskNotFound { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "task-not-found");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.TaskNotFound");
+            404
+        }
+        crate::tasks::DeleteTaskPushNotificationConfigOutcome::Deleted { push_notification_config_deleted, .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "deleted");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push('{');
+            json::member(&mut body, "event");
+            json::push_text(&mut body, "a2a.tasks.PushNotificationConfigDeleted");
+            json::member(&mut body, "payload");
+            wire::encode_event_a2a_tasks_push_notification_config_deleted(push_notification_config_deleted, &mut body);
+            body.push('}');
+            body.push(']');
+            202
         }
     };
     body.push('}');
@@ -1437,26 +1437,6 @@ where
 fn answer_a2a_tasks_list_task_push_notification_configs(outcome: &crate::tasks::ListTaskPushNotificationConfigsOutcome) -> (u16, String) {
     let mut body = String::from("{");
     let status = match outcome {
-        crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "task-not-found");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.TaskNotFound");
-            404
-        }
-        crate::tasks::ListTaskPushNotificationConfigsOutcome::Listed { response, .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "listed");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "response");
-            wire::encode_response_a2a_tasks_list_task_push_notification_configs(response, &mut body);
-            200
-        }
         crate::tasks::ListTaskPushNotificationConfigsOutcome::VersionNotSupported { .. } => {
             json::member(&mut body, "outcome");
             json::push_text(&mut body, "version-not-supported");
@@ -1486,6 +1466,26 @@ fn answer_a2a_tasks_list_task_push_notification_configs(outcome: &crate::tasks::
             json::member(&mut body, "error");
             json::push_text(&mut body, "a2a.tasks.PushNotificationNotSupported");
             502
+        }
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "task-not-found");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.TaskNotFound");
+            404
+        }
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::Listed { response, .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "listed");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "response");
+            wire::encode_response_a2a_tasks_list_task_push_notification_configs(response, &mut body);
+            200
         }
     };
     body.push('}');
@@ -1548,6 +1548,26 @@ where
 fn answer_a2a_tasks_cancel_task(outcome: &crate::tasks::CancelTaskOutcome) -> (u16, String) {
     let mut body = String::from("{");
     let status = match outcome {
+        crate::tasks::CancelTaskOutcome::VersionNotSupported { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "version-not-supported");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.VersionNotSupported");
+            502
+        }
+        crate::tasks::CancelTaskOutcome::ExtensionRequired { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "extension-required");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.ExtensionSupportRequired");
+            502
+        }
         crate::tasks::CancelTaskOutcome::NotFound { .. } => {
             json::member(&mut body, "outcome");
             json::push_text(&mut body, "not-found");
@@ -1593,26 +1613,6 @@ fn answer_a2a_tasks_cancel_task(outcome: &crate::tasks::CancelTaskOutcome) -> (u
             json::member(&mut body, "error");
             json::push_text(&mut body, "a2a.tasks.TaskNotCancelable");
             409
-        }
-        crate::tasks::CancelTaskOutcome::VersionNotSupported { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "version-not-supported");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.VersionNotSupported");
-            502
-        }
-        crate::tasks::CancelTaskOutcome::ExtensionRequired { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "extension-required");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.ExtensionSupportRequired");
-            502
         }
     };
     body.push('}');
@@ -1869,26 +1869,6 @@ where
 fn answer_a2a_tasks_get_task(outcome: &crate::tasks::GetTaskOutcome) -> (u16, String) {
     let mut body = String::from("{");
     let status = match outcome {
-        crate::tasks::GetTaskOutcome::NotFound { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "not-found");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.TaskNotFound");
-            404
-        }
-        crate::tasks::GetTaskOutcome::Found { response, .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "found");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "response");
-            wire::encode_response_a2a_tasks_get_task(response, &mut body);
-            200
-        }
         crate::tasks::GetTaskOutcome::VersionNotSupported { .. } => {
             json::member(&mut body, "outcome");
             json::push_text(&mut body, "version-not-supported");
@@ -1908,6 +1888,26 @@ fn answer_a2a_tasks_get_task(outcome: &crate::tasks::GetTaskOutcome) -> (u16, St
             json::member(&mut body, "error");
             json::push_text(&mut body, "a2a.tasks.ExtensionSupportRequired");
             502
+        }
+        crate::tasks::GetTaskOutcome::NotFound { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "not-found");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.TaskNotFound");
+            404
+        }
+        crate::tasks::GetTaskOutcome::Found { response, .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "found");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "response");
+            wire::encode_response_a2a_tasks_get_task(response, &mut body);
+            200
         }
     };
     body.push('}');
@@ -2261,36 +2261,6 @@ where
 fn answer_a2a_tasks_subscribe_to_task(outcome: &crate::tasks::SubscribeToTaskOutcome) -> (u16, String) {
     let mut body = String::from("{");
     let status = match outcome {
-        crate::tasks::SubscribeToTaskOutcome::NotFound { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "not-found");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.TaskNotFound");
-            404
-        }
-        crate::tasks::SubscribeToTaskOutcome::TaskTerminal { .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "task-terminal");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "error");
-            json::push_text(&mut body, "a2a.tasks.UnsupportedOperation");
-            409
-        }
-        crate::tasks::SubscribeToTaskOutcome::Subscribed { response, .. } => {
-            json::member(&mut body, "outcome");
-            json::push_text(&mut body, "subscribed");
-            json::member(&mut body, "published");
-            body.push('[');
-            body.push(']');
-            json::member(&mut body, "response");
-            wire::encode_response_a2a_tasks_subscribe_to_task(response, &mut body);
-            200
-        }
         crate::tasks::SubscribeToTaskOutcome::VersionNotSupported { .. } => {
             json::member(&mut body, "outcome");
             json::push_text(&mut body, "version-not-supported");
@@ -2320,6 +2290,36 @@ fn answer_a2a_tasks_subscribe_to_task(outcome: &crate::tasks::SubscribeToTaskOut
             json::member(&mut body, "error");
             json::push_text(&mut body, "a2a.tasks.UnsupportedOperation");
             502
+        }
+        crate::tasks::SubscribeToTaskOutcome::NotFound { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "not-found");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.TaskNotFound");
+            404
+        }
+        crate::tasks::SubscribeToTaskOutcome::TaskTerminal { .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "task-terminal");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "error");
+            json::push_text(&mut body, "a2a.tasks.UnsupportedOperation");
+            409
+        }
+        crate::tasks::SubscribeToTaskOutcome::Subscribed { response, .. } => {
+            json::member(&mut body, "outcome");
+            json::push_text(&mut body, "subscribed");
+            json::member(&mut body, "published");
+            body.push('[');
+            body.push(']');
+            json::member(&mut body, "response");
+            wire::encode_response_a2a_tasks_subscribe_to_task(response, &mut body);
+            200
         }
     };
     body.push('}');

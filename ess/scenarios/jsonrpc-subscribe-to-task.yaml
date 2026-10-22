@@ -1,0 +1,96 @@
+# JSON-RPC method `SubscribeToTask`. A2A v1.0.1 section 5.3: "| Subscribe to task |
+# `SubscribeToTask` | `SubscribeToTask` | `POST /tasks/{id}:subscribe` |"; section 9.4.6
+# `"method": "SubscribeToTask"` and "Error: Returns `UnsupportedOperationError` if the task is in
+# a terminal state (`TASK_STATE_COMPLETED`, `TASK_STATE_FAILED`, `TASK_STATE_CANCELED`, or
+# `TASK_STATE_REJECTED`)." Section 3.1.6, Errors: "UnsupportedOperationError: Streaming is not
+# supported by the agent", "TaskNotFoundError: The task ID does not exist or is not accessible."
+# Section 3.6.2: "If the version is not supported by the interface, agents MUST return a
+# VersionNotSupportedError"; section 3.3.4: "When a server requests use of an extension marked as
+# `required: true` in the Agent Card but the client does not declare support for it, the agent
+# MUST return ExtensionSupportRequiredError". Section 5.4:
+# "| `UnsupportedOperationError` | `-32004` | `FAILED_PRECONDITION` | `400 Bad Request` |",
+# "| `TaskNotFoundError` | `-32001` | `NOT_FOUND` | `404 Not Found` |",
+# "| `ExtensionSupportRequiredError` | `-32008` | `FAILED_PRECONDITION` | `400 Bad Request` |",
+# "| `VersionNotSupportedError` | `-32009` | `FAILED_PRECONDITION` | `400 Bad Request` |".
+# -32004 for streaming, -32008 and -32009 answer before the task lookup (rule above
+# outcome_groups in domains/tasks.yaml), so their acts name a task the agent does not hold.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: jsonrpc-subscribe-to-task
+summary: SubscribeToTask answers -32004 for a canceled task, -32001 for an unknown one, and -32004 without streaming, -32008 and -32009 before the task lookup.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-02-06T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-02-06T09:00:01Z
+    command: a2a.tasks.SubscribeToTask
+    actor: a2a.tasks.Client
+    input:
+      id: {$instance: task}
+    outcome: subscribed
+
+  - at: 2026-02-06T09:00:02Z
+    command: a2a.tasks.CancelTask
+    actor: a2a.tasks.Client
+    input:
+      id: {$instance: task}
+    outcome: canceled
+
+  - at: 2026-02-06T09:00:03Z
+    command: a2a.tasks.SubscribeToTask
+    actor: a2a.tasks.Client
+    input:
+      id: {$instance: task}
+    outcome: task-terminal
+    error:
+      name: a2a.tasks.UnsupportedOperation
+
+  - at: 2026-02-06T09:00:04Z
+    command: a2a.tasks.SubscribeToTask
+    actor: a2a.tasks.Client
+    input:
+      id: no-such-task
+    outcome: not-found
+    error:
+      name: a2a.tasks.TaskNotFound
+
+  - at: 2026-02-06T09:00:05Z
+    command: a2a.tasks.SubscribeToTask
+    actor: a2a.tasks.Client
+    input:
+      id: no-such-task
+    outcome: streaming-not-supported
+    error:
+      name: a2a.tasks.UnsupportedOperation
+
+  - at: 2026-02-06T09:00:06Z
+    command: a2a.tasks.SubscribeToTask
+    actor: a2a.tasks.Client
+    input:
+      id: no-such-task
+    outcome: extension-required
+    error:
+      name: a2a.tasks.ExtensionSupportRequired
+
+  - at: 2026-02-06T09:00:07Z
+    command: a2a.tasks.SubscribeToTask
+    actor: a2a.tasks.Client
+    input:
+      id: no-such-task
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported

@@ -1,0 +1,55 @@
+# Adversary case, the control beside adv-push-capability-before-task-lookup and
+# adv-version-before-task-lookup. A2A v1.0.1 section 3.3.4: "If
+# `AgentCard.capabilities.pushNotifications` is `false` or not present, operations related to push
+# notification configuration (Create, Get, List, Delete) **MUST** return
+# [`PushNotificationNotSupportedError`]", and section 3.6.2: "If the version is not supported by
+# the interface, agents MUST return a [`VersionNotSupportedError`]". Both depend on the request
+# alone, so CreateTaskPushNotificationConfig and GetTaskPushNotificationConfig answer -32003 and
+# -32009 for a task the agent does not hold (`before_row: true`, rule above outcome_groups in
+# domains/tasks.yaml).
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: adv-create-get-before-task-lookup
+summary: Create and Get answer -32003 and -32009 for a task the agent does not hold.
+
+timeline:
+  - at: 2026-02-15T09:00:00Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      id: cfg-1
+      url: https://client.example.test/webhook
+    outcome: push-not-supported
+    error:
+      name: a2a.tasks.PushNotificationNotSupported
+
+  - at: 2026-02-15T09:00:01Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      url: https://client.example.test/webhook
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported
+
+  - at: 2026-02-15T09:00:02Z
+    command: a2a.tasks.GetTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      id: cfg-1
+    outcome: push-not-supported
+    error:
+      name: a2a.tasks.PushNotificationNotSupported
+
+  - at: 2026-02-15T09:00:03Z
+    command: a2a.tasks.GetTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      id: cfg-1
+    outcome: version-not-supported
+    error:
+      name: a2a.tasks.VersionNotSupported
