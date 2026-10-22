@@ -1,0 +1,35 @@
+# A2A v1.0.1 a2a.proto, TaskArtifactUpdateEvent: "A task delta where an artifact has been
+# generated", with task_id, context_id and artifact REQUIRED and the `append` and `last_chunk`
+# flags. Section 3.1.2 streams it and section 3.5.3 pushes it. The artifact and the flags are
+# input the system decides, and the interpreted target refuses to compare them ("ESS-CF-TARGET:
+# … the scenario compares input `append`, which the system decides and the model does not
+# determine"), so this scenario asserts the event only.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: update-artifact-emits-event
+summary: An artifact the agent generates for a task is emitted as TaskArtifactUpdated.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-01-11T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-11T09:00:01Z
+    command: a2a.tasks.UpdateArtifact
+    input:
+      id: {$instance: task}
+    outcome: updated
+    events:
+      - event: a2a.tasks.TaskArtifactUpdated

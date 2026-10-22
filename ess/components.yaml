@@ -14,6 +14,7 @@ components:
         - a2a.tasks.SubscribeToTask
         - a2a.tasks.CreateTaskPushNotificationConfig
         - a2a.tasks.GetTaskPushNotificationConfig
+        - a2a.tasks.ListTaskPushNotificationConfigs
         - a2a.tasks.DeleteTaskPushNotificationConfig
         - a2a.tasks.StartWorking
         - a2a.tasks.RequireInput
@@ -21,11 +22,19 @@ components:
         - a2a.tasks.CompleteTask
         - a2a.tasks.FailTask
         - a2a.tasks.RejectTask
+        - a2a.tasks.UpdateArtifact
         - a2a.discovery.GetExtendedAgentCard
+    # UNMAPPED (ESS gap): push delivery. Section 4.3.3: "When a task update occurs, the agent
+    # sends an HTTP POST request to the configured webhook URL", and the same section: "Agents MUST
+    # attempt delivery at least once for each configured webhook". ESS 0.67.0 publishes an event
+    # to subscribers of a component; it has no construct for delivering an event to an endpoint
+    # a stored row names (PushNotificationConfig.url), with that row's credentials. Missing
+    # construct: an outbound delivery addressed by entity data.
     publishes:
       events:
         - a2a.tasks.TaskCreated
         - a2a.tasks.TaskStatusUpdated
+        - a2a.tasks.TaskArtifactUpdated
         - a2a.tasks.PushNotificationConfigCreated
         - a2a.tasks.PushNotificationConfigDeleted
     reached_by: network

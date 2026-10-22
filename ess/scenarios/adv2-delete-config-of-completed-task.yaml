@@ -1,0 +1,55 @@
+# Adversary case. A2A v1.0.1 section 3.1.10 lists one error for DeleteTaskPushNotificationConfig,
+# TaskNotFoundError. A task in a terminal state exists, so deleting its configuration succeeds.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: adv2-delete-config-of-completed-task
+summary: Deleting the configuration of a canceled task succeeds.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-01-15T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-15T09:00:01Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-1
+      url: https://client.example.test/webhook
+    outcome: created
+
+  - at: 2026-01-15T09:00:02Z
+    command: a2a.tasks.CancelTask
+    actor: a2a.tasks.Client
+    input:
+      id: {$instance: task}
+    outcome: canceled
+
+  - at: 2026-01-15T09:00:03Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-1
+    outcome: deleted
+
+  - at: 2026-01-15T09:00:04Z
+    command: a2a.tasks.GetTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-1
+    outcome: config-not-found

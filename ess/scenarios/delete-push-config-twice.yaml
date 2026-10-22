@@ -1,6 +1,6 @@
 # A2A v1.0.1 section 3.1.10: deleting a push-notification configuration MUST be idempotent.
-# Synthesis arranges no task row for `already-gone` (ESS-SYNTH-008), so this scenario creates
-# the task, creates and deletes a configuration, then deletes it again.
+# The second delete takes the same `deleted` branch and removes no row: "multiple deletions of
+# the same config have the same effect".
 type: ess-scenario/1
 domain: a2a.tasks
 scenario: delete-push-config-twice
@@ -46,4 +46,4 @@ timeline:
     input:
       task_id: {$instance: task}
       id: cfg-1
-    outcome: already-gone
+    outcome: deleted

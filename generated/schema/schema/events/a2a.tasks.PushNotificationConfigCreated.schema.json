@@ -5,6 +5,9 @@
   "x-ess-kind": "event-payload",
   "type": "object",
   "properties": {
+    "row": {
+      "$ref": "#/$defs/a2a.tasks.PushNotificationConfigRow"
+    },
     "config_id": {
       "$ref": "#/$defs/a2a.tasks.PushNotificationConfigId"
     },
@@ -13,6 +16,7 @@
     }
   },
   "required": [
+    "row",
     "config_id",
     "task_id"
   ],
@@ -20,14 +24,20 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
-    "contract_digest": "slice-sha256/2:71fc7a1a796c290aa553e9c59c1936d69d73e2f0d489f56a5b0690288923a223",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:61778e336bbcba7f2d4bf25c3f37299678dd3a3a5e3fc3eb174fe4b4ee5aa515",
     "regenerate": "ess generate"
   },
   "$defs": {
     "a2a.tasks.PushNotificationConfigId": {
       "title": "PushNotificationConfigId",
       "x-ess-name": "a2a.tasks.PushNotificationConfigId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.PushNotificationConfigRow": {
+      "title": "PushNotificationConfigRow",
+      "x-ess-name": "a2a.tasks.PushNotificationConfigRow",
       "x-ess-kind": "newtype",
       "type": "string"
     },

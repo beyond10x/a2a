@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-// contract digest f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea
+// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Ephemeral stores for the generated network entry points; no durability.
@@ -9,15 +9,15 @@
 #[derive(Clone, Default)]
 pub struct MemoryPushNotificationConfigStorage(std::rc::Rc<std::cell::RefCell<Vec<crate::tasks::PushNotificationConfigSnapshot>>>);
 impl crate::behaviour::PushNotificationConfigStorage for MemoryPushNotificationConfigStorage {
-fn get(&self, identity: &crate::tasks::PushNotificationConfigId) -> Option<crate::tasks::PushNotificationConfigSnapshot> { let key = memory_key_27(identity); self.0.borrow().iter().find(|row| memory_key_27(&row.data.id) == key).cloned() }
-fn put(&mut self, snapshot: crate::tasks::PushNotificationConfigSnapshot) { self.delete(&snapshot.data.id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_27(&row.data.id).cmp(&memory_key_27(&other.data.id))); }
-fn delete(&mut self, identity: &crate::tasks::PushNotificationConfigId) { let key = memory_key_27(identity); self.0.borrow_mut().retain(|row| memory_key_27(&row.data.id) != key); }
+fn get(&self, identity: &crate::tasks::PushNotificationConfigRow) -> Option<crate::tasks::PushNotificationConfigSnapshot> { let key = memory_key_28(identity); self.0.borrow().iter().find(|row| memory_key_28(&row.data.row) == key).cloned() }
+fn put(&mut self, snapshot: crate::tasks::PushNotificationConfigSnapshot) { self.delete(&snapshot.data.row); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_28(&row.data.row).cmp(&memory_key_28(&other.data.row))); }
+fn delete(&mut self, identity: &crate::tasks::PushNotificationConfigRow) { let key = memory_key_28(identity); self.0.borrow_mut().retain(|row| memory_key_28(&row.data.row) != key); }
 fn list(&self) -> Vec<crate::tasks::PushNotificationConfigSnapshot> { self.0.borrow().clone() }
 }
 impl crate::behaviour::PushNotificationConfigStorage for MemoryPorts {
-fn get(&self, identity: &crate::tasks::PushNotificationConfigId) -> Option<crate::tasks::PushNotificationConfigSnapshot> { crate::behaviour::PushNotificationConfigStorage::get(&self.push_notification_config_storage, identity) }
+fn get(&self, identity: &crate::tasks::PushNotificationConfigRow) -> Option<crate::tasks::PushNotificationConfigSnapshot> { crate::behaviour::PushNotificationConfigStorage::get(&self.push_notification_config_storage, identity) }
 fn put(&mut self, snapshot: crate::tasks::PushNotificationConfigSnapshot) { crate::behaviour::PushNotificationConfigStorage::put(&mut self.push_notification_config_storage, snapshot); }
-fn delete(&mut self, identity: &crate::tasks::PushNotificationConfigId) { crate::behaviour::PushNotificationConfigStorage::delete(&mut self.push_notification_config_storage, identity); }
+fn delete(&mut self, identity: &crate::tasks::PushNotificationConfigRow) { crate::behaviour::PushNotificationConfigStorage::delete(&mut self.push_notification_config_storage, identity); }
 fn list(&self) -> Vec<crate::tasks::PushNotificationConfigSnapshot> { crate::behaviour::PushNotificationConfigStorage::list(&self.push_notification_config_storage) }
 }
 
@@ -25,9 +25,9 @@ fn list(&self) -> Vec<crate::tasks::PushNotificationConfigSnapshot> { crate::beh
 #[derive(Clone, Default)]
 pub struct MemoryTaskStorage(std::rc::Rc<std::cell::RefCell<Vec<crate::tasks::TaskEntitySnapshot>>>);
 impl crate::behaviour::TaskStorage for MemoryTaskStorage {
-fn get(&self, identity: &crate::tasks::TaskId) -> Option<crate::tasks::TaskEntitySnapshot> { let key = memory_key_31(identity); self.0.borrow().iter().find(|row| memory_key_31(&row.data.id) == key).cloned() }
-fn put(&mut self, snapshot: crate::tasks::TaskEntitySnapshot) { self.delete(&snapshot.data.id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_31(&row.data.id).cmp(&memory_key_31(&other.data.id))); }
-fn delete(&mut self, identity: &crate::tasks::TaskId) { let key = memory_key_31(identity); self.0.borrow_mut().retain(|row| memory_key_31(&row.data.id) != key); }
+fn get(&self, identity: &crate::tasks::TaskId) -> Option<crate::tasks::TaskEntitySnapshot> { let key = memory_key_32(identity); self.0.borrow().iter().find(|row| memory_key_32(&row.data.id) == key).cloned() }
+fn put(&mut self, snapshot: crate::tasks::TaskEntitySnapshot) { self.delete(&snapshot.data.id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_32(&row.data.id).cmp(&memory_key_32(&other.data.id))); }
+fn delete(&mut self, identity: &crate::tasks::TaskId) { let key = memory_key_32(identity); self.0.borrow_mut().retain(|row| memory_key_32(&row.data.id) != key); }
 fn list(&self) -> Vec<crate::tasks::TaskEntitySnapshot> { self.0.borrow().clone() }
 }
 impl crate::behaviour::TaskStorage for MemoryPorts {
@@ -50,9 +50,9 @@ impl crate::behaviour::TryContext for MemoryPorts {
 fn try_generate_optional_timestamp(&mut self) -> Result<Option<crate::primitives::Timestamp>, crate::obligation::UnmetObligation> { Ok(None) }
 }
 
-fn memory_key_27(value: &crate::tasks::PushNotificationConfigId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
+fn memory_key_28(value: &crate::tasks::PushNotificationConfigRow) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
 
-fn memory_key_31(value: &crate::tasks::TaskId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
+fn memory_key_32(value: &crate::tasks::TaskId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
 
 // A common structural order; individual specifications use only a subset of the variants.
 #[allow(dead_code)]
@@ -87,6 +87,9 @@ fn get_task(&mut self, input: crate::tasks::GetTask) -> Result<crate::tasks::Get
 impl crate::tasks::obligations::GetTaskPushNotificationConfigBehavior for MemoryPorts {
 fn get_task_push_notification_config(&mut self, input: crate::tasks::GetTaskPushNotificationConfig) -> Result<crate::tasks::GetTaskPushNotificationConfigOutcome, crate::obligation::UnmetObligation> { crate::tasks::obligations::GetTaskPushNotificationConfigBehavior::get_task_push_notification_config(&mut crate::tasks::obligations::Unimplemented, input) }
 }
+impl crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior for MemoryPorts {
+fn list_task_push_notification_configs(&mut self, input: crate::tasks::ListTaskPushNotificationConfigs) -> Result<crate::tasks::ListTaskPushNotificationConfigsOutcome, crate::obligation::UnmetObligation> { crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior::list_task_push_notification_configs(&mut crate::tasks::obligations::Unimplemented, input) }
+}
 impl crate::tasks::obligations::SendMessageBehavior for MemoryPorts {
 fn send_message(&mut self, input: crate::tasks::SendMessage) -> Result<crate::tasks::SendMessageOutcome, crate::obligation::UnmetObligation> { crate::tasks::obligations::SendMessageBehavior::send_message(&mut crate::tasks::obligations::Unimplemented, input) }
 }
@@ -98,4 +101,7 @@ fn subscribe_to_task(&mut self, input: crate::tasks::SubscribeToTask) -> Result<
 }
 impl crate::tasks::obligations::TaskPushNotificationConfigsQuery for MemoryPorts {
 fn task_push_notification_configs(&self, task_id: crate::tasks::TaskId) -> Result<Vec<crate::tasks::TaskPushNotificationConfigs>, crate::obligation::UnmetObligation> { crate::tasks::obligations::TaskPushNotificationConfigsQuery::task_push_notification_configs(&crate::tasks::obligations::Unimplemented, task_id) }
+}
+impl crate::tasks::obligations::TasksQuery for MemoryPorts {
+fn tasks(&self, context_id: Option<crate::tasks::ContextId>, status: Option<crate::tasks::TaskState>, status_timestamp_after: Option<crate::primitives::Timestamp>) -> Result<Vec<crate::tasks::Tasks>, crate::obligation::UnmetObligation> { crate::tasks::obligations::TasksQuery::tasks(&crate::tasks::obligations::Unimplemented, context_id, status, status_timestamp_after) }
 }

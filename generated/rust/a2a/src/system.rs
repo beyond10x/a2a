@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-// contract digest f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea
+// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! The `a2a` system, v1: its components assembled, its bindings wired, and its one transport.
@@ -23,6 +23,8 @@ pub enum SystemEvent {
     PushNotificationConfigCreated(crate::tasks::PushNotificationConfigCreated),
     /// `a2a.tasks.PushNotificationConfigDeleted`.
     PushNotificationConfigDeleted(crate::tasks::PushNotificationConfigDeleted),
+    /// `a2a.tasks.TaskArtifactUpdated`.
+    TaskArtifactUpdated(crate::tasks::TaskArtifactUpdated),
     /// `a2a.tasks.TaskCreated`.
     TaskCreated(crate::tasks::TaskCreated),
     /// `a2a.tasks.TaskStatusUpdated`.
@@ -35,6 +37,7 @@ impl SystemEvent {
         match self {
             Self::PushNotificationConfigCreated(_) => "a2a.tasks.PushNotificationConfigCreated",
             Self::PushNotificationConfigDeleted(_) => "a2a.tasks.PushNotificationConfigDeleted",
+            Self::TaskArtifactUpdated(_) => "a2a.tasks.TaskArtifactUpdated",
             Self::TaskCreated(_) => "a2a.tasks.TaskCreated",
             Self::TaskStatusUpdated(_) => "a2a.tasks.TaskStatusUpdated",
         }
@@ -46,6 +49,7 @@ impl From<crate::ports::a2a_agent::PublishedEvent> for SystemEvent {
         match event {
             crate::ports::a2a_agent::PublishedEvent::PushNotificationConfigCreated(event) => Self::PushNotificationConfigCreated(event),
             crate::ports::a2a_agent::PublishedEvent::PushNotificationConfigDeleted(event) => Self::PushNotificationConfigDeleted(event),
+            crate::ports::a2a_agent::PublishedEvent::TaskArtifactUpdated(event) => Self::TaskArtifactUpdated(event),
             crate::ports::a2a_agent::PublishedEvent::TaskCreated(event) => Self::TaskCreated(event),
             crate::ports::a2a_agent::PublishedEvent::TaskStatusUpdated(event) => Self::TaskStatusUpdated(event),
         }
@@ -95,7 +99,7 @@ impl<A2aAgentBehaviors> System<A2aAgentBehaviors> {
 
 impl<A2aAgentBehaviors> System<A2aAgentBehaviors>
 where
-    A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
+    A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
     /// Delivers until quiescent: collects every component's outbox onto the log. No binding
     /// reacts to anything this specification publishes, so collecting is the whole delivery.

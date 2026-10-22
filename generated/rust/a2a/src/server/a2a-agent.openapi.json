@@ -3,13 +3,13 @@
   "info": {
     "title": "a2a-agent",
     "summary": "An A2A server agent, reached over JSON-RPC, gRPC or HTTP+JSON (A2A v1.0.1 section 5).",
-    "description": "The HTTP surface of `a2a-agent`, one of the components of `a2a` v1.\n\nEvery path here is one semantic command, so the method is always POST and the path is the command's wire name under its domain's: a command is not a resource, and this document does not invent one. A status code is the outcome the specification declares — 202 for a branch that was taken, 422 for a refusal the input decides, 502 for a refusal decided outside the request — and the `outcome` property of every response body names the branch. Events emitted by a branch are published to consumers through the event transport, and the `published` property of every response body lists them too, in publication order. A branch that returns the command's response is carried out in the request that took it, so it is answered 200, and its body carries that response under `response`.\n\nThe specification declares who may invoke what (`x-ess-may-invoke` on each operation), so every command is sent as a declared actor. How a request proves which actor it is belongs to the realization, which authenticates it and hands the surface the caller; nothing in the request itself names one. The grant is checked before the command runs, and a request authenticated as no actor, or as one without the grant, is answered 403 with one standard refusal, the same for every command: `{\"refused\": \"not granted\", \"actor\": <name or null>}`. A 403 a declared branch answers carries `outcome` and the declared `error` instead, so a client tells the two apart by the members present. A command no declared actor may invoke is refused to every caller. Views are not grant-checked: a grant names commands, and any caller may read what a view publishes.\n\nThis component declares `reached_by: network`, so its callers are not deployed with it and this contract is the surface they reach it through. That declaration is also why the views its domains declare have paths here: a GET under `views` per projection, answering every row it holds. There is no page size, no cursor, no ordering and no filter parameter, because the specification states none — a view's filter is part of the projection, not of the request. A view that declares `params:` is the exception: each is a query parameter, described on its operation, and a view that declares `paging:` takes its page and size there.",
+    "description": "The HTTP surface of `a2a-agent`, one of the components of `a2a` v1.\n\nEvery path here is one semantic command, so the method is always POST and the path is the command's wire name under its domain's: a command is not a resource, and this document does not invent one. A status code is the outcome the specification declares — 202 for a branch that was taken, 422 for a refusal the input decides, 502 for a refusal decided outside the request — and the `outcome` property of every response body names the branch. Events emitted by a branch are published to consumers through the event transport, and the `published` property of every response body lists them too, in publication order. A branch that returns the command's response is carried out in the request that took it, so it is answered 200, and its body carries that response under `response`.\n\nThe specification declares who may invoke what (`x-ess-may-invoke` on each operation), so every command is sent as a declared actor. How a request proves which actor it is belongs to the realization, which authenticates it and hands the surface the caller; nothing in the request itself names one. The grant is checked before the command runs, and a request authenticated as no actor, or as one without the grant, is answered 403 with one standard refusal, the same for every command: `{\"refused\": \"not granted\", \"actor\": <name or null>}`. A 403 a declared branch answers carries `outcome` and the declared `error` instead, so a client tells the two apart by the members present. A command no declared actor may invoke is refused to every caller. A view an actor's grant names is read-checked the same way (`x-ess-may-read` on its operation): a request authenticated as no actor, or as one the grant does not name, is answered 403 with the same standard refusal before the view is read. A view no grant names is open, and any caller may read what it publishes.\n\nThis component declares `reached_by: network`, so its callers are not deployed with it and this contract is the surface they reach it through. That declaration is also why the views its domains declare have paths here: a GET under `views` per projection, answering every row it holds. There is no page size, no cursor, no ordering and no filter parameter, because the specification states none — a view's filter is part of the projection, not of the request. A view that declares `params:` is the exception: each is a query parameter, described on its operation, and a view that declares `paging:` takes its page and size there.",
     "version": "v1",
     "x-ess-provenance": {
       "system": "a2a",
       "specification_version": "v1",
-      "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
-      "contract_digest": "slice-sha256/2:f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea"
+      "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+      "contract_digest": "slice-sha256/2:f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44"
     },
     "x-ess-reached-by": "network"
   },
@@ -114,14 +114,16 @@
             }
           },
           "502": {
-            "description": "Outcomes `not-supported` and `not-configured`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.",
+            "description": "Outcomes `not-supported`, `not-configured`, `version-not-supported` and `extension-required`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.",
             "content": {
               "application/json": {
                 "schema": {
                   "discriminator": {
                     "mapping": {
+                      "extension-required": "#/components/schemas/a2a.discovery.GetExtendedAgentCard.extension-required.Response",
                       "not-configured": "#/components/schemas/a2a.discovery.GetExtendedAgentCard.not-configured.Response",
-                      "not-supported": "#/components/schemas/a2a.discovery.GetExtendedAgentCard.not-supported.Response"
+                      "not-supported": "#/components/schemas/a2a.discovery.GetExtendedAgentCard.not-supported.Response",
+                      "version-not-supported": "#/components/schemas/a2a.discovery.GetExtendedAgentCard.version-not-supported.Response"
                     },
                     "propertyName": "outcome"
                   },
@@ -131,6 +133,12 @@
                     },
                     {
                       "$ref": "#/components/schemas/a2a.discovery.GetExtendedAgentCard.not-configured.Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/a2a.discovery.GetExtendedAgentCard.version-not-supported.Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/a2a.discovery.GetExtendedAgentCard.extension-required.Response"
                     }
                   ]
                 }
@@ -248,7 +256,7 @@
             }
           },
           "502": {
-            "description": "Outcomes `task-not-found`, `task-terminal`, `context-mismatch`, `content-type-not-supported`, `version-not-supported` and `extension-required`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.",
+            "description": "Outcomes `task-not-found`, `task-terminal`, `context-mismatch`, `context-not-accepted`, `content-type-not-supported`, `version-not-supported` and `extension-required`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.",
             "content": {
               "application/json": {
                 "schema": {
@@ -256,6 +264,7 @@
                     "mapping": {
                       "content-type-not-supported": "#/components/schemas/a2a.tasks.SendMessage.content-type-not-supported.Response",
                       "context-mismatch": "#/components/schemas/a2a.tasks.SendMessage.context-mismatch.Response",
+                      "context-not-accepted": "#/components/schemas/a2a.tasks.SendMessage.context-not-accepted.Response",
                       "extension-required": "#/components/schemas/a2a.tasks.SendMessage.extension-required.Response",
                       "task-not-found": "#/components/schemas/a2a.tasks.SendMessage.task-not-found.Response",
                       "task-terminal": "#/components/schemas/a2a.tasks.SendMessage.task-terminal.Response",
@@ -272,6 +281,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/a2a.tasks.SendMessage.context-mismatch.Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/a2a.tasks.SendMessage.context-not-accepted.Response"
                     },
                     {
                       "$ref": "#/components/schemas/a2a.tasks.SendMessage.content-type-not-supported.Response"
@@ -294,7 +306,7 @@
       "post": {
         "operationId": "a2a.tasks.SendStreamingMessage",
         "summary": "Send streaming message",
-        "description": "Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal or interrupted (A2A v1.0.1 section 3.1.2; POST /message:stream).",
+        "description": "Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).",
         "tags": [
           "tasks"
         ],
@@ -398,7 +410,7 @@
             }
           },
           "502": {
-            "description": "Outcomes `task-not-found`, `task-terminal`, `context-mismatch`, `content-type-not-supported`, `version-not-supported`, `extension-required` and `streaming-not-supported`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.",
+            "description": "Outcomes `task-not-found`, `task-terminal`, `context-mismatch`, `context-not-accepted`, `content-type-not-supported`, `version-not-supported`, `extension-required` and `streaming-not-supported`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.",
             "content": {
               "application/json": {
                 "schema": {
@@ -406,6 +418,7 @@
                     "mapping": {
                       "content-type-not-supported": "#/components/schemas/a2a.tasks.SendStreamingMessage.content-type-not-supported.Response",
                       "context-mismatch": "#/components/schemas/a2a.tasks.SendStreamingMessage.context-mismatch.Response",
+                      "context-not-accepted": "#/components/schemas/a2a.tasks.SendStreamingMessage.context-not-accepted.Response",
                       "extension-required": "#/components/schemas/a2a.tasks.SendStreamingMessage.extension-required.Response",
                       "streaming-not-supported": "#/components/schemas/a2a.tasks.SendStreamingMessage.streaming-not-supported.Response",
                       "task-not-found": "#/components/schemas/a2a.tasks.SendStreamingMessage.task-not-found.Response",
@@ -423,6 +436,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/a2a.tasks.SendStreamingMessage.context-mismatch.Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/a2a.tasks.SendStreamingMessage.context-not-accepted.Response"
                     },
                     {
                       "$ref": "#/components/schemas/a2a.tasks.SendStreamingMessage.content-type-not-supported.Response"
@@ -468,11 +484,25 @@
         },
         "responses": {
           "200": {
-            "description": "Outcome `created`: the branch the specification declares for this input, carried out in this request: the body carries the command's response under `response`. Events this branch emits are published to consumers and listed under `published`.",
+            "description": "Outcomes `created` and `assigned`: the branch the specification declares for this input, carried out in this request: the body carries the command's response under `response`. Events this branch emits are published to consumers and listed under `published`.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.created.Response"
+                  "discriminator": {
+                    "mapping": {
+                      "assigned": "#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.assigned.Response",
+                      "created": "#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.created.Response"
+                    },
+                    "propertyName": "outcome"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.created.Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.assigned.Response"
+                    }
+                  ]
                 }
               }
             }
@@ -598,25 +628,11 @@
         },
         "responses": {
           "202": {
-            "description": "Outcomes `already-gone` and `deleted`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "description": "Outcome `deleted`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
             "content": {
               "application/json": {
                 "schema": {
-                  "discriminator": {
-                    "mapping": {
-                      "already-gone": "#/components/schemas/a2a.tasks.DeleteTaskPushNotificationConfig.already-gone.Response",
-                      "deleted": "#/components/schemas/a2a.tasks.DeleteTaskPushNotificationConfig.deleted.Response"
-                    },
-                    "propertyName": "outcome"
-                  },
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/a2a.tasks.DeleteTaskPushNotificationConfig.already-gone.Response"
-                    },
-                    {
-                      "$ref": "#/components/schemas/a2a.tasks.DeleteTaskPushNotificationConfig.deleted.Response"
-                    }
-                  ]
+                  "$ref": "#/components/schemas/a2a.tasks.DeleteTaskPushNotificationConfig.deleted.Response"
                 }
               }
             }
@@ -652,8 +668,8 @@
               }
             }
           },
-          "409": {
-            "description": "Outcome `task-not-found`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.",
+          "404": {
+            "description": "Outcome `task-not-found`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -793,11 +809,11 @@
             }
           },
           "409": {
-            "description": "Outcome `other-task`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.",
+            "description": "Outcome `config-not-found`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/a2a.tasks.GetTaskPushNotificationConfig.other-task.Response"
+                  "$ref": "#/components/schemas/a2a.tasks.GetTaskPushNotificationConfig.config-not-found.Response"
                 }
               }
             }
@@ -849,6 +865,136 @@
                     },
                     {
                       "$ref": "#/components/schemas/a2a.tasks.GetTaskPushNotificationConfig.push-not-supported.Response"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/commands/pushNotificationConfigs:list": {
+      "post": {
+        "operationId": "a2a.tasks.ListTaskPushNotificationConfigs",
+        "summary": "List push notification configs",
+        "description": "Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; GET /tasks/{task_id}/pushNotificationConfigs).",
+        "tags": [
+          "tasks"
+        ],
+        "x-ess-may-invoke": [
+          "a2a.tasks.Client"
+        ],
+        "requestBody": {
+          "description": "The input `a2a.tasks.ListTaskPushNotificationConfigs` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Outcome `listed`: the branch the specification declares for this input, carried out in this request: the body carries the command's response under `response`. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.listed.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Outcome `task-not-found`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.task-not-found.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Outcomes `version-not-supported`, `extension-required` and `push-not-supported`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "extension-required": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.extension-required.Response",
+                      "push-not-supported": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.push-not-supported.Response",
+                      "version-not-supported": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.version-not-supported.Response"
+                    },
+                    "propertyName": "outcome"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.version-not-supported.Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.extension-required.Response"
+                    },
+                    {
+                      "$ref": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.push-not-supported.Response"
                     }
                   ]
                 }
@@ -1824,6 +1970,108 @@
         }
       }
     },
+    "/tasks/commands/tasks:update_artifact": {
+      "post": {
+        "operationId": "a2a.tasks.UpdateArtifact",
+        "summary": "Update artifact",
+        "description": "The agent generates an artifact of the task, or a chunk of one (TaskArtifactUpdateEvent).",
+        "tags": [
+          "tasks"
+        ],
+        "x-ess-may-invoke": [
+          "a2a.tasks.Agent"
+        ],
+        "requestBody": {
+          "description": "The input `a2a.tasks.UpdateArtifact` declares.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/a2a.tasks.UpdateArtifact.Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Outcome `updated`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/a2a.tasks.UpdateArtifact.updated.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-invoke` does not list. It is checked before the command runs, so nothing was read, written or published, and the same request from a granted actor is decided by the command. Its body carries `refused` and `actor`, never the `outcome` and `error` a declared branch carries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Outcome `not-found`: the branch the specification declares for this input. Events this branch emits are published to consumers and listed under `published`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/a2a.tasks.UpdateArtifact.not-found.Response"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command's effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "committed": {
+                      "description": "`true` when the command's effect and events were committed and delivering what it published failed; `false` when an unmet obligation stopped the command before anything was written.",
+                      "type": "boolean"
+                    },
+                    "refused": {
+                      "description": "What was left unfinished, in words.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "committed"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tasks/commands/tasks:work": {
       "post": {
         "operationId": "a2a.tasks.StartWorking",
@@ -1943,6 +2191,9 @@
         "tags": [
           "tasks"
         ],
+        "x-ess-may-read": [
+          "a2a.tasks.Agent"
+        ],
         "x-ess-consistency": "read_your_writes",
         "responses": {
           "200": {
@@ -1951,6 +2202,93 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/a2a.tasks.PushNotificationConfigs.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/views/allTasks": {
+      "get": {
+        "operationId": "a2a.tasks.AllTasks",
+        "summary": "All tasks",
+        "tags": [
+          "tasks"
+        ],
+        "x-ess-may-read": [
+          "a2a.tasks.Agent"
+        ],
+        "x-ess-consistency": "read_your_writes",
+        "responses": {
+          "200": {
+            "description": "Every row of `a2a.tasks.AllTasks`, a projection of `a2a.tasks.Task`. Contains every instance. Read-your-writes: a caller that has just issued a command sees its effect here.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/a2a.tasks.AllTasks.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
                 }
               }
             }
@@ -1964,6 +2302,9 @@
         "summary": "List push notification configs",
         "tags": [
           "tasks"
+        ],
+        "x-ess-may-read": [
+          "a2a.tasks.Client"
         ],
         "x-ess-consistency": "read_your_writes",
         "parameters": [
@@ -1987,6 +2328,37 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -1998,14 +2370,78 @@
         "tags": [
           "tasks"
         ],
+        "x-ess-may-read": [
+          "a2a.tasks.Client"
+        ],
         "x-ess-consistency": "read_your_writes",
+        "parameters": [
+          {
+            "name": "context_id",
+            "in": "query",
+            "description": "Read by the view's filter as `param.context_id`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/a2a.tasks.ContextId"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Read by the view's filter as `param.status`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/a2a.tasks.Task.State"
+            }
+          },
+          {
+            "name": "status_timestamp_after",
+            "in": "query",
+            "description": "Read by the view's filter as `param.status_timestamp_after`; it selects which rows the view holds.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Every row of `a2a.tasks.Tasks`, a projection of `a2a.tasks.Task`. Contains every instance. Read-your-writes: a caller that has just issued a command sees its effect here.",
+            "description": "Every row of `a2a.tasks.Tasks`, a projection of `a2a.tasks.Task`. Contains the instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp))` holds. Read-your-writes: a caller that has just issued a command sees its effect here.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/a2a.tasks.Tasks.Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No declared outcome: the standard refusal for an actor no grant admits: the request was authenticated as no actor, or as one `x-ess-may-read` does not list. It is checked before the view is read, so no row was read, and the same request from a granted actor answers the rows. Its body is the one a command answers an ungranted actor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actor": {
+                      "description": "The qualified name of the actor the request was authenticated as, or null where it was authenticated as none.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "refused": {
+                      "description": "The standard refusal for an actor no grant admits.",
+                      "enum": [
+                        "not granted"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "refused",
+                    "actor"
+                  ],
+                  "type": "object"
                 }
               }
             }
@@ -2426,6 +2862,32 @@
         ],
         "additionalProperties": false
       },
+      "a2a.discovery.GetExtendedAgentCard.extension-required.Response": {
+        "additionalProperties": false,
+        "description": "Decided outside the request: the agent card marks an extension required and the request does not declare it.",
+        "properties": {
+          "error": {
+            "const": "a2a.discovery.ExtensionSupportRequired",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "extension-required",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
       "a2a.discovery.GetExtendedAgentCard.not-configured.Response": {
         "additionalProperties": false,
         "description": "Decided outside the request: the agent declares the capability but has no extended card configured.",
@@ -2499,6 +2961,32 @@
           "outcome",
           "published",
           "response"
+        ],
+        "type": "object"
+      },
+      "a2a.discovery.GetExtendedAgentCard.version-not-supported.Response": {
+        "additionalProperties": false,
+        "description": "Decided outside the request: the A2A-Version service parameter names a version the agent does not support.",
+        "properties": {
+          "error": {
+            "const": "a2a.discovery.VersionNotSupported",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "version-not-supported",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
         ],
         "type": "object"
       },
@@ -2586,100 +3074,29 @@
       "a2a.discovery.OAuthFlows": {
         "title": "OAuthFlows",
         "x-ess-name": "a2a.discovery.OAuthFlows",
-        "x-ess-kind": "union",
-        "oneOf": [
-          {
-            "title": "authorizationCode",
-            "type": "object",
-            "properties": {
-              "flow": {
-                "type": "string",
-                "const": "authorizationCode"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.AuthorizationCodeOAuthFlow"
-              }
-            },
-            "required": [
-              "flow",
-              "value"
-            ],
-            "additionalProperties": false
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "authorizationCode": {
+            "$ref": "#/components/schemas/a2a.discovery.AuthorizationCodeOAuthFlow",
+            "x-ess-field": "authorization_code"
           },
-          {
-            "title": "clientCredentials",
-            "type": "object",
-            "properties": {
-              "flow": {
-                "type": "string",
-                "const": "clientCredentials"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.ClientCredentialsOAuthFlow"
-              }
-            },
-            "required": [
-              "flow",
-              "value"
-            ],
-            "additionalProperties": false
+          "clientCredentials": {
+            "$ref": "#/components/schemas/a2a.discovery.ClientCredentialsOAuthFlow",
+            "x-ess-field": "client_credentials"
           },
-          {
-            "title": "deviceCode",
-            "type": "object",
-            "properties": {
-              "flow": {
-                "type": "string",
-                "const": "deviceCode"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.DeviceCodeOAuthFlow"
-              }
-            },
-            "required": [
-              "flow",
-              "value"
-            ],
-            "additionalProperties": false
+          "implicit": {
+            "$ref": "#/components/schemas/a2a.discovery.ImplicitOAuthFlow"
           },
-          {
-            "title": "implicit",
-            "type": "object",
-            "properties": {
-              "flow": {
-                "type": "string",
-                "const": "implicit"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.ImplicitOAuthFlow"
-              }
-            },
-            "required": [
-              "flow",
-              "value"
-            ],
-            "additionalProperties": false
+          "password": {
+            "$ref": "#/components/schemas/a2a.discovery.PasswordOAuthFlow"
           },
-          {
-            "title": "password",
-            "type": "object",
-            "properties": {
-              "flow": {
-                "type": "string",
-                "const": "password"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.PasswordOAuthFlow"
-              }
-            },
-            "required": [
-              "flow",
-              "value"
-            ],
-            "additionalProperties": false
+          "deviceCode": {
+            "$ref": "#/components/schemas/a2a.discovery.DeviceCodeOAuthFlow",
+            "x-ess-field": "device_code"
           }
-        ],
-        "x-ess-union-tag": "flow"
+        },
+        "additionalProperties": false
       },
       "a2a.discovery.OpenIdConnectSecurityScheme": {
         "title": "OpenIdConnectSecurityScheme",
@@ -2747,100 +3164,31 @@
       "a2a.discovery.SecurityScheme": {
         "title": "SecurityScheme",
         "x-ess-name": "a2a.discovery.SecurityScheme",
-        "x-ess-kind": "union",
-        "oneOf": [
-          {
-            "title": "apiKeySecurityScheme",
-            "type": "object",
-            "properties": {
-              "scheme": {
-                "type": "string",
-                "const": "apiKeySecurityScheme"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.APIKeySecurityScheme"
-              }
-            },
-            "required": [
-              "scheme",
-              "value"
-            ],
-            "additionalProperties": false
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "apiKeySecurityScheme": {
+            "$ref": "#/components/schemas/a2a.discovery.APIKeySecurityScheme",
+            "x-ess-field": "api_key_security_scheme"
           },
-          {
-            "title": "httpAuthSecurityScheme",
-            "type": "object",
-            "properties": {
-              "scheme": {
-                "type": "string",
-                "const": "httpAuthSecurityScheme"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.HTTPAuthSecurityScheme"
-              }
-            },
-            "required": [
-              "scheme",
-              "value"
-            ],
-            "additionalProperties": false
+          "httpAuthSecurityScheme": {
+            "$ref": "#/components/schemas/a2a.discovery.HTTPAuthSecurityScheme",
+            "x-ess-field": "http_auth_security_scheme"
           },
-          {
-            "title": "mtlsSecurityScheme",
-            "type": "object",
-            "properties": {
-              "scheme": {
-                "type": "string",
-                "const": "mtlsSecurityScheme"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.MutualTlsSecurityScheme"
-              }
-            },
-            "required": [
-              "scheme",
-              "value"
-            ],
-            "additionalProperties": false
+          "oauth2SecurityScheme": {
+            "$ref": "#/components/schemas/a2a.discovery.OAuth2SecurityScheme",
+            "x-ess-field": "oauth2_security_scheme"
           },
-          {
-            "title": "oauth2SecurityScheme",
-            "type": "object",
-            "properties": {
-              "scheme": {
-                "type": "string",
-                "const": "oauth2SecurityScheme"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.OAuth2SecurityScheme"
-              }
-            },
-            "required": [
-              "scheme",
-              "value"
-            ],
-            "additionalProperties": false
+          "openIdConnectSecurityScheme": {
+            "$ref": "#/components/schemas/a2a.discovery.OpenIdConnectSecurityScheme",
+            "x-ess-field": "open_id_connect_security_scheme"
           },
-          {
-            "title": "openIdConnectSecurityScheme",
-            "type": "object",
-            "properties": {
-              "scheme": {
-                "type": "string",
-                "const": "openIdConnectSecurityScheme"
-              },
-              "value": {
-                "$ref": "#/components/schemas/a2a.discovery.OpenIdConnectSecurityScheme"
-              }
-            },
-            "required": [
-              "scheme",
-              "value"
-            ],
-            "additionalProperties": false
+          "mtlsSecurityScheme": {
+            "$ref": "#/components/schemas/a2a.discovery.MutualTlsSecurityScheme",
+            "x-ess-field": "mtls_security_scheme"
           }
-        ],
-        "x-ess-union-tag": "scheme"
+        },
+        "additionalProperties": false
       },
       "a2a.discovery.StringList": {
         "title": "StringList",
@@ -2857,6 +3205,66 @@
         },
         "required": [
           "list"
+        ],
+        "additionalProperties": false
+      },
+      "a2a.tasks.AllTasks.Response": {
+        "additionalProperties": false,
+        "description": "The rows of `a2a.tasks.AllTasks`.",
+        "properties": {
+          "rows": {
+            "description": "Every row the projection holds, in the order it holds them.",
+            "items": {
+              "$ref": "#/components/schemas/a2a.tasks.AllTasks.Row"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "a2a.tasks.AllTasks.Row": {
+        "title": "All tasks row",
+        "x-ess-name": "a2a.tasks.AllTasks",
+        "x-ess-kind": "view-row",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskId"
+          },
+          "context_id": {
+            "$ref": "#/components/schemas/a2a.tasks.ContextId"
+          },
+          "state": {
+            "$ref": "#/components/schemas/a2a.tasks.Task.State"
+          },
+          "status_message": {
+            "$ref": "#/components/schemas/a2a.tasks.Message"
+          },
+          "status_timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/a2a.tasks.Artifact"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/a2a.tasks.Message"
+            }
+          },
+          "metadata": {}
+        },
+        "required": [
+          "id",
+          "context_id",
+          "state"
         ],
         "additionalProperties": false
       },
@@ -3002,7 +3410,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.ExtensionSupportRequired",
-            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -3050,7 +3458,7 @@
       },
       "a2a.tasks.CancelTask.not-cancelable.Response": {
         "additionalProperties": false,
-        "description": "The task is in a terminal state. Taken when the subject is in a state none of this command's declared moves start from. Which states those are is the lifecycle's answer, not this command's.",
+        "description": "The task is in a terminal state, Canceled included. Taken when the subject is in a state none of this command's declared moves start from. Which states those are is the lifecycle's answer, not this command's.",
         "properties": {
           "error": {
             "const": "a2a.tasks.TaskNotCancelable",
@@ -3106,7 +3514,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.VersionNotSupported",
-            "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -3298,9 +3706,54 @@
         ],
         "additionalProperties": false
       },
+      "a2a.tasks.CreateTaskPushNotificationConfig.assigned.Response": {
+        "additionalProperties": false,
+        "description": "Taken when no other outcome's condition matched. A `a2a.tasks.PushNotificationConfig` now exists, in `Active`. Its identity is published as `row` on `a2a.tasks.PushNotificationConfigCreated`. Emits `PushNotificationConfigCreated`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "assigned",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "a2a.tasks.PushNotificationConfigCreated",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/a2a.tasks.PushNotificationConfigCreated.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          },
+          "response": {
+            "$ref": "#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.Result"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "response"
+        ],
+        "type": "object"
+      },
       "a2a.tasks.CreateTaskPushNotificationConfig.created.Response": {
         "additionalProperties": false,
-        "description": "Taken when no other outcome's condition matched. A `a2a.tasks.PushNotificationConfig` now exists, in `Active`. Its identity is published as `config_id` on `a2a.tasks.PushNotificationConfigCreated`. Emits `PushNotificationConfigCreated`, published to consumers and listed under `published`.",
+        "description": "Taken when `defined(id)` holds of the input. A `a2a.tasks.PushNotificationConfig` now exists, in `Active`. Its identity is published as `row` on `a2a.tasks.PushNotificationConfigCreated`. Emits `PushNotificationConfigCreated`, published to consumers and listed under `published`.",
         "properties": {
           "outcome": {
             "const": "created",
@@ -3349,7 +3802,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.ExtensionSupportRequired",
-            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -3427,7 +3880,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.VersionNotSupported",
-            "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -3471,29 +3924,9 @@
         ],
         "additionalProperties": false
       },
-      "a2a.tasks.DeleteTaskPushNotificationConfig.already-gone.Response": {
-        "additionalProperties": false,
-        "description": "Taken when the request names an identity no record carries.",
-        "properties": {
-          "outcome": {
-            "const": "already-gone",
-            "description": "Which declared outcome the command took."
-          },
-          "published": {
-            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
-            "maxItems": 0,
-            "type": "array"
-          }
-        },
-        "required": [
-          "outcome",
-          "published"
-        ],
-        "type": "object"
-      },
       "a2a.tasks.DeleteTaskPushNotificationConfig.deleted.Response": {
         "additionalProperties": false,
-        "description": "Taken when no other outcome's condition matched. A `a2a.tasks.PushNotificationConfig` no longer exists. The instance is the one `id` names. Emits `PushNotificationConfigDeleted`, published to consumers and listed under `published`.",
+        "description": "Taken when no other outcome's condition matched. A `a2a.tasks.Task` has changed, and its state is unchanged. The instance is the one `task_id` names. Emits `PushNotificationConfigDeleted`, published to consumers and listed under `published`.",
         "properties": {
           "outcome": {
             "const": "deleted",
@@ -3538,7 +3971,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.ExtensionSupportRequired",
-            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -3586,7 +4019,7 @@
       },
       "a2a.tasks.DeleteTaskPushNotificationConfig.task-not-found.Response": {
         "additionalProperties": false,
-        "description": "Taken when no `a2a.tasks.Task` carries the identity `input.task_id` names.",
+        "description": "Taken when the request names an identity no record carries.",
         "properties": {
           "error": {
             "const": "a2a.tasks.TaskNotFound",
@@ -3616,7 +4049,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.VersionNotSupported",
-            "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -3797,7 +4230,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.ExtensionSupportRequired",
-            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -3873,7 +4306,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.VersionNotSupported",
-            "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -3933,13 +4366,39 @@
         ],
         "additionalProperties": false
       },
+      "a2a.tasks.GetTaskPushNotificationConfig.config-not-found.Response": {
+        "additionalProperties": false,
+        "description": "Taken when, of the `a2a.tasks.PushNotificationConfig` rows whose stored fields satisfy `(task_id == input.task_id and config_id == input.id)` before the outcome, no row is selected.",
+        "properties": {
+          "error": {
+            "const": "a2a.tasks.TaskNotFound",
+            "description": "TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "config-not-found",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
       "a2a.tasks.GetTaskPushNotificationConfig.extension-required.Response": {
         "additionalProperties": false,
         "description": "Decided outside the request: the agent card marks an extension required and the request does not declare it.",
         "properties": {
           "error": {
             "const": "a2a.tasks.ExtensionSupportRequired",
-            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -3961,7 +4420,7 @@
       },
       "a2a.tasks.GetTaskPushNotificationConfig.found.Response": {
         "additionalProperties": false,
-        "description": "Taken when no other outcome's condition matched. The existing `a2a.tasks.PushNotificationConfig` is preserved without an error or event. The instance is the one `id` names.",
+        "description": "Taken when no other outcome's condition matched. The existing `a2a.tasks.Task` is preserved without an error or event. The instance is the one `task_id` names.",
         "properties": {
           "outcome": {
             "const": "found",
@@ -4009,32 +4468,6 @@
         ],
         "type": "object"
       },
-      "a2a.tasks.GetTaskPushNotificationConfig.other-task.Response": {
-        "additionalProperties": false,
-        "description": "Taken when the existing subject's stored fields satisfy `task_id != input.task_id`.",
-        "properties": {
-          "error": {
-            "const": "a2a.tasks.TaskNotFound",
-            "description": "TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.",
-            "type": "string"
-          },
-          "outcome": {
-            "const": "other-task",
-            "description": "Which declared outcome the command took."
-          },
-          "published": {
-            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
-            "maxItems": 0,
-            "type": "array"
-          }
-        },
-        "required": [
-          "outcome",
-          "published",
-          "error"
-        ],
-        "type": "object"
-      },
       "a2a.tasks.GetTaskPushNotificationConfig.push-not-supported.Response": {
         "additionalProperties": false,
         "description": "Decided outside the request: the agent card does not declare capabilities.pushNotifications.",
@@ -4067,7 +4500,183 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.VersionNotSupported",
-            "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "version-not-supported",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "a2a.tasks.ListTaskPushNotificationConfigs.Input": {
+        "title": "List push notification configs input",
+        "description": "Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; GET /tasks/{task_id}/pushNotificationConfigs).",
+        "x-ess-name": "a2a.tasks.ListTaskPushNotificationConfigs",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "taskId": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskId",
+            "x-ess-field": "task_id"
+          },
+          "pageSize": {
+            "x-ess-field": "page_size",
+            "type": "integer"
+          },
+          "pageToken": {
+            "x-ess-field": "page_token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "taskId"
+        ],
+        "additionalProperties": false
+      },
+      "a2a.tasks.ListTaskPushNotificationConfigs.Result": {
+        "title": "List push notification configs response",
+        "description": "Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; GET /tasks/{task_id}/pushNotificationConfigs).",
+        "x-ess-name": "a2a.tasks.ListTaskPushNotificationConfigs",
+        "x-ess-kind": "command-response",
+        "type": "object",
+        "properties": {
+          "configs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/a2a.tasks.TaskPushNotificationConfig"
+            }
+          },
+          "nextPageToken": {
+            "x-ess-field": "next_page_token",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "a2a.tasks.ListTaskPushNotificationConfigs.extension-required.Response": {
+        "additionalProperties": false,
+        "description": "Decided outside the request: the agent card marks an extension required and the request does not declare it.",
+        "properties": {
+          "error": {
+            "const": "a2a.tasks.ExtensionSupportRequired",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "extension-required",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "a2a.tasks.ListTaskPushNotificationConfigs.listed.Response": {
+        "additionalProperties": false,
+        "description": "Taken when no other outcome's condition matched. The existing `a2a.tasks.Task` is preserved without an error or event. The instance is the one `task_id` names.",
+        "properties": {
+          "outcome": {
+            "const": "listed",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          },
+          "response": {
+            "$ref": "#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.Result"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "response"
+        ],
+        "type": "object"
+      },
+      "a2a.tasks.ListTaskPushNotificationConfigs.push-not-supported.Response": {
+        "additionalProperties": false,
+        "description": "Decided outside the request: the agent card does not declare capabilities.pushNotifications.",
+        "properties": {
+          "error": {
+            "const": "a2a.tasks.PushNotificationNotSupported",
+            "description": "PushNotificationNotSupportedError (JSON-RPC -32003, HTTP 400): the agent card does not declare capabilities.pushNotifications.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "push-not-supported",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "a2a.tasks.ListTaskPushNotificationConfigs.task-not-found.Response": {
+        "additionalProperties": false,
+        "description": "Taken when the request names an identity no record carries.",
+        "properties": {
+          "error": {
+            "const": "a2a.tasks.TaskNotFound",
+            "description": "TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "task-not-found",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "a2a.tasks.ListTaskPushNotificationConfigs.version-not-supported.Response": {
+        "additionalProperties": false,
+        "description": "Decided outside the request: the A2A-Version service parameter names a version the agent does not support.",
+        "properties": {
+          "error": {
+            "const": "a2a.tasks.VersionNotSupported",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -4182,6 +4791,9 @@
         "x-ess-kind": "event-payload",
         "type": "object",
         "properties": {
+          "row": {
+            "$ref": "#/components/schemas/a2a.tasks.PushNotificationConfigRow"
+          },
           "config_id": {
             "$ref": "#/components/schemas/a2a.tasks.PushNotificationConfigId"
           },
@@ -4190,6 +4802,7 @@
           }
         },
         "required": [
+          "row",
           "config_id",
           "task_id"
         ],
@@ -4220,6 +4833,12 @@
         "x-ess-kind": "newtype",
         "type": "string"
       },
+      "a2a.tasks.PushNotificationConfigRow": {
+        "title": "PushNotificationConfigRow",
+        "x-ess-name": "a2a.tasks.PushNotificationConfigRow",
+        "x-ess-kind": "newtype",
+        "type": "string"
+      },
       "a2a.tasks.PushNotificationConfigs.Response": {
         "additionalProperties": false,
         "description": "The rows of `a2a.tasks.PushNotificationConfigs`.",
@@ -4243,7 +4862,10 @@
         "x-ess-kind": "view-row",
         "type": "object",
         "properties": {
-          "id": {
+          "row": {
+            "$ref": "#/components/schemas/a2a.tasks.PushNotificationConfigRow"
+          },
+          "config_id": {
             "$ref": "#/components/schemas/a2a.tasks.PushNotificationConfigId"
           },
           "state": {
@@ -4266,7 +4888,8 @@
           }
         },
         "required": [
-          "id",
+          "row",
+          "config_id",
           "state",
           "task_id",
           "url"
@@ -4703,7 +5326,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.ContextMismatch",
-            "description": "The message's contextId differs from the contextId of the task it names.",
+            "description": "InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the message's contextId differs from the contextId of the task it names.",
             "type": "string"
           },
           "outcome": {
@@ -4723,9 +5346,35 @@
         ],
         "type": "object"
       },
+      "a2a.tasks.SendMessage.context-not-accepted.Response": {
+        "additionalProperties": false,
+        "description": "Decided outside the request: the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1).",
+        "properties": {
+          "error": {
+            "const": "a2a.tasks.ContextNotAccepted",
+            "description": "InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the agent cannot accept the contextId the client provided.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "context-not-accepted",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
       "a2a.tasks.SendMessage.continued.Response": {
         "additionalProperties": false,
-        "description": "The agent answers with the task the message continued. Decided outside the request: message.taskId names a non-terminal task, and the agent takes the message into it.",
+        "description": "The agent answers with the task the message continued, in the state it holds. Decided outside the request: message.taskId names a non-terminal task, and the agent takes the message into it.",
         "properties": {
           "outcome": {
             "const": "continued",
@@ -4777,7 +5426,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.ExtensionSupportRequired",
-            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -4799,7 +5448,7 @@
       },
       "a2a.tasks.SendMessage.task-created.Response": {
         "additionalProperties": false,
-        "description": "A new task in Submitted; the agent works on it after the answer. Taken when no other outcome's condition matched. A `a2a.tasks.Task` now exists, in `Submitted`. Its identity is published as `task_id` on `a2a.tasks.TaskCreated`. Emits `TaskCreated`, published to consumers and listed under `published`.",
+        "description": "A new task. With returnImmediately true the answer carries it as created; otherwise the answer waits until it is terminal or interrupted. Taken when no other outcome's condition matched. A `a2a.tasks.Task` now exists, in `Submitted`. Its identity is published as `task_id` on `a2a.tasks.TaskCreated`. Emits `TaskCreated`, published to consumers and listed under `published`.",
         "properties": {
           "outcome": {
             "const": "task-created",
@@ -4900,7 +5549,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.VersionNotSupported",
-            "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -4950,7 +5599,7 @@
       },
       "a2a.tasks.SendStreamingMessage.Input": {
         "title": "Send streaming message input",
-        "description": "Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal or interrupted (A2A v1.0.1 section 3.1.2; POST /message:stream).",
+        "description": "Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).",
         "x-ess-name": "a2a.tasks.SendStreamingMessage",
         "x-ess-kind": "command-input",
         "type": "object",
@@ -4973,7 +5622,7 @@
       },
       "a2a.tasks.SendStreamingMessage.Result": {
         "title": "Send streaming message response",
-        "description": "Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal or interrupted (A2A v1.0.1 section 3.1.2; POST /message:stream).",
+        "description": "Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).",
         "x-ess-name": "a2a.tasks.SendStreamingMessage",
         "x-ess-kind": "command-response",
         "type": "object",
@@ -5020,7 +5669,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.ContextMismatch",
-            "description": "The message's contextId differs from the contextId of the task it names.",
+            "description": "InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the message's contextId differs from the contextId of the task it names.",
             "type": "string"
           },
           "outcome": {
@@ -5040,9 +5689,35 @@
         ],
         "type": "object"
       },
+      "a2a.tasks.SendStreamingMessage.context-not-accepted.Response": {
+        "additionalProperties": false,
+        "description": "Decided outside the request: the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1).",
+        "properties": {
+          "error": {
+            "const": "a2a.tasks.ContextNotAccepted",
+            "description": "InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the agent cannot accept the contextId the client provided.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "context-not-accepted",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
       "a2a.tasks.SendStreamingMessage.continued.Response": {
         "additionalProperties": false,
-        "description": "The agent answers with the task the message continued. Decided outside the request: message.taskId names a non-terminal task, and the agent takes the message into it.",
+        "description": "The agent answers with the task the message continued, in the state it holds. Decided outside the request: message.taskId names a non-terminal task, and the agent takes the message into it.",
         "properties": {
           "outcome": {
             "const": "continued",
@@ -5094,7 +5769,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.ExtensionSupportRequired",
-            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -5243,7 +5918,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.VersionNotSupported",
-            "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -5420,7 +6095,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.ExtensionSupportRequired",
-            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+            "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -5548,7 +6223,7 @@
         "properties": {
           "error": {
             "const": "a2a.tasks.VersionNotSupported",
-            "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+            "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
             "type": "string"
           },
           "outcome": {
@@ -5583,6 +6258,39 @@
           "Submitted",
           "Working"
         ]
+      },
+      "a2a.tasks.TaskArtifactUpdated.Event": {
+        "title": "TaskArtifactUpdated payload",
+        "description": "An artifact the agent generated; streamed and pushed as the a2a.proto message TaskArtifactUpdateEvent, whose task_id, context_id and artifact it marks REQUIRED.",
+        "x-ess-name": "a2a.tasks.TaskArtifactUpdated",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskId",
+            "x-ess-field": "task_id"
+          },
+          "contextId": {
+            "$ref": "#/components/schemas/a2a.tasks.ContextId",
+            "x-ess-field": "context_id"
+          },
+          "artifact": {
+            "$ref": "#/components/schemas/a2a.tasks.Artifact"
+          },
+          "append": {
+            "type": "boolean"
+          },
+          "lastChunk": {
+            "x-ess-field": "last_chunk",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "taskId",
+          "contextId",
+          "artifact"
+        ],
+        "additionalProperties": false
       },
       "a2a.tasks.TaskCreated.Event": {
         "title": "TaskCreated payload",
@@ -5661,7 +6369,7 @@
         "x-ess-kind": "view-row",
         "type": "object",
         "properties": {
-          "id": {
+          "config_id": {
             "$ref": "#/components/schemas/a2a.tasks.PushNotificationConfigId"
           },
           "task_id": {
@@ -5681,7 +6389,7 @@
           }
         },
         "required": [
-          "id",
+          "config_id",
           "task_id",
           "url"
         ],
@@ -5781,7 +6489,7 @@
       },
       "a2a.tasks.TaskStatusUpdated.Event": {
         "title": "TaskStatusUpdated payload",
-        "description": "Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.",
+        "description": "Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent, whose task_id, context_id and status a2a.proto marks REQUIRED.",
         "x-ess-name": "a2a.tasks.TaskStatusUpdated",
         "x-ess-kind": "event-payload",
         "type": "object",
@@ -5791,11 +6499,15 @@
           },
           "context_id": {
             "$ref": "#/components/schemas/a2a.tasks.ContextId"
+          },
+          "status": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskStatus"
           }
         },
         "required": [
           "task_id",
-          "context_id"
+          "context_id",
+          "status"
         ],
         "additionalProperties": false
       },
@@ -5858,6 +6570,101 @@
           "state"
         ],
         "additionalProperties": false
+      },
+      "a2a.tasks.UpdateArtifact.Input": {
+        "title": "Update artifact input",
+        "description": "The agent generates an artifact of the task, or a chunk of one (TaskArtifactUpdateEvent).",
+        "x-ess-name": "a2a.tasks.UpdateArtifact",
+        "x-ess-kind": "command-input",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskId"
+          },
+          "artifact": {
+            "$ref": "#/components/schemas/a2a.tasks.Artifact"
+          },
+          "append": {
+            "type": "boolean"
+          },
+          "last_chunk": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "artifact",
+          "append",
+          "last_chunk"
+        ],
+        "additionalProperties": false
+      },
+      "a2a.tasks.UpdateArtifact.not-found.Response": {
+        "additionalProperties": false,
+        "description": "Taken when the request names an identity no record carries.",
+        "properties": {
+          "error": {
+            "const": "a2a.tasks.TaskNotFound",
+            "description": "TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "not-found",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "maxItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published",
+          "error"
+        ],
+        "type": "object"
+      },
+      "a2a.tasks.UpdateArtifact.updated.Response": {
+        "additionalProperties": false,
+        "description": "Taken when no other outcome's condition matched. A `a2a.tasks.Task` has changed, and its state is unchanged. The instance is the one `id` names. Emits `TaskArtifactUpdated`, published to consumers and listed under `published`.",
+        "properties": {
+          "outcome": {
+            "const": "updated",
+            "description": "Which declared outcome the command took."
+          },
+          "published": {
+            "description": "Every event this branch published, in publication order: its qualified name and its payload.",
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "a2a.tasks.TaskArtifactUpdated",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/a2a.tasks.TaskArtifactUpdated.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "published"
+        ],
+        "type": "object"
       }
     }
   },
@@ -6006,12 +6813,15 @@
     },
     "a2a.tasks.PushNotificationConfig": {
       "title": "PushNotificationConfig",
-      "description": "A webhook the agent posts task updates to. It persists until the task completes or the client deletes it (A2A v1.0.1 section 3.1.7).",
+      "description": "A webhook the agent posts task updates to. A2A v1.0.1 section 3.1.7: \"The configuration MUST persist until task completion or explicit deletion\"; it states no end of a configuration, so it lives until DeleteTaskPushNotificationConfig removes it.",
       "x-ess-name": "a2a.tasks.PushNotificationConfig",
       "x-ess-kind": "entity",
       "type": "object",
       "properties": {
-        "id": {
+        "row": {
+          "$ref": "#/x-ess-entities/a2a.tasks.PushNotificationConfigRow"
+        },
+        "config_id": {
           "$ref": "#/x-ess-entities/a2a.tasks.PushNotificationConfigId"
         },
         "task_id": {
@@ -6043,7 +6853,8 @@
         }
       },
       "required": [
-        "id",
+        "row",
+        "config_id",
         "task_id",
         "url",
         "state"
@@ -6062,6 +6873,12 @@
     "a2a.tasks.PushNotificationConfigId": {
       "title": "PushNotificationConfigId",
       "x-ess-name": "a2a.tasks.PushNotificationConfigId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.PushNotificationConfigRow": {
+      "title": "PushNotificationConfigRow",
+      "x-ess-name": "a2a.tasks.PushNotificationConfigRow",
       "x-ess-kind": "newtype",
       "type": "string"
     },

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VersionNotSupported payload",
+  "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
+  "x-ess-name": "a2a.discovery.VersionNotSupported",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:cfdca77ed25493f03c7a99eb1be518d664f641425d96c6d09b2c5fb3f4bfb23d",
+    "regenerate": "ess generate"
+  }
+}

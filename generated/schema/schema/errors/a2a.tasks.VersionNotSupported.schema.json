@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "VersionNotSupported payload",
-  "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+  "description": "VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).",
   "x-ess-name": "a2a.tasks.VersionNotSupported",
   "x-ess-kind": "error-payload",
   "type": "object",
@@ -9,8 +9,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
-    "contract_digest": "slice-sha256/2:76c0fe4363096281999e06a185d581f23ce29b9abf737d84d15a21d663f04ecb",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:2e4a8eb985d676106273ff3aaeac15a39a1a917f72ec6229ae35a27243058ed2",
     "regenerate": "ess generate"
   }
 }

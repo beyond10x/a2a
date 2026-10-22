@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-// contract digest f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea
+// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Tasks — `a2a.tasks`.
@@ -100,6 +100,10 @@ pub enum PushNotificationConfigState {
 /// PushNotificationConfigId — `a2a.tasks.PushNotificationConfigId`: a distinct wrapper around `String`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushNotificationConfigId(pub String);
+
+/// PushNotificationConfigRow — `a2a.tasks.PushNotificationConfigRow`: a distinct wrapper around `String`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PushNotificationConfigRow(pub String);
 
 /// Role — `a2a.tasks.Role`: one of a closed set of names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -229,8 +233,10 @@ pub struct TaskStatus {
 /// is carried by the type parameter of [`PushNotificationConfig<S>`], and at a boundary by [`PushNotificationConfigSnapshot::state`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushNotificationConfigData {
-    /// The identity: `id` — `a2a.tasks.PushNotificationConfigId`.
-    pub id: PushNotificationConfigId,
+    /// The identity: `row` — `a2a.tasks.PushNotificationConfigRow`.
+    pub row: PushNotificationConfigRow,
+    /// `config_id` — `a2a.tasks.PushNotificationConfigId`.
+    pub config_id: PushNotificationConfigId,
     /// `task_id` — `a2a.tasks.TaskId`.
     ///
     /// Carries `push_notification_configs`: `a2a.tasks.Task` owns many `a2a.tasks.PushNotificationConfig`.
@@ -512,6 +518,14 @@ impl Task<task_state::AuthRequired> {
         }
     }
 
+    /// `require_input` — `AuthRequired` → `InputRequired`. Taken by the `moved` outcome of `a2a.tasks.RequireInput`.
+    pub fn require_input(self) -> Task<task_state::InputRequired> {
+        Task {
+            data: self.data,
+            state: core::marker::PhantomData,
+        }
+    }
+
     /// `complete` — `AuthRequired` → `Completed`. Taken by the `moved` outcome of `a2a.tasks.CompleteTask`.
     pub fn complete(self) -> Task<task_state::Completed> {
         Task {
@@ -548,6 +562,14 @@ impl Task<task_state::AuthRequired> {
 impl Task<task_state::InputRequired> {
     /// `work` — `InputRequired` → `Working`. Taken by the `moved` outcome of `a2a.tasks.StartWorking`.
     pub fn work(self) -> Task<task_state::Working> {
+        Task {
+            data: self.data,
+            state: core::marker::PhantomData,
+        }
+    }
+
+    /// `require_auth` — `InputRequired` → `AuthRequired`. Taken by the `moved` outcome of `a2a.tasks.RequireAuth`.
+    pub fn require_auth(self) -> Task<task_state::AuthRequired> {
         Task {
             data: self.data,
             state: core::marker::PhantomData,
@@ -872,7 +894,7 @@ pub enum CancelTaskOutcome {
     },
     /// `not-cancelable` — from a state no declared move starts in.
     ///
-    /// The task is in a terminal state.
+    /// The task is in a terminal state, Canceled included.
     NotCancelable {
         /// Why it was refused: `a2a.tasks.TaskNotCancelable`.
         error: TaskNotCancelable,
@@ -966,8 +988,15 @@ pub enum CreateTaskPushNotificationConfigOutcome {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
     },
-    /// `created` — otherwise.
+    /// `created` — when `defined(id)`.
     Created {
+        /// Actual response returned by this branch.
+        response: CreateTaskPushNotificationConfigResponse,
+        /// The `a2a.tasks.PushNotificationConfigCreated` this outcome publishes.
+        push_notification_config_created: PushNotificationConfigCreated,
+    },
+    /// `assigned` — otherwise.
+    Assigned {
         /// Actual response returned by this branch.
         response: CreateTaskPushNotificationConfigResponse,
         /// The `a2a.tasks.PushNotificationConfigCreated` this outcome publishes.
@@ -1012,13 +1041,11 @@ pub struct DeleteTaskPushNotificationConfig {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DeleteTaskPushNotificationConfigOutcome {
-    /// `task-not-found` — when no `a2a.tasks.Task` carries the identity `input.task_id` names.
+    /// `task-not-found` — for an identity no record carries.
     TaskNotFound {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
     },
-    /// `already-gone` — for an identity no record carries.
-    AlreadyGone,
     /// `deleted` — otherwise.
     Deleted {
         /// The `a2a.tasks.PushNotificationConfigDeleted` this outcome publishes.
@@ -1158,13 +1185,28 @@ pub struct GetTaskPushNotificationConfigResponse {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GetTaskPushNotificationConfigOutcome {
+    /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
+    VersionNotSupported {
+        /// Why it was refused: `a2a.tasks.VersionNotSupported`.
+        error: VersionNotSupported,
+    },
+    /// `extension-required` — externally decided (the agent card marks an extension required and the request does not declare it).
+    ExtensionRequired {
+        /// Why it was refused: `a2a.tasks.ExtensionSupportRequired`.
+        error: ExtensionSupportRequired,
+    },
+    /// `push-not-supported` — externally decided (the agent card does not declare capabilities.pushNotifications).
+    PushNotSupported {
+        /// Why it was refused: `a2a.tasks.PushNotificationNotSupported`.
+        error: PushNotificationNotSupported,
+    },
     /// `not-found` — for an identity no record carries.
     NotFound {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
     },
-    /// `other-task` — when the existing subject's stored fields satisfy `task_id != input.task_id`.
-    OtherTask {
+    /// `config-not-found` — when, of the `a2a.tasks.PushNotificationConfig` rows satisfying `(task_id == input.task_id and config_id == input.id)`, no row is selected.
+    ConfigNotFound {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
     },
@@ -1172,6 +1214,51 @@ pub enum GetTaskPushNotificationConfigOutcome {
     Found {
         /// Actual response returned by this branch.
         response: GetTaskPushNotificationConfigResponse,
+    },
+}
+
+/// List push notification configs — the input of `a2a.tasks.ListTaskPushNotificationConfigs`.
+///
+/// Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; GET /tasks/{task_id}/pushNotificationConfigs).
+///
+/// Everything it can result in is [`ListTaskPushNotificationConfigsOutcome`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ListTaskPushNotificationConfigs {
+    /// `tenant` — `Optional<String>`.
+    pub tenant: Option<String>,
+    /// `task_id` — `a2a.tasks.TaskId`.
+    pub task_id: TaskId,
+    /// `page_size` — `Optional<Integer>`.
+    pub page_size: Option<i64>,
+    /// `page_token` — `Optional<String>`.
+    pub page_token: Option<String>,
+}
+
+/// Actual typed response of `a2a.tasks.ListTaskPushNotificationConfigs`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ListTaskPushNotificationConfigsResponse {
+    /// `configs` — `Optional<List<a2a.tasks.TaskPushNotificationConfig>>`.
+    pub configs: Option<Vec<TaskPushNotificationConfig>>,
+    /// `next_page_token` — `Optional<String>`.
+    pub next_page_token: Option<String>,
+}
+
+/// Everything `a2a.tasks.ListTaskPushNotificationConfigs` can result in — one variant per declared outcome.
+///
+/// An infrastructure failure is deliberately not in here: a refusal is a fact about the domain,
+/// a transport fault is a fact about the run, and conflating the two is what the declared
+/// outcomes exist to prevent.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ListTaskPushNotificationConfigsOutcome {
+    /// `task-not-found` — for an identity no record carries.
+    TaskNotFound {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
+    /// `listed` — otherwise.
+    Listed {
+        /// Actual response returned by this branch.
+        response: ListTaskPushNotificationConfigsResponse,
     },
     /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
     VersionNotSupported {
@@ -1349,6 +1436,11 @@ pub enum SendMessageOutcome {
         /// Why it was refused: `a2a.tasks.ContextMismatch`.
         error: ContextMismatch,
     },
+    /// `context-not-accepted` — externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)).
+    ContextNotAccepted {
+        /// Why it was refused: `a2a.tasks.ContextNotAccepted`.
+        error: ContextNotAccepted,
+    },
     /// `content-type-not-supported` — externally decided (a part's media type is not supported by the agent).
     ContentTypeNotSupported {
         /// Why it was refused: `a2a.tasks.ContentTypeNotSupported`.
@@ -1356,7 +1448,7 @@ pub enum SendMessageOutcome {
     },
     /// `continued` — externally decided (message.taskId names a non-terminal task, and the agent takes the message into it).
     ///
-    /// The agent answers with the task the message continued.
+    /// The agent answers with the task the message continued, in the state it holds.
     Continued {
         /// Actual response returned by this branch.
         response: SendMessageResponse,
@@ -1368,7 +1460,7 @@ pub enum SendMessageOutcome {
     },
     /// `task-created` — otherwise.
     ///
-    /// A new task in Submitted; the agent works on it after the answer.
+    /// A new task. With returnImmediately true the answer carries it as created; otherwise the answer waits until it is terminal or interrupted.
     TaskCreated {
         /// Actual response returned by this branch.
         response: SendMessageResponse,
@@ -1389,7 +1481,7 @@ pub enum SendMessageOutcome {
 
 /// Send streaming message — the input of `a2a.tasks.SendStreamingMessage`.
 ///
-/// Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal or interrupted (A2A v1.0.1 section 3.1.2; POST /message:stream).
+/// Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).
 ///
 /// Everything it can result in is [`SendStreamingMessageOutcome`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1435,6 +1527,11 @@ pub enum SendStreamingMessageOutcome {
         /// Why it was refused: `a2a.tasks.ContextMismatch`.
         error: ContextMismatch,
     },
+    /// `context-not-accepted` — externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)).
+    ContextNotAccepted {
+        /// Why it was refused: `a2a.tasks.ContextNotAccepted`.
+        error: ContextNotAccepted,
+    },
     /// `content-type-not-supported` — externally decided (a part's media type is not supported by the agent).
     ContentTypeNotSupported {
         /// Why it was refused: `a2a.tasks.ContentTypeNotSupported`.
@@ -1442,7 +1539,7 @@ pub enum SendStreamingMessageOutcome {
     },
     /// `continued` — externally decided (message.taskId names a non-terminal task, and the agent takes the message into it).
     ///
-    /// The agent answers with the task the message continued.
+    /// The agent answers with the task the message continued, in the state it holds.
     Continued {
         /// Actual response returned by this branch.
         response: SendStreamingMessageResponse,
@@ -1574,9 +1671,47 @@ pub enum SubscribeToTaskOutcome {
     },
 }
 
+/// Update artifact — the input of `a2a.tasks.UpdateArtifact`.
+///
+/// The agent generates an artifact of the task, or a chunk of one (TaskArtifactUpdateEvent).
+///
+/// Everything it can result in is [`UpdateArtifactOutcome`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UpdateArtifact {
+    /// `id` — `a2a.tasks.TaskId`.
+    pub id: TaskId,
+    /// `artifact` — `a2a.tasks.Artifact`.
+    pub artifact: Artifact,
+    /// `append` — `Boolean`.
+    pub append: bool,
+    /// `last_chunk` — `Boolean`.
+    pub last_chunk: bool,
+}
+
+/// Everything `a2a.tasks.UpdateArtifact` can result in — one variant per declared outcome.
+///
+/// An infrastructure failure is deliberately not in here: a refusal is a fact about the domain,
+/// a transport fault is a fact about the run, and conflating the two is what the declared
+/// outcomes exist to prevent.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum UpdateArtifactOutcome {
+    /// `not-found` — for an identity no record carries.
+    NotFound {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
+    /// `updated` — otherwise.
+    Updated {
+        /// The `a2a.tasks.TaskArtifactUpdated` this outcome publishes.
+        task_artifact_updated: TaskArtifactUpdated,
+    },
+}
+
 /// PushNotificationConfigCreated — the event `a2a.tasks.PushNotificationConfigCreated`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushNotificationConfigCreated {
+    /// `row` — `a2a.tasks.PushNotificationConfigRow`.
+    pub row: PushNotificationConfigRow,
     /// `config_id` — `a2a.tasks.PushNotificationConfigId`.
     pub config_id: PushNotificationConfigId,
     /// `task_id` — `a2a.tasks.TaskId`.
@@ -1592,6 +1727,23 @@ pub struct PushNotificationConfigDeleted {
     pub task_id: TaskId,
 }
 
+/// TaskArtifactUpdated — the event `a2a.tasks.TaskArtifactUpdated`.
+///
+/// An artifact the agent generated; streamed and pushed as the a2a.proto message TaskArtifactUpdateEvent, whose task_id, context_id and artifact it marks REQUIRED.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TaskArtifactUpdated {
+    /// `task_id` — `a2a.tasks.TaskId`.
+    pub task_id: TaskId,
+    /// `context_id` — `a2a.tasks.ContextId`.
+    pub context_id: ContextId,
+    /// `artifact` — `a2a.tasks.Artifact`.
+    pub artifact: Artifact,
+    /// `append` — `Optional<Boolean>`.
+    pub append: Option<bool>,
+    /// `last_chunk` — `Optional<Boolean>`.
+    pub last_chunk: Option<bool>,
+}
+
 /// TaskCreated — the event `a2a.tasks.TaskCreated`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskCreated {
@@ -1601,13 +1753,15 @@ pub struct TaskCreated {
 
 /// TaskStatusUpdated — the event `a2a.tasks.TaskStatusUpdated`.
 ///
-/// Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.
+/// Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent, whose task_id, context_id and status a2a.proto marks REQUIRED.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskStatusUpdated {
     /// `task_id` — `a2a.tasks.TaskId`.
     pub task_id: TaskId,
     /// `context_id` — `a2a.tasks.ContextId`.
     pub context_id: ContextId,
+    /// `status` — `a2a.tasks.TaskStatus`.
+    pub status: TaskStatus,
 }
 
 /// The declared error `a2a.tasks.ContentTypeNotSupported`.
@@ -1618,13 +1772,19 @@ pub struct ContentTypeNotSupported;
 
 /// The declared error `a2a.tasks.ContextMismatch`.
 ///
-/// The message's contextId differs from the contextId of the task it names.
+/// InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the message's contextId differs from the contextId of the task it names.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContextMismatch;
 
+/// The declared error `a2a.tasks.ContextNotAccepted`.
+///
+/// InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the agent cannot accept the contextId the client provided.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContextNotAccepted;
+
 /// The declared error `a2a.tasks.ExtensionSupportRequired`.
 ///
-/// ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).
+/// ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtensionSupportRequired;
 
@@ -1663,9 +1823,34 @@ pub struct UnsupportedOperation;
 
 /// The declared error `a2a.tasks.VersionNotSupported`.
 ///
-/// VersionNotSupportedError (JSON-RPC -32009, HTTP 400).
+/// VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VersionNotSupported;
+
+/// All tasks — one row of the view `a2a.tasks.AllTasks`.
+///
+/// Projects `a2a.tasks.Task` at `read_your_writes` consistency.
+/// The specification fully determines every row, so its query is generated over the storage port —
+/// see the plan.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AllTasks {
+    /// `id` — `a2a.tasks.TaskId`.
+    pub id: TaskId,
+    /// `context_id` — `a2a.tasks.ContextId`.
+    pub context_id: ContextId,
+    /// `state` — `a2a.tasks.Task.State`.
+    pub state: TaskState,
+    /// `status_message` — `Optional<a2a.tasks.Message>`.
+    pub status_message: Option<Message>,
+    /// `status_timestamp` — `Optional<Timestamp>`.
+    pub status_timestamp: Option<crate::primitives::Timestamp>,
+    /// `artifacts` — `Optional<List<a2a.tasks.Artifact>>`.
+    pub artifacts: Option<Vec<Artifact>>,
+    /// `history` — `Optional<List<a2a.tasks.Message>>`.
+    pub history: Option<Vec<Message>>,
+    /// `metadata` — `Optional<Json>`.
+    pub metadata: Option<crate::json::Value>,
+}
 
 /// All push notification configs — one row of the view `a2a.tasks.PushNotificationConfigs`.
 ///
@@ -1674,8 +1859,10 @@ pub struct VersionNotSupported;
 /// see the plan.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushNotificationConfigs {
-    /// `id` — `a2a.tasks.PushNotificationConfigId`.
-    pub id: PushNotificationConfigId,
+    /// `row` — `a2a.tasks.PushNotificationConfigRow`.
+    pub row: PushNotificationConfigRow,
+    /// `config_id` — `a2a.tasks.PushNotificationConfigId`.
+    pub config_id: PushNotificationConfigId,
     /// `state` — `a2a.tasks.PushNotificationConfig.State`.
     pub state: PushNotificationConfigState,
     /// `task_id` — `a2a.tasks.TaskId`.
@@ -1697,8 +1884,8 @@ pub struct PushNotificationConfigs {
 /// current is a storage decision the specification does not take.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskPushNotificationConfigs {
-    /// `id` — `a2a.tasks.PushNotificationConfigId`.
-    pub id: PushNotificationConfigId,
+    /// `config_id` — `a2a.tasks.PushNotificationConfigId`.
+    pub config_id: PushNotificationConfigId,
     /// `task_id` — `a2a.tasks.TaskId`.
     pub task_id: TaskId,
     /// `tenant` — `Optional<String>`.
@@ -1713,9 +1900,9 @@ pub struct TaskPushNotificationConfigs {
 
 /// List tasks — one row of the view `a2a.tasks.Tasks`.
 ///
-/// Projects `a2a.tasks.Task` at `read_your_writes` consistency.
-/// The specification fully determines every row, so its query is generated over the storage port —
-/// see the plan.
+/// Projects `a2a.tasks.Task` at `read_your_writes` consistency, containing instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp))`.
+/// Serving it is an implementation obligation — see the plan — because how a projection is kept
+/// current is a storage decision the specification does not take.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tasks {
     /// `id` — `a2a.tasks.TaskId`.
@@ -1770,7 +1957,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.CreateTaskPushNotificationConfig` input, decide and enact exactly one outcome. Selection precedence: on commands with `when_related:`, check `existing_instance` then `exists: false` before input-guarded refusals; choose the first declared input refusal whose guard holds; then check addressed-row existence (`unknown_instance`, and `existing_instance` on commands without `when_related:`); then the held state (`when_subject_state` and `when_subject`), with `wrong_state` only if the selected branch moves from a state the row does not hold; then accepting and external branches in declaration order. An accepting branch that moves nothing answers in every state. Related-presence predicates do not precede input-guarded refusals. Declared outcomes (declaration order, not selection precedence): `task-not-found` when no `a2a.tasks.Task` carries the identity `input.task_id` names, error `a2a.tasks.TaskNotFound`; `created` otherwise, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`.
+    /// Contract: given `a2a.tasks.CreateTaskPushNotificationConfig` input, decide and enact exactly one outcome. Selection precedence: on commands with `when_related:`, check `existing_instance` then `exists: false` before input-guarded refusals; choose the first declared input refusal whose guard holds; then check addressed-row existence (`unknown_instance`, and `existing_instance` on commands without `when_related:`); then the held state (`when_subject_state` and `when_subject`), with `wrong_state` only if the selected branch moves from a state the row does not hold; then accepting and external branches in declaration order. An accepting branch that moves nothing answers in every state. Related-presence predicates do not precede input-guarded refusals. Declared outcomes (declaration order, not selection precedence): `task-not-found` when no `a2a.tasks.Task` carries the identity `input.task_id` names, error `a2a.tasks.TaskNotFound`; `created` when `defined(id)`, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`; `assigned` otherwise, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`.
     pub trait CreateTaskPushNotificationConfigBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.CreateTaskPushNotificationConfig`.
         ///
@@ -1781,9 +1968,9 @@ pub mod obligations {
 
     /// The behaviour `a2a.tasks.DeleteTaskPushNotificationConfig` — an implementation obligation.
     ///
-    /// Why it is not generated: kept an obligation by `external:` beside `when_related:` in one command.
+    /// Why it is not generated: kept an obligation by effects on filtered rows (`affects:`), in `deleted`.
     ///
-    /// Contract: given `a2a.tasks.DeleteTaskPushNotificationConfig` input, decide and enact exactly one outcome. Selection precedence: on commands with `when_related:`, check `existing_instance` then `exists: false` before input-guarded refusals; choose the first declared input refusal whose guard holds; then check addressed-row existence (`unknown_instance`, and `existing_instance` on commands without `when_related:`); then the held state (`when_subject_state` and `when_subject`), with `wrong_state` only if the selected branch moves from a state the row does not hold; then accepting and external branches in declaration order. An accepting branch that moves nothing answers in every state. Related-presence predicates do not precede input-guarded refusals. Declared outcomes (declaration order, not selection precedence): `task-not-found` when no `a2a.tasks.Task` carries the identity `input.task_id` names, error `a2a.tasks.TaskNotFound`; `already-gone` for an identity no record carries; `deleted` otherwise, deletes `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigDeleted`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`.
+    /// Contract: given `a2a.tasks.DeleteTaskPushNotificationConfig` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `deleted` otherwise, updates `a2a.tasks.Task`, removes, beside its subject, every `a2a.tasks.PushNotificationConfig` where `(task_id == subject.id and config_id == input.id)`, emits `a2a.tasks.PushNotificationConfigDeleted`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`.
     pub trait DeleteTaskPushNotificationConfigBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.DeleteTaskPushNotificationConfig`.
         ///
@@ -1820,13 +2007,26 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.GetTaskPushNotificationConfig` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `other-task` when the existing subject's stored fields satisfy `task_id != input.task_id`, error `a2a.tasks.TaskNotFound`; `found` otherwise, preserves `a2a.tasks.PushNotificationConfig`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`.
+    /// Contract: given `a2a.tasks.GetTaskPushNotificationConfig` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `config-not-found` when, of the `a2a.tasks.PushNotificationConfig` rows satisfying `(task_id == input.task_id and config_id == input.id)`, no row is selected, error `a2a.tasks.TaskNotFound`; `found` otherwise, preserves `a2a.tasks.Task`.
     pub trait GetTaskPushNotificationConfigBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.GetTaskPushNotificationConfig`.
         ///
         /// `Err` is the typed refusal of an obligation nothing has satisfied; a satisfying
         /// implementation never returns it.
         fn get_task_push_notification_config(&mut self, input: super::GetTaskPushNotificationConfig) -> Result<super::GetTaskPushNotificationConfigOutcome, crate::obligation::UnmetObligation>;
+    }
+
+    /// The behaviour `a2a.tasks.ListTaskPushNotificationConfigs` — an implementation obligation.
+    ///
+    /// Why it is not generated: kept an obligation by a typed response (`response:`).
+    ///
+    /// Contract: given `a2a.tasks.ListTaskPushNotificationConfigs` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `listed` otherwise, preserves `a2a.tasks.Task`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`.
+    pub trait ListTaskPushNotificationConfigsBehavior {
+        /// Decides and enacts exactly one declared outcome of `a2a.tasks.ListTaskPushNotificationConfigs`.
+        ///
+        /// `Err` is the typed refusal of an obligation nothing has satisfied; a satisfying
+        /// implementation never returns it.
+        fn list_task_push_notification_configs(&mut self, input: super::ListTaskPushNotificationConfigs) -> Result<super::ListTaskPushNotificationConfigsOutcome, crate::obligation::UnmetObligation>;
     }
 
     /// The behaviour `a2a.tasks.RejectTask` — generated.
@@ -1866,7 +2066,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.SendMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it); `direct-message` externally decided (the agent answers with a message and creates no task); `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`.
+    /// Contract: given `a2a.tasks.SendMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it); `direct-message` externally decided (the agent answers with a message and creates no task); `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`.
     pub trait SendMessageBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.SendMessage`.
         ///
@@ -1879,7 +2079,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.SendStreamingMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it); `direct-message` externally decided (the agent answers with a message and creates no task); `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`.
+    /// Contract: given `a2a.tasks.SendStreamingMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it); `direct-message` externally decided (the agent answers with a message and creates no task); `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`.
     pub trait SendStreamingMessageBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.SendStreamingMessage`.
         ///
@@ -1912,6 +2112,28 @@ pub mod obligations {
         fn subscribe_to_task(&mut self, input: super::SubscribeToTask) -> Result<super::SubscribeToTaskOutcome, crate::obligation::UnmetObligation>;
     }
 
+    /// The behaviour `a2a.tasks.UpdateArtifact` — generated.
+    ///
+    /// The specification fully determines it: [`crate::behaviour::Generated`] implements it
+    /// over the storage and context ports. Implement it yourself to replace that behaviour.
+    pub trait UpdateArtifactBehavior {
+        /// Decides and enacts exactly one declared outcome of `a2a.tasks.UpdateArtifact`.
+        ///
+        /// `Err` is the typed refusal of a request the model declares no outcome for.
+        fn update_artifact(&mut self, input: super::UpdateArtifact) -> Result<super::UpdateArtifactOutcome, crate::obligation::UnmetObligation>;
+    }
+
+    /// The query `a2a.tasks.AllTasks` — generated.
+    ///
+    /// The specification fully determines it: [`crate::behaviour::Generated`] implements it
+    /// over the storage port. Implement it yourself to replace that query.
+    pub trait AllTasksQuery {
+        /// Serves `a2a.tasks.AllTasks` rows at the view's declared consistency.
+        ///
+        /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
+        fn all_tasks(&self) -> Result<Vec<super::AllTasks>, crate::obligation::UnmetObligation>;
+    }
+
     /// The query `a2a.tasks.PushNotificationConfigs` — generated.
     ///
     /// The specification fully determines it: [`crate::behaviour::Generated`] implements it
@@ -1936,15 +2158,17 @@ pub mod obligations {
         fn task_push_notification_configs(&self, task_id: crate::tasks::TaskId) -> Result<Vec<super::TaskPushNotificationConfigs>, crate::obligation::UnmetObligation>;
     }
 
-    /// The query `a2a.tasks.Tasks` — generated.
+    /// The query `a2a.tasks.Tasks` — an implementation obligation.
     ///
-    /// The specification fully determines it: [`crate::behaviour::Generated`] implements it
-    /// over the storage port. Implement it yourself to replace that query.
+    /// Why it is not generated: kept an obligation by a view parameter (`params:`), which a generated query does not apply.
+    ///
+    /// Contract: a query answering `a2a.tasks.Tasks` with rows projected from `a2a.tasks.Task` at `read_your_writes` consistency, containing instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp))`.
     pub trait TasksQuery {
         /// Serves `a2a.tasks.Tasks` rows at the view's declared consistency.
         ///
-        /// `Err` is the typed refusal of a row whose declared type cannot hold its value.
-        fn tasks(&self) -> Result<Vec<super::Tasks>, crate::obligation::UnmetObligation>;
+        /// `Err` is the typed refusal of an obligation nothing has satisfied; a satisfying
+        /// implementation never returns it.
+        fn tasks(&self, context_id: Option<crate::tasks::ContextId>, status: Option<crate::tasks::TaskState>, status_timestamp_after: Option<crate::primitives::Timestamp>) -> Result<Vec<super::Tasks>, crate::obligation::UnmetObligation>;
     }
 
     /// Every obligation of this bounded context, refused in the type system.
@@ -1983,6 +2207,12 @@ pub mod obligations {
         }
     }
 
+    impl ListTaskPushNotificationConfigsBehavior for Unimplemented {
+        fn list_task_push_notification_configs(&mut self, _input: super::ListTaskPushNotificationConfigs) -> Result<super::ListTaskPushNotificationConfigsOutcome, crate::obligation::UnmetObligation> {
+            Err(crate::obligation::UnmetObligation { capability: "command behaviour", source: "a2a.tasks.ListTaskPushNotificationConfigs" })
+        }
+    }
+
     impl SendMessageBehavior for Unimplemented {
         fn send_message(&mut self, _input: super::SendMessage) -> Result<super::SendMessageOutcome, crate::obligation::UnmetObligation> {
             Err(crate::obligation::UnmetObligation { capability: "command behaviour", source: "a2a.tasks.SendMessage" })
@@ -2004,6 +2234,12 @@ pub mod obligations {
     impl TaskPushNotificationConfigsQuery for Unimplemented {
         fn task_push_notification_configs(&self, _task_id: crate::tasks::TaskId) -> Result<Vec<super::TaskPushNotificationConfigs>, crate::obligation::UnmetObligation> {
             Err(crate::obligation::UnmetObligation { capability: "view query", source: "a2a.tasks.TaskPushNotificationConfigs" })
+        }
+    }
+
+    impl TasksQuery for Unimplemented {
+        fn tasks(&self, _context_id: Option<crate::tasks::ContextId>, _status: Option<crate::tasks::TaskState>, _status_timestamp_after: Option<crate::primitives::Timestamp>) -> Result<Vec<super::Tasks>, crate::obligation::UnmetObligation> {
+            Err(crate::obligation::UnmetObligation { capability: "view query", source: "a2a.tasks.Tasks" })
         }
     }
 }

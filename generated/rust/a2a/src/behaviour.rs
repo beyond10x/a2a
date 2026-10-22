@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-// contract digest f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea
+// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! What the specification fully determines, generated: the behaviour of every command the plan
@@ -22,16 +22,16 @@ use crate::obligation::UnmetObligation;
 
 /// Where `a2a.tasks.PushNotificationConfig` is stored — a port the implementor provides.
 ///
-/// Keyed by the identity `id`. Generated network entries supply an ephemeral implementation; durable storage remains a port.
+/// Keyed by the identity `row`. Generated network entries supply an ephemeral implementation; durable storage remains a port.
 pub trait PushNotificationConfigStorage {
     /// The instance with this identity, or `None` where none is stored.
-    fn get(&self, identity: &crate::tasks::PushNotificationConfigId) -> Option<crate::tasks::PushNotificationConfigSnapshot>;
+    fn get(&self, identity: &crate::tasks::PushNotificationConfigRow) -> Option<crate::tasks::PushNotificationConfigSnapshot>;
 
     /// Stores this instance under its identity, replacing what was held.
     fn put(&mut self, snapshot: crate::tasks::PushNotificationConfigSnapshot);
 
     /// Removes the instance with this identity.
-    fn delete(&mut self, identity: &crate::tasks::PushNotificationConfigId);
+    fn delete(&mut self, identity: &crate::tasks::PushNotificationConfigRow);
 
     /// Every stored instance, in the order the store keeps them: the order a generated query
     /// answers an unordered view in.
@@ -137,7 +137,7 @@ where
         let mut next = moved.snapshot();
         next.data.status_message = input.status_message.clone();
         next.data.status_timestamp = self.ports.try_generate_optional_timestamp()?;
-        let answer = crate::tasks::CompleteTaskOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone() } };
+        let answer = crate::tasks::CompleteTaskOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone(), status: crate::tasks::TaskStatus { state: crate::tasks::WireTaskState::TASKSTATECOMPLETED, message: input.status_message.clone(), timestamp: self.ports.try_generate_optional_timestamp()? } } };
         TaskStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -183,7 +183,7 @@ where
         let mut next = moved.snapshot();
         next.data.status_message = input.status_message.clone();
         next.data.status_timestamp = self.ports.try_generate_optional_timestamp()?;
-        let answer = crate::tasks::FailTaskOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone() } };
+        let answer = crate::tasks::FailTaskOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone(), status: crate::tasks::TaskStatus { state: crate::tasks::WireTaskState::TASKSTATEFAILED, message: input.status_message.clone(), timestamp: self.ports.try_generate_optional_timestamp()? } } };
         TaskStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -198,6 +198,12 @@ impl<P: crate::tasks::obligations::GetTaskBehavior> crate::tasks::obligations::G
 impl<P: crate::tasks::obligations::GetTaskPushNotificationConfigBehavior> crate::tasks::obligations::GetTaskPushNotificationConfigBehavior for Generated<P> {
     fn get_task_push_notification_config(&mut self, input: crate::tasks::GetTaskPushNotificationConfig) -> Result<crate::tasks::GetTaskPushNotificationConfigOutcome, UnmetObligation> {
         crate::tasks::obligations::GetTaskPushNotificationConfigBehavior::get_task_push_notification_config(&mut self.ports, input)
+    }
+}
+
+impl<P: crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior> crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior for Generated<P> {
+    fn list_task_push_notification_configs(&mut self, input: crate::tasks::ListTaskPushNotificationConfigs) -> Result<crate::tasks::ListTaskPushNotificationConfigsOutcome, UnmetObligation> {
+        crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior::list_task_push_notification_configs(&mut self.ports, input)
     }
 }
 
@@ -229,7 +235,7 @@ where
         let mut next = moved.snapshot();
         next.data.status_message = input.status_message.clone();
         next.data.status_timestamp = self.ports.try_generate_optional_timestamp()?;
-        let answer = crate::tasks::RejectTaskOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone() } };
+        let answer = crate::tasks::RejectTaskOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone(), status: crate::tasks::TaskStatus { state: crate::tasks::WireTaskState::TASKSTATEREJECTED, message: input.status_message.clone(), timestamp: self.ports.try_generate_optional_timestamp()? } } };
         TaskStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -254,6 +260,7 @@ where
         let held_state = held.state;
         let before = held.data.clone();
         let moved = match held.refine() {
+            crate::tasks::AnyTask::InputRequired(instance) => crate::tasks::AnyTask::AuthRequired(instance.require_auth()),
             crate::tasks::AnyTask::Submitted(instance) => crate::tasks::AnyTask::AuthRequired(instance.require_auth()),
             crate::tasks::AnyTask::Working(instance) => crate::tasks::AnyTask::AuthRequired(instance.require_auth()),
             _ => return Ok(crate::tasks::RequireAuthOutcome::WrongState { error: crate::tasks::TaskStateConflict { state: held_state } }),
@@ -261,7 +268,7 @@ where
         let mut next = moved.snapshot();
         next.data.status_message = input.status_message.clone();
         next.data.status_timestamp = self.ports.try_generate_optional_timestamp()?;
-        let answer = crate::tasks::RequireAuthOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone() } };
+        let answer = crate::tasks::RequireAuthOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone(), status: crate::tasks::TaskStatus { state: crate::tasks::WireTaskState::TASKSTATEAUTHREQUIRED, message: input.status_message.clone(), timestamp: self.ports.try_generate_optional_timestamp()? } } };
         TaskStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -286,6 +293,7 @@ where
         let held_state = held.state;
         let before = held.data.clone();
         let moved = match held.refine() {
+            crate::tasks::AnyTask::AuthRequired(instance) => crate::tasks::AnyTask::InputRequired(instance.require_input()),
             crate::tasks::AnyTask::Submitted(instance) => crate::tasks::AnyTask::InputRequired(instance.require_input()),
             crate::tasks::AnyTask::Working(instance) => crate::tasks::AnyTask::InputRequired(instance.require_input()),
             _ => return Ok(crate::tasks::RequireInputOutcome::WrongState { error: crate::tasks::TaskStateConflict { state: held_state } }),
@@ -293,7 +301,7 @@ where
         let mut next = moved.snapshot();
         next.data.status_message = input.status_message.clone();
         next.data.status_timestamp = self.ports.try_generate_optional_timestamp()?;
-        let answer = crate::tasks::RequireInputOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone() } };
+        let answer = crate::tasks::RequireInputOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone(), status: crate::tasks::TaskStatus { state: crate::tasks::WireTaskState::TASKSTATEINPUTREQUIRED, message: input.status_message.clone(), timestamp: self.ports.try_generate_optional_timestamp()? } } };
         TaskStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -338,7 +346,7 @@ where
         let mut next = moved.snapshot();
         next.data.status_message = input.status_message.clone();
         next.data.status_timestamp = self.ports.try_generate_optional_timestamp()?;
-        let answer = crate::tasks::StartWorkingOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone() } };
+        let answer = crate::tasks::StartWorkingOutcome::Moved { task_status_updated: crate::tasks::TaskStatusUpdated { task_id: input.id.clone(), context_id: before.context_id.clone(), status: crate::tasks::TaskStatus { state: crate::tasks::WireTaskState::TASKSTATEWORKING, message: input.status_message.clone(), timestamp: self.ports.try_generate_optional_timestamp()? } } };
         TaskStorage::put(&mut self.ports, next);
         return Ok(answer);
     }
@@ -347,6 +355,53 @@ where
 impl<P: crate::tasks::obligations::SubscribeToTaskBehavior> crate::tasks::obligations::SubscribeToTaskBehavior for Generated<P> {
     fn subscribe_to_task(&mut self, input: crate::tasks::SubscribeToTask) -> Result<crate::tasks::SubscribeToTaskOutcome, UnmetObligation> {
         crate::tasks::obligations::SubscribeToTaskBehavior::subscribe_to_task(&mut self.ports, input)
+    }
+}
+
+/// `a2a.tasks.UpdateArtifact`, generated: every outcome is one the specification fully determines.
+impl<P> crate::tasks::obligations::UpdateArtifactBehavior for Generated<P>
+where
+    P: TaskStorage,
+{
+    fn update_artifact(&mut self, input: crate::tasks::UpdateArtifact) -> Result<crate::tasks::UpdateArtifactOutcome, UnmetObligation> {
+        let _ = &input;
+        // The addressed row's existence, at step 2 of the one precedence rule.
+        if TaskStorage::get(&self.ports, &input.id).is_none() {
+            return Ok(crate::tasks::UpdateArtifactOutcome::NotFound { error: crate::tasks::TaskNotFound });
+        }
+        // `updated`: the default.
+        let Some(held) = TaskStorage::get(&self.ports, &input.id) else {
+            return Ok(crate::tasks::UpdateArtifactOutcome::NotFound { error: crate::tasks::TaskNotFound });
+        };
+        let _ = &held;
+        let before = held.data.clone();
+        let next = held;
+        let answer = crate::tasks::UpdateArtifactOutcome::Updated { task_artifact_updated: crate::tasks::TaskArtifactUpdated { task_id: input.id.clone(), context_id: before.context_id.clone(), artifact: input.artifact.clone(), append: Some(input.append.clone()), last_chunk: Some(input.last_chunk.clone()) } };
+        TaskStorage::put(&mut self.ports, next);
+        return Ok(answer);
+    }
+}
+
+/// `a2a.tasks.AllTasks`, generated: every row is one the specification fully determines from the stored `a2a.tasks.Task`s.
+impl<P> crate::tasks::obligations::AllTasksQuery for Generated<P>
+where
+    P: TaskStorage,
+{
+    fn all_tasks(&self) -> Result<Vec<crate::tasks::AllTasks>, UnmetObligation> {
+        let admitted = TaskStorage::list(&self.ports);
+        Ok(admitted
+            .into_iter()
+            .map(|held| crate::tasks::AllTasks {
+                id: held.data.id,
+                context_id: held.data.context_id,
+                state: held.state,
+                status_message: held.data.status_message,
+                status_timestamp: held.data.status_timestamp,
+                artifacts: held.data.artifacts,
+                history: held.data.history,
+                metadata: held.data.metadata,
+            })
+            .collect())
     }
 }
 
@@ -360,7 +415,8 @@ where
         Ok(admitted
             .into_iter()
             .map(|held| crate::tasks::PushNotificationConfigs {
-                id: held.data.id,
+                row: held.data.row,
+                config_id: held.data.config_id,
                 state: held.state,
                 task_id: held.data.task_id,
                 tenant: held.data.tenant,
@@ -378,25 +434,8 @@ impl<P: crate::tasks::obligations::TaskPushNotificationConfigsQuery> crate::task
     }
 }
 
-/// `a2a.tasks.Tasks`, generated: every row is one the specification fully determines from the stored `a2a.tasks.Task`s.
-impl<P> crate::tasks::obligations::TasksQuery for Generated<P>
-where
-    P: TaskStorage,
-{
-    fn tasks(&self) -> Result<Vec<crate::tasks::Tasks>, UnmetObligation> {
-        let admitted = TaskStorage::list(&self.ports);
-        Ok(admitted
-            .into_iter()
-            .map(|held| crate::tasks::Tasks {
-                id: held.data.id,
-                context_id: held.data.context_id,
-                state: held.state,
-                status_message: held.data.status_message,
-                status_timestamp: held.data.status_timestamp,
-                artifacts: held.data.artifacts,
-                history: held.data.history,
-                metadata: held.data.metadata,
-            })
-            .collect())
+impl<P: crate::tasks::obligations::TasksQuery> crate::tasks::obligations::TasksQuery for Generated<P> {
+    fn tasks(&self, context_id: Option<crate::tasks::ContextId>, status: Option<crate::tasks::TaskState>, status_timestamp_after: Option<crate::primitives::Timestamp>) -> Result<Vec<crate::tasks::Tasks>, UnmetObligation> {
+        crate::tasks::obligations::TasksQuery::tasks(&self.ports, context_id, status, status_timestamp_after)
     }
 }

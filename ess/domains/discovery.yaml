@@ -223,20 +223,38 @@ types:
       - name: scopes
         type: Map<String, String>
 
-  # UNMAPPED: proto `oneof flow` is serialized by ProtoJSON as an object with exactly one member
-  # named after the chosen field (`{"clientCredentials": {...}}`), not as a tagged object. The
-  # union below uses a `flow` tag, which is not the A2A wire form. Open question: does ESS have a
-  # union encoding keyed by member name (externally tagged)? Until it does, this type describes
-  # the choice, not the bytes.
+  # a2a.proto, message OAuthFlows, `oneof flow`; ProtoJSON writes the chosen member under its
+  # own camelCase name ({"clientCredentials": {...}}), not as a tagged object, so each member
+  # is an Optional field here: that is the wire form.
+  # UNMAPPED (ESS gap): the exactly-one rule of the oneof. ESS 0.67.0 has no externally tagged
+  # union (a union without `tag:` is refused: "missing field `tag`"). The rule validates as a
+  # type invariant (`any: [all: [defined(authorization_code), not defined(client_credentials),
+  # …], …]`), but synthesis then refuses it twice: "ESS-SYNTH-013: type
+  # a2a.discovery.OAuthFlows has no scenario" (no view publishes it) and "ESS-SYNTH-001: outcome
+  # a2a.discovery.GetExtendedAgentCard/returned has no scenario … record invariant on a response
+  # type a2a.discovery.OAuthFlows has no executable observer". Missing construct: a union keyed
+  # by member name, or a response-type invariant the response observer checks.
   - name: a2a.discovery.OAuthFlows
-    kind: union
-    tag: flow
-    variants:
-      authorizationCode: a2a.discovery.AuthorizationCodeOAuthFlow
-      clientCredentials: a2a.discovery.ClientCredentialsOAuthFlow
-      implicit: a2a.discovery.ImplicitOAuthFlow
-      password: a2a.discovery.PasswordOAuthFlow
-      deviceCode: a2a.discovery.DeviceCodeOAuthFlow
+    kind: struct
+    fields:
+      - name: authorization_code
+        type: Optional<a2a.discovery.AuthorizationCodeOAuthFlow>
+        naming: {wire: authorizationCode}
+        presence: omitted_when_absent
+      - name: client_credentials
+        type: Optional<a2a.discovery.ClientCredentialsOAuthFlow>
+        naming: {wire: clientCredentials}
+        presence: omitted_when_absent
+      - name: implicit
+        type: Optional<a2a.discovery.ImplicitOAuthFlow>
+        presence: omitted_when_absent
+      - name: password
+        type: Optional<a2a.discovery.PasswordOAuthFlow>
+        presence: omitted_when_absent
+      - name: device_code
+        type: Optional<a2a.discovery.DeviceCodeOAuthFlow>
+        naming: {wire: deviceCode}
+        presence: omitted_when_absent
 
   - name: a2a.discovery.OAuth2SecurityScheme
     kind: struct
@@ -268,16 +286,33 @@ types:
         type: Optional<String>
         presence: omitted_when_absent
 
-  # UNMAPPED: same `oneof` encoding question as OAuthFlows.
+  # a2a.proto, message SecurityScheme, `oneof scheme`; ProtoJSON writes the chosen member under
+  # its own camelCase name ({"apiKeySecurityScheme": {...}}), so each member is an Optional
+  # field here: that is the wire form.
+  # UNMAPPED (ESS gap): the exactly-one rule of the oneof, as for OAuthFlows above.
   - name: a2a.discovery.SecurityScheme
-    kind: union
-    tag: scheme
-    variants:
-      apiKeySecurityScheme: a2a.discovery.APIKeySecurityScheme
-      httpAuthSecurityScheme: a2a.discovery.HTTPAuthSecurityScheme
-      oauth2SecurityScheme: a2a.discovery.OAuth2SecurityScheme
-      openIdConnectSecurityScheme: a2a.discovery.OpenIdConnectSecurityScheme
-      mtlsSecurityScheme: a2a.discovery.MutualTlsSecurityScheme
+    kind: struct
+    fields:
+      - name: api_key_security_scheme
+        type: Optional<a2a.discovery.APIKeySecurityScheme>
+        naming: {wire: apiKeySecurityScheme}
+        presence: omitted_when_absent
+      - name: http_auth_security_scheme
+        type: Optional<a2a.discovery.HTTPAuthSecurityScheme>
+        naming: {wire: httpAuthSecurityScheme}
+        presence: omitted_when_absent
+      - name: oauth2_security_scheme
+        type: Optional<a2a.discovery.OAuth2SecurityScheme>
+        naming: {wire: oauth2SecurityScheme}
+        presence: omitted_when_absent
+      - name: open_id_connect_security_scheme
+        type: Optional<a2a.discovery.OpenIdConnectSecurityScheme>
+        naming: {wire: openIdConnectSecurityScheme}
+        presence: omitted_when_absent
+      - name: mtls_security_scheme
+        type: Optional<a2a.discovery.MutualTlsSecurityScheme>
+        naming: {wire: mtlsSecurityScheme}
+        presence: omitted_when_absent
 
   - name: a2a.discovery.AgentCard
     kind: struct
@@ -343,6 +378,24 @@ errors:
     summary: >-
       ExtendedAgentCardNotConfiguredError (JSON-RPC -32007, HTTP 400): the agent declares the
       capability but has no extended card configured.
+  - name: a2a.discovery.VersionNotSupported
+    summary: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+  - name: a2a.discovery.ExtensionSupportRequired
+    summary: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+
+# Section 3.2.6 sends the service parameters (A2A-Version, A2A-Extensions) with every request,
+# and section 3.6.2: "If the version is not supported by the interface, agents MUST return a
+# VersionNotSupportedError", GetExtendedAgentCard included (as a2a.tasks protocol-negotiation).
+outcome_groups:
+  - name: discovery-protocol-negotiation
+    actor: a2a.discovery.Client
+    outcomes:
+      - name: version-not-supported
+        external: the A2A-Version service parameter names a version the agent does not support
+        error: a2a.discovery.VersionNotSupported
+      - name: extension-required
+        external: the agent card marks an extension required and the request does not declare it
+        error: a2a.discovery.ExtensionSupportRequired
 
 commands:
   - name: a2a.discovery.GetExtendedAgentCard

@@ -1,0 +1,66 @@
+# Adversary case. a2a.proto names a configuration through its task: GetTaskPushNotificationConfigRequest
+# `task_id` is "The parent task resource ID" and `id` "The resource ID of the configuration", on
+# GET /tasks/{task_id=*}/pushNotificationConfigs/{id=*}. A2A v1.0.1 section 3.1.7: "The
+# configuration MUST persist until task completion or explicit deletion." A Create under another
+# task is no explicit deletion of this one, so the owner's configuration must still be found.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: adv-config-id-of-other-task
+summary: A configuration created under another task with the same id leaves the first task's configuration in place.
+
+arrange:
+  - instance: owner
+    entity: a2a.tasks.Task
+  - instance: other
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-01-13T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: first
+    outcome: task-created
+    capture: {instance: owner, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-13T09:00:01Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-2
+        role: ROLE_USER
+        parts:
+          - text: second
+    outcome: task-created
+    capture: {instance: other, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-13T09:00:02Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: owner}
+      id: cfg-1
+      url: https://owner.example.test/webhook
+    outcome: created
+
+  - at: 2026-01-13T09:00:03Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: other}
+      id: cfg-1
+      url: https://other.example.test/webhook
+    outcome: created
+
+  - at: 2026-01-13T09:00:04Z
+    command: a2a.tasks.GetTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: owner}
+      id: cfg-1
+    outcome: found

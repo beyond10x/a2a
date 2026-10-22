@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ExtensionSupportRequired payload",
-  "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+  "description": "ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).",
   "x-ess-name": "a2a.tasks.ExtensionSupportRequired",
   "x-ess-kind": "error-payload",
   "type": "object",
@@ -9,8 +9,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
-    "contract_digest": "slice-sha256/2:7497bdec061ac4100b39cc472127bf8b4cd8801ed811b674bb75f0bd0e1e47be",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:3530d11a5994d707050e95b3ac078bdc703fe85bf5ec95c2ea0ec0633e287069",
     "regenerate": "ess generate"
   }
 }

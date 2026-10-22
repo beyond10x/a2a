@@ -1,6 +1,6 @@
 # generated from a2a v1
-# model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-# contract digest slice-sha256/2:349a5c79ccee7624c72184c786551e9b3d64a5586372ebff0bf2daef8fcaddf1
+# model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+# contract digest slice-sha256/2:a022dd615614f37623e0c59889b53bdc92ed9c94d388c110ac57066db3fb4b76
 # do not edit: regenerate with `ess generate`
 asyncapi: 3.0.0
 info:
@@ -16,8 +16,8 @@ info:
   x-ess-provenance:
     system: a2a
     specification_version: v1
-    source_digest: 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-    contract_digest: slice-sha256/2:349a5c79ccee7624c72184c786551e9b3d64a5586372ebff0bf2daef8fcaddf1
+    source_digest: d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+    contract_digest: slice-sha256/2:a022dd615614f37623e0c59889b53bdc92ed9c94d388c110ac57066db3fb4b76
 defaultContentType: application/json
 channels:
   a2a.tasks.PushNotificationConfigCreated:
@@ -36,6 +36,15 @@ channels:
         $ref: '#/components/messages/a2a.tasks.PushNotificationConfigDeleted'
     x-ess-event: a2a.tasks.PushNotificationConfigDeleted
     x-ess-address-source: qualified-name
+  a2a.tasks.TaskArtifactUpdated:
+    address: a2a.tasks.TaskArtifactUpdated
+    title: TaskArtifactUpdated
+    summary: An artifact the agent generated; streamed and pushed as the a2a.proto message TaskArtifactUpdateEvent, whose task_id, context_id and artifact it marks REQUIRED.
+    messages:
+      a2a.tasks.TaskArtifactUpdated:
+        $ref: '#/components/messages/a2a.tasks.TaskArtifactUpdated'
+    x-ess-event: a2a.tasks.TaskArtifactUpdated
+    x-ess-address-source: qualified-name
   a2a.tasks.TaskCreated:
     address: a2a.tasks.TaskCreated
     title: TaskCreated
@@ -47,7 +56,7 @@ channels:
   a2a.tasks.TaskStatusUpdated:
     address: a2a.tasks.TaskStatusUpdated
     title: TaskStatusUpdated
-    summary: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.
+    summary: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent, whose task_id, context_id and status a2a.proto marks REQUIRED.
     messages:
       a2a.tasks.TaskStatusUpdated:
         $ref: '#/components/messages/a2a.tasks.TaskStatusUpdated'
@@ -62,7 +71,8 @@ operations:
     summary: Publishes `a2a.tasks.PushNotificationConfigCreated`.
     description: |-
       Nothing in this specification reacts to `a2a.tasks.PushNotificationConfigCreated`.
-      `a2a.tasks.CreateTaskPushNotificationConfig` emits it on `created`, which creates a `a2a.tasks.PushNotificationConfig` in `Active`. It carries the new instance's identity in `config_id`.
+      `a2a.tasks.CreateTaskPushNotificationConfig` emits it on `created`, which creates a `a2a.tasks.PushNotificationConfig` in `Active`. It carries the new instance's identity in `row`.
+      `a2a.tasks.CreateTaskPushNotificationConfig` emits it on `assigned`, which creates a `a2a.tasks.PushNotificationConfig` in `Active`. It carries the new instance's identity in `row`.
     messages:
     - $ref: '#/channels/a2a.tasks.PushNotificationConfigCreated/messages/a2a.tasks.PushNotificationConfigCreated'
   send.a2a.tasks.PushNotificationConfigDeleted:
@@ -73,9 +83,20 @@ operations:
     summary: Publishes `a2a.tasks.PushNotificationConfigDeleted`.
     description: |-
       Nothing in this specification reacts to `a2a.tasks.PushNotificationConfigDeleted`.
-      `a2a.tasks.DeleteTaskPushNotificationConfig` emits it on `deleted`, which removes a `a2a.tasks.PushNotificationConfig`.
+      `a2a.tasks.DeleteTaskPushNotificationConfig` emits it on `deleted`, which changes a `a2a.tasks.Task` without moving it.
     messages:
     - $ref: '#/channels/a2a.tasks.PushNotificationConfigDeleted/messages/a2a.tasks.PushNotificationConfigDeleted'
+  send.a2a.tasks.TaskArtifactUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/a2a.tasks.TaskArtifactUpdated'
+    title: Publish TaskArtifactUpdated
+    summary: Publishes `a2a.tasks.TaskArtifactUpdated`.
+    description: |-
+      Nothing in this specification reacts to `a2a.tasks.TaskArtifactUpdated`.
+      `a2a.tasks.UpdateArtifact` emits it on `updated`, which changes a `a2a.tasks.Task` without moving it.
+    messages:
+    - $ref: '#/channels/a2a.tasks.TaskArtifactUpdated/messages/a2a.tasks.TaskArtifactUpdated'
   send.a2a.tasks.TaskCreated:
     action: send
     channel:
@@ -119,6 +140,13 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/event.a2a.tasks.PushNotificationConfigDeleted'
+    a2a.tasks.TaskArtifactUpdated:
+      name: a2a.tasks.TaskArtifactUpdated
+      title: TaskArtifactUpdated
+      summary: An artifact the agent generated; streamed and pushed as the a2a.proto message TaskArtifactUpdateEvent, whose task_id, context_id and artifact it marks REQUIRED.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/event.a2a.tasks.TaskArtifactUpdated'
     a2a.tasks.TaskCreated:
       name: a2a.tasks.TaskCreated
       title: TaskCreated
@@ -128,7 +156,7 @@ components:
     a2a.tasks.TaskStatusUpdated:
       name: a2a.tasks.TaskStatusUpdated
       title: TaskStatusUpdated
-      summary: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.
+      summary: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent, whose task_id, context_id and status a2a.proto marks REQUIRED.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/event.a2a.tasks.TaskStatusUpdated'
@@ -139,11 +167,14 @@ components:
       x-ess-kind: event-payload
       type: object
       properties:
+        row:
+          $ref: '#/components/schemas/type.a2a.tasks.PushNotificationConfigRow'
         config_id:
           $ref: '#/components/schemas/type.a2a.tasks.PushNotificationConfigId'
         task_id:
           $ref: '#/components/schemas/type.a2a.tasks.TaskId'
       required:
+      - row
       - config_id
       - task_id
       additionalProperties: false
@@ -161,6 +192,31 @@ components:
       - config_id
       - task_id
       additionalProperties: false
+    event.a2a.tasks.TaskArtifactUpdated:
+      title: TaskArtifactUpdated payload
+      description: An artifact the agent generated; streamed and pushed as the a2a.proto message TaskArtifactUpdateEvent, whose task_id, context_id and artifact it marks REQUIRED.
+      x-ess-name: a2a.tasks.TaskArtifactUpdated
+      x-ess-kind: event-payload
+      type: object
+      properties:
+        taskId:
+          $ref: '#/components/schemas/type.a2a.tasks.TaskId'
+          x-ess-field: task_id
+        contextId:
+          $ref: '#/components/schemas/type.a2a.tasks.ContextId'
+          x-ess-field: context_id
+        artifact:
+          $ref: '#/components/schemas/type.a2a.tasks.Artifact'
+        append:
+          type: boolean
+        lastChunk:
+          x-ess-field: last_chunk
+          type: boolean
+      required:
+      - taskId
+      - contextId
+      - artifact
+      additionalProperties: false
     event.a2a.tasks.TaskCreated:
       title: TaskCreated payload
       x-ess-name: a2a.tasks.TaskCreated
@@ -174,7 +230,7 @@ components:
       additionalProperties: false
     event.a2a.tasks.TaskStatusUpdated:
       title: TaskStatusUpdated payload
-      description: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.
+      description: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent, whose task_id, context_id and status a2a.proto marks REQUIRED.
       x-ess-name: a2a.tasks.TaskStatusUpdated
       x-ess-kind: event-payload
       type: object
@@ -183,9 +239,39 @@ components:
           $ref: '#/components/schemas/type.a2a.tasks.TaskId'
         context_id:
           $ref: '#/components/schemas/type.a2a.tasks.ContextId'
+        status:
+          $ref: '#/components/schemas/type.a2a.tasks.TaskStatus'
       required:
       - task_id
       - context_id
+      - status
+      additionalProperties: false
+    type.a2a.tasks.Artifact:
+      title: Artifact
+      description: An output the agent produced for a task (A2A v1.0.1 section 4.1.7).
+      x-ess-name: a2a.tasks.Artifact
+      x-ess-kind: struct
+      type: object
+      properties:
+        artifactId:
+          x-ess-field: artifact_id
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/type.a2a.tasks.Part'
+        metadata: {}
+        extensions:
+          type: array
+          items:
+            type: string
+      required:
+      - artifactId
+      - parts
       additionalProperties: false
     type.a2a.tasks.ContextId:
       title: ContextId
@@ -193,14 +279,117 @@ components:
       x-ess-name: a2a.tasks.ContextId
       x-ess-kind: newtype
       type: string
+    type.a2a.tasks.Message:
+      title: Message
+      description: One turn of communication between client and agent (A2A v1.0.1 section 4.1.4).
+      x-ess-name: a2a.tasks.Message
+      x-ess-kind: struct
+      type: object
+      properties:
+        messageId:
+          x-ess-field: message_id
+          type: string
+        contextId:
+          $ref: '#/components/schemas/type.a2a.tasks.ContextId'
+          x-ess-field: context_id
+        taskId:
+          $ref: '#/components/schemas/type.a2a.tasks.TaskId'
+          x-ess-field: task_id
+        role:
+          $ref: '#/components/schemas/type.a2a.tasks.Role'
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/type.a2a.tasks.Part'
+        metadata: {}
+        extensions:
+          type: array
+          items:
+            type: string
+        referenceTaskIds:
+          x-ess-field: reference_task_ids
+          type: array
+          items:
+            $ref: '#/components/schemas/type.a2a.tasks.TaskId'
+      required:
+      - messageId
+      - role
+      - parts
+      additionalProperties: false
+    type.a2a.tasks.Part:
+      title: Part
+      description: One piece of content in a message or artifact (A2A v1.0.1 section 4.1.6).
+      x-ess-name: a2a.tasks.Part
+      x-ess-kind: struct
+      type: object
+      properties:
+        text:
+          type: string
+        raw:
+          type: string
+          pattern: ^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+          contentEncoding: base64
+        url:
+          type: string
+        data: {}
+        metadata: {}
+        filename:
+          type: string
+        mediaType:
+          x-ess-field: media_type
+          type: string
+      additionalProperties: false
     type.a2a.tasks.PushNotificationConfigId:
       title: PushNotificationConfigId
       x-ess-name: a2a.tasks.PushNotificationConfigId
       x-ess-kind: newtype
       type: string
+    type.a2a.tasks.PushNotificationConfigRow:
+      title: PushNotificationConfigRow
+      x-ess-name: a2a.tasks.PushNotificationConfigRow
+      x-ess-kind: newtype
+      type: string
+    type.a2a.tasks.Role:
+      title: Role
+      x-ess-name: a2a.tasks.Role
+      x-ess-kind: enum
+      type: string
+      enum:
+      - ROLE_USER
+      - ROLE_AGENT
     type.a2a.tasks.TaskId:
       title: TaskId
       description: Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).
       x-ess-name: a2a.tasks.TaskId
       x-ess-kind: newtype
       type: string
+    type.a2a.tasks.TaskState:
+      title: TaskState
+      x-ess-name: a2a.tasks.TaskState
+      x-ess-kind: enum
+      type: string
+      enum:
+      - TASK_STATE_SUBMITTED
+      - TASK_STATE_WORKING
+      - TASK_STATE_COMPLETED
+      - TASK_STATE_FAILED
+      - TASK_STATE_CANCELED
+      - TASK_STATE_INPUT_REQUIRED
+      - TASK_STATE_REJECTED
+      - TASK_STATE_AUTH_REQUIRED
+    type.a2a.tasks.TaskStatus:
+      title: TaskStatus
+      x-ess-name: a2a.tasks.TaskStatus
+      x-ess-kind: struct
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/type.a2a.tasks.TaskState'
+        message:
+          $ref: '#/components/schemas/type.a2a.tasks.Message'
+        timestamp:
+          type: string
+          format: date-time
+      required:
+      - state
+      additionalProperties: false
