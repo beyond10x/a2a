@@ -45,5 +45,17 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 
 ## Releases
 
-Record each change under `## Unreleased` in `CHANGELOG.md`. A release moves those entries under its
-version heading and tags the same version.
+Releases are bare-version tags (`0.1.0`, no `v`); every crate inherits the workspace version and
+nothing is on a registry.
+
+- `CHANGELOG.md` follows Keep a Changelog 1.1.0. Changes collect under `## [Unreleased]`.
+- A release commit on `main` sets `[workspace.package] version` in `Cargo.toml` and `Cargo.lock`,
+  turns `## [Unreleased]` into `## [<version>] - <date>` under a new empty `## [Unreleased]`, and
+  moves the link references at the bottom. `task release-check TAG=<version>` passes on it.
+- The tag is the bot's, on that commit:
+  `b10x-gates bot --repository beyond10x/a2a -- tag -a <version> -m "a2a <version>" <commit>`, then
+  `b10x-gates bot --repository beyond10x/a2a -- push origin <version>`.
+- `.github/workflows/release.yml` runs on the tag: `release-check`, then `check.yml`, then
+  `task release-artifacts` and the GitHub Release with the version's CHANGELOG section as notes.
+- A release is finished when the tag, the green `release` run and the Release with every asset of
+  `task release-artifacts` are verified. Never move or delete a pushed tag; fix forward.

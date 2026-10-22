@@ -59,6 +59,55 @@ tasks:
       - ess verify conform synthesize --path ess --scenarios ess --out {{.SCRATCH}}/conf/suite.json
       - ess verify conform run --path ess --target interpreted --suite {{.SCRATCH}}/conf/suite.json --report-format 2 --report-out {{.SCRATCH}}/conf/report.json
 
+  release-check:
+    desc: Fail unless TAG is the workspace version and CHANGELOG.md has its entry.
+    silent: true
+    requires:
+      vars: [TAG]
+    env:
+      RELEASE_TAG: '{{.TAG}}'
+    cmds:
+      - cmd: |
+          set -eu
+          if ! printf '%s\n' "$RELEASE_TAG" | grep -Eqx '[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "release-check: tag '$RELEASE_TAG' is not a bare version such as 0.1.0" >&2
+            exit 1
+          fi
+          version=$(sed -n '/^\[workspace\.package\]/,/^\[/s/^version = "\(.*\)"$/\1/p' Cargo.toml)
+          if [ "$RELEASE_TAG" != "$version" ]; then
+            echo "release-check: tag '$RELEASE_TAG' is not the workspace version '$version' in Cargo.toml" >&2
+            exit 1
+          fi
+          if ! awk -v head="## [$RELEASE_TAG] - " 'index($0, head) == 1 { found = 1 } END { exit !found }' CHANGELOG.md; then
+            echo "release-check: CHANGELOG.md has no '## [$RELEASE_TAG] - <date>' entry" >&2
+            exit 1
+          fi
+          echo "release-check: $RELEASE_TAG is the workspace version and has a CHANGELOG.md entry"
+
+  release-artifacts:
+    desc: Write the release assets for TAG into OUT (default dist) with a SHA256SUMS file.
+    requires:
+      vars: [TAG]
+    vars:
+      OUT: '{{.OUT | default "dist"}}'
+      BUNDLE: a2a-{{.TAG}}-specification
+    cmds:
+      - rm -rf {{.OUT}}
+      - mkdir -p {{.OUT}}/{{.BUNDLE}}
+      - cp -r ess upstream {{.OUT}}/{{.BUNDLE}}/
+      - mkdir -p {{.OUT}}/{{.BUNDLE}}/generated
+      - for: [openapi, asyncapi, schema]
+        cmd: cp -r generated/{{.ITEM}}/{{.ITEM}} {{.OUT}}/{{.BUNDLE}}/generated/{{.ITEM}}
+      - cp LICENSE CHANGELOG.md {{.OUT}}/{{.BUNDLE}}/
+      - tar -C {{.OUT}} --sort=name --owner=0 --group=0 --numeric-owner --mtime=@0 -czf {{.OUT}}/{{.BUNDLE}}.tar.gz {{.BUNDLE}}
+      - tar -C generated/schema --sort=name --owner=0 --group=0 --numeric-owner --mtime=@0 -czf {{.OUT}}/a2a-{{.TAG}}-json-schema.tar.gz schema
+      - cp upstream/a2a.proto {{.OUT}}/a2a.proto
+      - cp upstream/openapi/a2a.openapi.yaml {{.OUT}}/a2a-{{.TAG}}-upstream.openapi.yaml
+      - cp generated/openapi/openapi/a2a-agent.yaml {{.OUT}}/a2a-{{.TAG}}.openapi.yaml
+      - cp generated/asyncapi/asyncapi/a2a-agent.yaml {{.OUT}}/a2a-{{.TAG}}.asyncapi.yaml
+      - rm -rf {{.OUT}}/{{.BUNDLE}}
+      - cd {{.OUT}} && find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%P\n' | sort | xargs sha256sum > SHA256SUMS && sha256sum --check --strict SHA256SUMS
+
   plan:
     desc: Validate the AEP planning store.
     cmds:
