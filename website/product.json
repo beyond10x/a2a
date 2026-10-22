@@ -1,0 +1,86 @@
+{
+  "format": "b10x-product-landing/1",
+  "product": {
+    "name": "a2a",
+    "mark": "A2A",
+    "eyebrow": "A2A v1.0.1 · executable specification",
+    "promise": [
+      "The A2A protocol,",
+      "as a specification that runs."
+    ],
+    "lede": "a2a holds the A2A (Agent2Agent) protocol v1.0.1 as an ESS specification: the task lifecycle, messages, push-notification configs and the extended Agent Card. OpenAPI, AsyncAPI and JSON Schema documents and a Rust crate are generated from it, and task check fails when any of them drifts. Each rule ESS cannot hold yet is marked UNMAPPED beside the place it belongs.",
+    "description": "The A2A protocol v1.0.1 as an ESS specification, with a2a.proto and the OpenAPI, AsyncAPI and JSON Schema documents generated from it.",
+    "actions": [
+      {
+        "label": "Download the documents",
+        "href": "/docs/reference/downloads",
+        "kind": "primary"
+      },
+      {
+        "label": "Read the documentation",
+        "href": "/docs/"
+      },
+      {
+        "label": "Source",
+        "href": "https://github.com/beyond10x/a2a"
+      }
+    ],
+    "meta": "ESS specification · OpenAPI, AsyncAPI, JSON Schema · Rust · Apache-2.0"
+  },
+  "sections": [
+    {
+      "kind": "features",
+      "eyebrow": "What is here",
+      "title": "One specification, the documents generated from it.",
+      "lede": "Every page under Reference and every file under Downloads is generated from the repository by a2a-docs, and task check fails when one of them differs from what the repository generates.",
+      "items": [
+        {
+          "title": "The specification",
+          "description": "Domains a2a.tasks and a2a.discovery, their commands, events and views, the component a2a-agent and the system graph, generated from ess/.",
+          "status": "shipped",
+          "href": "/docs/reference/specification"
+        },
+        {
+          "title": "Downloads",
+          "description": "a2a.proto as upstream tagged it, OpenAPI of A2A's HTTP+JSON binding and of the specification, AsyncAPI of its events, and its JSON Schemas as one document, with SHA256SUMS.",
+          "status": "shipped",
+          "href": "/docs/reference/downloads"
+        },
+        {
+          "title": "HTTP+JSON routes",
+          "description": "Which of A2A's routes the specification serves at their path, and the reason for each one it cannot.",
+          "status": "shipped",
+          "href": "/docs/reference/http-routes"
+        },
+        {
+          "title": "UNMAPPED markers",
+          "description": "Every rule of A2A the specification does not hold, linked to the comment that quotes the source and names the ESS refusal.",
+          "status": "shipped",
+          "href": "/docs/reference/unmapped"
+        },
+        {
+          "title": "Server, client and test kit",
+          "description": "Hand-written Rust on top of the generated crate. The repository has checks only today.",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "kind": "related",
+      "eyebrow": "Built with",
+      "title": "Where the specification comes from.",
+      "tools": [
+        {
+          "id": "ess",
+          "relation": "specified-by",
+          "via": "ess/ is an ESS specification; ess generate writes generated/"
+        },
+        {
+          "name": "A2A",
+          "description": "The Agent2Agent protocol. a2a.proto at v1.0.1 is pinned verbatim in upstream/.",
+          "href": "https://github.com/a2aproject/A2A"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+[package]
+name = "a2a-docs"
+description = "Generates the derived pages and downloads of the a2a documentation site and checks them for drift."
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow = "1"
+clap = { workspace = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+serde_yaml_ng = "0.10"
+sha2 = "0.10"
