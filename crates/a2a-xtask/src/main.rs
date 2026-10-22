@@ -42,7 +42,10 @@ fn main() -> ExitCode {
 }
 
 fn repository_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
+    let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")));
+    manifest_dir
         .ancestors()
         .nth(2)
         .expect("crates/a2a-xtask sits two levels below the repository root")
