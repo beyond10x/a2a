@@ -20,27 +20,36 @@ tasks:
       - task: spec
       - task: projections-drift
       - task: drift
+      - task: http-paths
       - cargo fmt --all --check
       - cargo clippy --workspace --all-targets --locked -- -D warnings
       - cargo test --workspace --locked
       - cargo build --locked --manifest-path generated/rust/a2a/Cargo.toml --features server
 
   spec:
-    desc: Validate the ESS specification.
+    desc: Validate the ESS specification and its ess-http/1 binding.
     cmds:
       - ess specify validate --path ess
+      - ess specify http validate --path ess --binding ess/http.yaml
 
   projections:
-    desc: Rewrite generated/openapi, generated/asyncapi and generated/schema from ess/.
+    desc: Rewrite generated/openapi, generated/openapi-http, generated/asyncapi and generated/schema from ess/.
     cmds:
       - for: [openapi, asyncapi, schema]
         cmd: ess generate --path ess --kind {{.ITEM}} --out generated/{{.ITEM}}
+      - ess generate --path ess --kind openapi --http ess/http.yaml --out generated/openapi-http
 
   projections-drift:
-    desc: Fail when generated/openapi, generated/asyncapi or generated/schema differs from ess/.
+    desc: Fail when generated/openapi, generated/openapi-http, generated/asyncapi or generated/schema differs from ess/.
     cmds:
       - for: [openapi, asyncapi, schema]
         cmd: ess generate --path ess --kind {{.ITEM}} --out generated/{{.ITEM}} --check
+      - ess generate --path ess --kind openapi --http ess/http.yaml --out generated/openapi-http --check
+
+  http-paths:
+    desc: Fail when the (method, path) pairs of generated/openapi-http differ from upstream/openapi beyond ess/http-unmapped.tsv.
+    cmds:
+      - cargo run -q --locked -p a2a-xtask -- http-paths
 
   generate:
     desc: Rewrite generated/rust/a2a from a fresh synthesis of ess/.

@@ -1,0 +1,105 @@
+# A2A's HTTP+JSON binding (A2A v1.0.1 section 11), the `google.api.http` options of
+# upstream/a2a.proto. Projected by `ess generate --kind openapi --http ess/http.yaml` into
+# generated/openapi-http; `task http-paths` holds its (method, path) pairs to
+# upstream/openapi/a2a.openapi.yaml, every remaining difference named in ess/http-unmapped.tsv.
+# Path variables follow the proto (`/tasks/{task_id=*}/pushNotificationConfigs/{id=*}`), which
+# upstream/openapi spells `{taskId}` and `{id}`; section 11.3.3 writes `{id}` and `{configId}`.
+#
+# UNMAPPED (ESS gap): the `/{tenant}/...` additional binding of every operation, for example
+# `post: "/{tenant}/message:send"` beside `post: "/message:send"`. A second route for one
+# command is refused, "ESS-HTTP-005: routes[1]: command `a2a.tasks.SendMessage` is already
+# routed by `routes[0]`; an operation has one route", and the `tenant` input cannot be the
+# segment, "ESS-HTTP-009: routes[1].parameters.tenant: `input.tenant` has type
+# `Optional<String>`, which a path segment cannot carry: a segment is always present and holds
+# one `String`, `Integer`, enum, or unconstrained newtype of one of them". With both of those
+# lifted, four of the eleven GET twins would still overlap a route of the same method, since a
+# literal takes no precedence over a variable: `get /{tenant}/extendedAgentCard` and
+# `get /{tenant}/tasks` overlap `get /tasks/{id}`; `get /{tenant}/tasks/{id}` overlaps
+# `get /tasks/{taskId}/pushNotificationConfigs` and `get /views/tasks/pushNotificationConfigs`;
+# `get /{tenant}/tasks/{taskId}/pushNotificationConfigs` overlaps
+# `get /tasks/{taskId}/pushNotificationConfigs/{id}`. The other seven overlap nothing; ESS-HTTP-011
+# is per method, and stand-ins for each validate. The two `{id}:verb` twins also hit ESS-HTTP-007.
+# A stand-in `get /{taskId}/tasks` is refused, "ESS-HTTP-011: routes[6]: command
+# `a2a.tasks.ListTaskPushNotificationConfigs` (`routes[6]`, `get /{taskId}/tasks`) and command
+# `a2a.tasks.GetTask` (`routes[2]`, `get /tasks/{id}`) overlap on component `a2a-agent`: after an
+# equal prefix, segment 1 is `{taskId}` in one and `tasks` in the other, so one request path
+# matches both, and a literal takes no precedence over a variable". Missing constructs: an
+# additional route of one operation, with an optional input carried by the path on that route
+# only, and literal-over-variable precedence between overlapping routes. Here `tenant` travels in
+# the query (get) or the body (post, delete).
+#
+# UNMAPPED (ESS gap): DELETE carries its inputs outside the path in a JSON body, where section
+# 11.5 says "HTTP methods that do not support request bodies (GET, DELETE) MUST transmit
+# operation request parameters as path parameters or query parameters": `query` encoding is
+# admitted on `get` only (ESS-HTTP-020).
+type: ess-http/1
+specification: {system: a2a, version: v1, source_digest: "sha256:d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002"}
+routes:
+  # a2a.proto SendMessage: post "/message:send", body "*"; section 11.3.1.
+  - command: a2a.tasks.SendMessage
+    method: post
+    path: /message:send
+  # a2a.proto SendStreamingMessage: post "/message:stream", body "*"; section 11.3.1.
+  - command: a2a.tasks.SendStreamingMessage
+    method: post
+    path: /message:stream
+  # a2a.proto GetTask: get "/tasks/{id=*}"; section 11.3.2.
+  - command: a2a.tasks.GetTask
+    method: get
+    path: /tasks/{id}
+    parameters: {id: input.id}
+    request: {encoding: query}
+  # a2a.proto ListTasks: get "/tasks"; section 11.3.2. ListTasks is the view a2a.tasks.Tasks.
+  - view: a2a.tasks.Tasks
+    method: get
+    path: /tasks
+  # UNMAPPED (ESS gap): a2a.proto CancelTask, post "/tasks/{id=*}:cancel", body "*", and
+  # SubscribeToTask, get "/tasks/{id=*}:subscribe" (section 11.3.2 writes `POST
+  # /tasks/{id}:subscribe`), keep their derived routes, `post /tasks/commands/tasks:cancel` and
+  # `post /tasks/commands/tasks:subscribe`. A variable followed by a verb suffix in one segment
+  # is refused: "ESS-HTTP-007: routes[4].path: segment 2 of `/tasks/{id}:cancel`,
+  # `{id}:cancel`, is not one whole variable `{name}`: a variable is a whole segment and its
+  # name an identifier (an ASCII letter or `_`, then letters, digits and `_`)", and the same for
+  # `{id}:subscribe`. Missing construct: a path segment of a variable and a literal suffix
+  # (google.api.http's `{id=*}:verb`).
+  # a2a.proto CreateTaskPushNotificationConfig: post "/tasks/{task_id=*}/pushNotificationConfigs",
+  # body "*"; section 11.3.3.
+  - command: a2a.tasks.CreateTaskPushNotificationConfig
+    method: post
+    path: /tasks/{taskId}/pushNotificationConfigs
+    parameters: {taskId: input.task_id}
+  # a2a.proto GetTaskPushNotificationConfig: get
+  # "/tasks/{task_id=*}/pushNotificationConfigs/{id=*}"; section 11.3.3.
+  - command: a2a.tasks.GetTaskPushNotificationConfig
+    method: get
+    path: /tasks/{taskId}/pushNotificationConfigs/{id}
+    parameters: {taskId: input.task_id, id: input.id}
+    request: {encoding: query}
+  # a2a.proto ListTaskPushNotificationConfigs: get "/tasks/{task_id=*}/pushNotificationConfigs";
+  # section 11.3.3.
+  - command: a2a.tasks.ListTaskPushNotificationConfigs
+    method: get
+    path: /tasks/{taskId}/pushNotificationConfigs
+    parameters: {taskId: input.task_id}
+    request: {encoding: query}
+  # a2a.proto DeleteTaskPushNotificationConfig: delete
+  # "/tasks/{task_id=*}/pushNotificationConfigs/{id=*}"; section 11.3.3.
+  - command: a2a.tasks.DeleteTaskPushNotificationConfig
+    method: delete
+    path: /tasks/{taskId}/pushNotificationConfigs/{id}
+    parameters: {taskId: input.task_id, id: input.id}
+  # a2a.proto GetExtendedAgentCard: get "/extendedAgentCard"; section 11.3.4.
+  - command: a2a.discovery.GetExtendedAgentCard
+    method: get
+    path: /extendedAgentCard
+    request: {encoding: query}
+  # Not an A2A operation (domains/tasks.yaml, views). Its derived route,
+  # `get /tasks/views/pushNotificationConfigs`, overlaps `get /tasks/{taskId}/pushNotificationConfigs`:
+  # "ESS-HTTP-011: … after an equal prefix, segment 2 is `{taskId}` in one and `views` in the
+  # other, so one request path matches both, and a literal takes no precedence over a variable".
+  # So it is served under `/views/`, outside every A2A path. The agent-side commands
+  # (StartWorking … UpdateArtifact) and the views AllTasks and PushNotificationConfigs keep their
+  # derived routes, none of which overlaps an A2A path.
+  - view: a2a.tasks.TaskPushNotificationConfigs
+    method: get
+    path: /views/tasks/pushNotificationConfigs
