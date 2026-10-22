@@ -5,6 +5,13 @@ model, server, client, test kit, documentation) is derived from `ess/` or held t
 
 Running code is Rust with clap derive. The documentation site is the only Node.
 
+## Serves
+
+- **O2**, decisions as data, with evidence: A2A is an ESS specification first, and every artifact
+  is generated from it or checked against it.
+- **O1**, governed reach: agent-to-agent calls go through a contract whose refusals are declared.
+- **O6**, self-improvement: ESS gaps found here go back to ESS.
+
 ## Layout
 
 | Path | What it is | Who writes it |
