@@ -6,6 +6,9 @@ status: draft
 title: 0.1.0 scope and waves 1-3 approved by the orchestrator
 relations:
 - decides: story:first-release
+- decides: story:resolve-unmapped
+- decides: story:jsonrpc-binding
+- decides: story:streaming-binding
 revision: 1
 ---
 ## Decision
