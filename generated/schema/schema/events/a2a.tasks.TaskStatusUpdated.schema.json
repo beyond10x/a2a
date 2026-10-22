@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TaskStatusUpdated payload",
+  "description": "Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.",
+  "x-ess-name": "a2a.tasks.TaskStatusUpdated",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "$ref": "#/$defs/a2a.tasks.TaskId"
+    },
+    "context_id": {
+      "$ref": "#/$defs/a2a.tasks.ContextId"
+    }
+  },
+  "required": [
+    "task_id",
+    "context_id"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:24fa7410a5526bb83953fc03dbee889eabeb961842a7beffd6a487ccfdfed706",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.ContextId": {
+      "title": "ContextId",
+      "description": "Identifier grouping related tasks and messages (A2A v1.0.1 section 3.4.1).",
+      "x-ess-name": "a2a.tasks.ContextId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.TaskId": {
+      "title": "TaskId",
+      "description": "Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).",
+      "x-ess-name": "a2a.tasks.TaskId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    }
+  }
+}

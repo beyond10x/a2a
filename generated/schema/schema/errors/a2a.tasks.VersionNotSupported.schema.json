@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VersionNotSupported payload",
+  "description": "VersionNotSupportedError (JSON-RPC -32009, HTTP 400).",
+  "x-ess-name": "a2a.tasks.VersionNotSupported",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:76c0fe4363096281999e06a185d581f23ce29b9abf737d84d15a21d663f04ecb",
+    "regenerate": "ess generate"
+  }
+}

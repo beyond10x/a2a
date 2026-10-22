@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.AgentProvider",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:2e081c62f0386759eda7685f02f0b9df5f90d9d93812e14526ed7fe24b63c636",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.AgentProvider": {
+      "title": "AgentProvider",
+      "x-ess-name": "a2a.discovery.AgentProvider",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "organization": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "organization"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

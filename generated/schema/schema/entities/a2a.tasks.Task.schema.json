@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Task",
+  "description": "A stateful unit of work an agent runs for a client. Its lifecycle state is the wire `status.state`; the other status members are fields here.",
+  "x-ess-name": "a2a.tasks.Task",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/a2a.tasks.TaskId"
+    },
+    "context_id": {
+      "$ref": "#/$defs/a2a.tasks.ContextId"
+    },
+    "status_message": {
+      "$ref": "#/$defs/a2a.tasks.Message"
+    },
+    "status_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/a2a.tasks.Artifact"
+      }
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/a2a.tasks.Message"
+      }
+    },
+    "metadata": {},
+    "state": {
+      "$ref": "#/$defs/a2a.tasks.Task.State"
+    }
+  },
+  "required": [
+    "id",
+    "context_id",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:9131bd8696980c3de883d0ee8338b9c8eb9d5859c573d53f8dc563098be2d542",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.Artifact": {
+      "title": "Artifact",
+      "description": "An output the agent produced for a task (A2A v1.0.1 section 4.1.7).",
+      "x-ess-name": "a2a.tasks.Artifact",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "x-ess-field": "artifact_id",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.tasks.Part"
+          }
+        },
+        "metadata": {},
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "artifactId",
+        "parts"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.tasks.ContextId": {
+      "title": "ContextId",
+      "description": "Identifier grouping related tasks and messages (A2A v1.0.1 section 3.4.1).",
+      "x-ess-name": "a2a.tasks.ContextId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.Message": {
+      "title": "Message",
+      "description": "One turn of communication between client and agent (A2A v1.0.1 section 4.1.4).",
+      "x-ess-name": "a2a.tasks.Message",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "x-ess-field": "message_id",
+          "type": "string"
+        },
+        "contextId": {
+          "$ref": "#/$defs/a2a.tasks.ContextId",
+          "x-ess-field": "context_id"
+        },
+        "taskId": {
+          "$ref": "#/$defs/a2a.tasks.TaskId",
+          "x-ess-field": "task_id"
+        },
+        "role": {
+          "$ref": "#/$defs/a2a.tasks.Role"
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.tasks.Part"
+          }
+        },
+        "metadata": {},
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "referenceTaskIds": {
+          "x-ess-field": "reference_task_ids",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.tasks.TaskId"
+          }
+        }
+      },
+      "required": [
+        "messageId",
+        "role",
+        "parts"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.tasks.Part": {
+      "title": "Part",
+      "description": "One piece of content in a message or artifact (A2A v1.0.1 section 4.1.6).",
+      "x-ess-name": "a2a.tasks.Part",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "raw": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+          "contentEncoding": "base64"
+        },
+        "url": {
+          "type": "string"
+        },
+        "data": {},
+        "metadata": {},
+        "filename": {
+          "type": "string"
+        },
+        "mediaType": {
+          "x-ess-field": "media_type",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "a2a.tasks.Role": {
+      "title": "Role",
+      "x-ess-name": "a2a.tasks.Role",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "ROLE_USER",
+        "ROLE_AGENT"
+      ]
+    },
+    "a2a.tasks.Task.State": {
+      "title": "State",
+      "x-ess-name": "a2a.tasks.Task.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "AuthRequired",
+        "Canceled",
+        "Completed",
+        "Failed",
+        "InputRequired",
+        "Rejected",
+        "Submitted",
+        "Working"
+      ]
+    },
+    "a2a.tasks.TaskId": {
+      "title": "TaskId",
+      "description": "Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).",
+      "x-ess-name": "a2a.tasks.TaskId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    }
+  }
+}

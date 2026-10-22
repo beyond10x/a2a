@@ -1,0 +1,31 @@
+components:
+  - component: a2a-agent
+    summary: An A2A server agent, reached over JSON-RPC, gRPC or HTTP+JSON (A2A v1.0.1 section 5).
+    owns:
+      domains:
+        - a2a.tasks
+        - a2a.discovery
+    accepts:
+      commands:
+        - a2a.tasks.SendMessage
+        - a2a.tasks.SendStreamingMessage
+        - a2a.tasks.GetTask
+        - a2a.tasks.CancelTask
+        - a2a.tasks.SubscribeToTask
+        - a2a.tasks.CreateTaskPushNotificationConfig
+        - a2a.tasks.GetTaskPushNotificationConfig
+        - a2a.tasks.DeleteTaskPushNotificationConfig
+        - a2a.tasks.StartWorking
+        - a2a.tasks.RequireInput
+        - a2a.tasks.RequireAuth
+        - a2a.tasks.CompleteTask
+        - a2a.tasks.FailTask
+        - a2a.tasks.RejectTask
+        - a2a.discovery.GetExtendedAgentCard
+    publishes:
+      events:
+        - a2a.tasks.TaskCreated
+        - a2a.tasks.TaskStatusUpdated
+        - a2a.tasks.PushNotificationConfigCreated
+        - a2a.tasks.PushNotificationConfigDeleted
+    reached_by: network

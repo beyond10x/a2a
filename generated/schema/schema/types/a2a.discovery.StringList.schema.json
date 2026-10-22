@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.StringList",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:b0265f69024d43379438e0b6c52c090c3f5569014d7ac99ad0786b9df2bab89b",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.StringList": {
+      "title": "StringList",
+      "x-ess-name": "a2a.discovery.StringList",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "list"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

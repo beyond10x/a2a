@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UnsupportedOperation payload",
+  "description": "UnsupportedOperationError (JSON-RPC -32004, HTTP 400).",
+  "x-ess-name": "a2a.tasks.UnsupportedOperation",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:9b08726bc4e07793ba1222a627a18ac159d2cba3b61e33f89282ba6f66a93cf9",
+    "regenerate": "ess generate"
+  }
+}

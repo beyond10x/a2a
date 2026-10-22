@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.SecurityRequirement",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:b4ab5b3523c5c78c8bcef719cbbac0f02e5e907f6a0d0f40f126c2f4615d386f",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.SecurityRequirement": {
+      "title": "SecurityRequirement",
+      "x-ess-name": "a2a.discovery.SecurityRequirement",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "schemes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/a2a.discovery.StringList"
+          },
+          "x-ess-map-key": "String"
+        }
+      },
+      "required": [
+        "schemes"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.discovery.StringList": {
+      "title": "StringList",
+      "x-ess-name": "a2a.discovery.StringList",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "list"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

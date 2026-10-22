@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.DeviceCodeOAuthFlow",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:3a2cac6eef9bf98bd9631178b2a87d8aefee9bf0338c15883412bdffebf2e433",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.DeviceCodeOAuthFlow": {
+      "title": "DeviceCodeOAuthFlow",
+      "x-ess-name": "a2a.discovery.DeviceCodeOAuthFlow",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "deviceAuthorizationUrl": {
+          "x-ess-field": "device_authorization_url",
+          "type": "string"
+        },
+        "tokenUrl": {
+          "x-ess-field": "token_url",
+          "type": "string"
+        },
+        "refreshUrl": {
+          "x-ess-field": "refresh_url",
+          "type": "string"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-ess-map-key": "String"
+        }
+      },
+      "required": [
+        "deviceAuthorizationUrl",
+        "tokenUrl",
+        "scopes"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

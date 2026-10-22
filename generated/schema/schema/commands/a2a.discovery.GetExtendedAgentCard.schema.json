@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Get extended agent card input",
+  "description": "Return the Agent Card an authenticated client may see, possibly with more skills than the public card (A2A v1.0.1 section 3.1.11; GET /extendedAgentCard).",
+  "x-ess-name": "a2a.discovery.GetExtendedAgentCard",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "tenant": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:c94c055afe04f19b27cc261315ae6be7bb0db9542cc3aa85d4b94199433b6efc",
+    "regenerate": "ess generate"
+  }
+}

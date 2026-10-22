@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.AgentCardSignature",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:09424fc81c35c2f6dad2555a5d0a4ec75da0e424d0ae0588e9151dc4a57bc539",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.AgentCardSignature": {
+      "title": "AgentCardSignature",
+      "x-ess-name": "a2a.discovery.AgentCardSignature",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "protected": {
+          "type": "string"
+        },
+        "signature": {
+          "type": "string"
+        },
+        "header": {}
+      },
+      "required": [
+        "protected",
+        "signature"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

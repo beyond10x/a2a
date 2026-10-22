@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.AgentCapabilities",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:5023e309d323063390cea3ecd8e848c75c211e4044602fec1b3be7c4da4adeb4",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.AgentCapabilities": {
+      "title": "AgentCapabilities",
+      "x-ess-name": "a2a.discovery.AgentCapabilities",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "streaming": {
+          "type": "boolean"
+        },
+        "pushNotifications": {
+          "x-ess-field": "push_notifications",
+          "type": "boolean"
+        },
+        "extensions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.discovery.AgentExtension"
+          }
+        },
+        "extendedAgentCard": {
+          "x-ess-field": "extended_agent_card",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "a2a.discovery.AgentExtension": {
+      "title": "AgentExtension",
+      "x-ess-name": "a2a.discovery.AgentExtension",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "params": {}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Get task input",
+  "description": "Read a task's current state (A2A v1.0.1 section 3.1.3; GET /tasks/{id}).",
+  "x-ess-name": "a2a.tasks.GetTask",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "tenant": {
+      "type": "string"
+    },
+    "id": {
+      "$ref": "#/$defs/a2a.tasks.TaskId"
+    },
+    "historyLength": {
+      "x-ess-field": "history_length",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:df0095d09afaa83b3a24280eb4a4e284d29dcd232937bcb401cee5c96773f680",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.TaskId": {
+      "title": "TaskId",
+      "description": "Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).",
+      "x-ess-name": "a2a.tasks.TaskId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    }
+  }
+}

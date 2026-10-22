@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExtensionSupportRequired payload",
+  "description": "ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).",
+  "x-ess-name": "a2a.tasks.ExtensionSupportRequired",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:7497bdec061ac4100b39cc472127bf8b4cd8801ed811b674bb75f0bd0e1e47be",
+    "regenerate": "ess generate"
+  }
+}

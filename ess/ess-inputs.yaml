@@ -1,0 +1,9 @@
+format: ess-inputs/2
+requires: ess 0.67.0
+specification:
+  - system.yaml
+  - components.yaml
+  - domains/tasks.yaml
+  - domains/discovery.yaml
+scenarios:
+  - scenarios/delete-push-config-twice.yaml

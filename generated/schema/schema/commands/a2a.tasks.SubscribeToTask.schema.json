@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Subscribe to task input",
+  "description": "Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; GET /tasks/{id}:subscribe).",
+  "x-ess-name": "a2a.tasks.SubscribeToTask",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "tenant": {
+      "type": "string"
+    },
+    "id": {
+      "$ref": "#/$defs/a2a.tasks.TaskId"
+    }
+  },
+  "required": [
+    "id"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:a7b0b860e506d4e84af5114fb55e2bda85630e30ee13a7080f8db0011db357fc",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.TaskId": {
+      "title": "TaskId",
+      "description": "Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).",
+      "x-ess-name": "a2a.tasks.TaskId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    }
+  }
+}

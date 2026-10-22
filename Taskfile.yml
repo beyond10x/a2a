@@ -1,0 +1,85 @@
+version: '3'
+
+env:
+  CARGO_TARGET_DIR: '{{.HOME}}/.cache/b10x-target/a2a'
+
+vars:
+  A2A_VERSION: v1.0.1
+  A2A_SHA256: a148fb439ca2c37e12c10e5f0cfdd2d08f9ee5b1ec96f44593edd05a68bead96
+  A2A_SRC: '{{.HOME}}/.cache/a2a-upstream/{{.A2A_VERSION}}'
+  A2A_DIR: '{{.A2A_SRC}}/A2A-{{trimPrefix "v" .A2A_VERSION}}'
+  SCRATCH: '{{.HOME}}/.cache/a2a-gen'
+
+tasks:
+  default:
+    cmds: [{task: check}]
+
+  check:
+    desc: Validate ess/, hold every generated artifact to it, then format, lint and build.
+    cmds:
+      - task: spec
+      - task: projections-drift
+      - task: drift
+      - cargo fmt --all --check
+      - cargo clippy --workspace --all-targets --locked -- -D warnings
+      - cargo test --workspace --locked
+      - cargo build --locked --manifest-path generated/rust/a2a/Cargo.toml --features server
+
+  spec:
+    desc: Validate the ESS specification.
+    cmds:
+      - ess specify validate --path ess
+
+  projections:
+    desc: Rewrite generated/openapi, generated/asyncapi and generated/schema from ess/.
+    cmds:
+      - for: [openapi, asyncapi, schema]
+        cmd: ess generate --path ess --kind {{.ITEM}} --out generated/{{.ITEM}}
+
+  projections-drift:
+    desc: Fail when generated/openapi, generated/asyncapi or generated/schema differs from ess/.
+    cmds:
+      - for: [openapi, asyncapi, schema]
+        cmd: ess generate --path ess --kind {{.ITEM}} --out generated/{{.ITEM}} --check
+
+  generate:
+    desc: Rewrite generated/rust/a2a from a fresh synthesis of ess/.
+    cmds:
+      - cargo run -q --locked -p a2a-xtask -- generate
+
+  drift:
+    desc: Fail when generated/rust/a2a differs from a fresh synthesis of ess/.
+    cmds:
+      - cargo run -q --locked -p a2a-xtask -- drift
+
+  conform-interpreted:
+    desc: Run the synthesized suite against the ESS interpreted reference target (not a gate yet).
+    cmds:
+      - mkdir -p {{.SCRATCH}}/conf
+      - ess verify conform synthesize --path ess --scenarios ess --out {{.SCRATCH}}/conf/suite.json
+      - ess verify conform run --path ess --target interpreted --suite {{.SCRATCH}}/conf/suite.json --report-format 2 --report-out {{.SCRATCH}}/conf/report.json
+
+  plan:
+    desc: Validate the AEP planning store.
+    cmds:
+      - aep plan artifact validate
+
+  upstream-fetch:
+    desc: Download the pinned A2A release tarball and verify its sha256.
+    status:
+      - test -d {{.A2A_DIR}}
+    cmds:
+      - mkdir -p {{.A2A_SRC}}
+      - curl -fsSL -o {{.A2A_SRC}}/src.tar.gz https://github.com/a2aproject/A2A/archive/refs/tags/{{.A2A_VERSION}}.tar.gz
+      - echo "{{.A2A_SHA256}}  {{.A2A_SRC}}/src.tar.gz" | sha256sum -c -
+      - tar -xzf {{.A2A_SRC}}/src.tar.gz -C {{.A2A_SRC}}
+
+  upstream:
+    desc: Refresh upstream/ from the pinned release, then derive upstream/openapi/a2a.openapi.yaml.
+    deps: [upstream-fetch]
+    cmds:
+      - cp {{.A2A_DIR}}/specification/a2a.proto upstream/a2a.proto
+      - cp {{.A2A_DIR}}/LICENSE upstream/LICENSE
+      - mkdir -p {{.SCRATCH}}/openapiv2
+      - buf generate {{.A2A_DIR}}/specification --template upstream/buf.gen.openapiv2.yaml -o {{.SCRATCH}}/openapiv2
+      - npx -y swagger2openapi@7 --yaml --outfile upstream/openapi/a2a.openapi.yaml {{.SCRATCH}}/openapiv2/a2a.swagger.yaml

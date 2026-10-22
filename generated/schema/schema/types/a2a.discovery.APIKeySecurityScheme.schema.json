@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.APIKeySecurityScheme",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:6eae303936952ed71cf72076dc28d563a01b5b4b036706556a07105be8a7112d",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.APIKeySecurityScheme": {
+      "title": "APIKeySecurityScheme",
+      "x-ess-name": "a2a.discovery.APIKeySecurityScheme",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "location",
+        "name"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

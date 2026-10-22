@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.HTTPAuthSecurityScheme",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:3db996d96434c40437c43ac2749b538170767a0fbd7e2bcf5141c4510ba9845f",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.HTTPAuthSecurityScheme": {
+      "title": "HTTPAuthSecurityScheme",
+      "x-ess-name": "a2a.discovery.HTTPAuthSecurityScheme",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "scheme": {
+          "type": "string"
+        },
+        "bearerFormat": {
+          "x-ess-field": "bearer_format",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

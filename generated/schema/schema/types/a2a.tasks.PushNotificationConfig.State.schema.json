@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.tasks.PushNotificationConfig.State",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:0ea6f638abda1e4027b6bbdc86dd8ddedb5b0a3cb366ae1257c2c110c1319905",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.PushNotificationConfig.State": {
+      "title": "State",
+      "x-ess-name": "a2a.tasks.PushNotificationConfig.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Active"
+      ]
+    }
+  }
+}

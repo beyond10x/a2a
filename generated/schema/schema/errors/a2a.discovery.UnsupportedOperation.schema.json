@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UnsupportedOperation payload",
+  "description": "UnsupportedOperationError (JSON-RPC -32004, HTTP 400): the agent card does not declare capabilities.extendedAgentCard.",
+  "x-ess-name": "a2a.discovery.UnsupportedOperation",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:940f3998da3c4abde056f8a7ff367ef900b7f86ad0e98ba3538a94808347f04e",
+    "regenerate": "ess generate"
+  }
+}

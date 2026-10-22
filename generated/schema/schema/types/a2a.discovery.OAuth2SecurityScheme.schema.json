@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.OAuth2SecurityScheme",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:83abdde4c1dbe81773d5e6cefe85874b6058953134b988a01bd451105d06688e",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.AuthorizationCodeOAuthFlow": {
+      "title": "AuthorizationCodeOAuthFlow",
+      "x-ess-name": "a2a.discovery.AuthorizationCodeOAuthFlow",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "authorizationUrl": {
+          "x-ess-field": "authorization_url",
+          "type": "string"
+        },
+        "tokenUrl": {
+          "x-ess-field": "token_url",
+          "type": "string"
+        },
+        "refreshUrl": {
+          "x-ess-field": "refresh_url",
+          "type": "string"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-ess-map-key": "String"
+        },
+        "pkceRequired": {
+          "x-ess-field": "pkce_required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "authorizationUrl",
+        "tokenUrl",
+        "scopes"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.discovery.ClientCredentialsOAuthFlow": {
+      "title": "ClientCredentialsOAuthFlow",
+      "x-ess-name": "a2a.discovery.ClientCredentialsOAuthFlow",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "tokenUrl": {
+          "x-ess-field": "token_url",
+          "type": "string"
+        },
+        "refreshUrl": {
+          "x-ess-field": "refresh_url",
+          "type": "string"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-ess-map-key": "String"
+        }
+      },
+      "required": [
+        "tokenUrl",
+        "scopes"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.discovery.DeviceCodeOAuthFlow": {
+      "title": "DeviceCodeOAuthFlow",
+      "x-ess-name": "a2a.discovery.DeviceCodeOAuthFlow",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "deviceAuthorizationUrl": {
+          "x-ess-field": "device_authorization_url",
+          "type": "string"
+        },
+        "tokenUrl": {
+          "x-ess-field": "token_url",
+          "type": "string"
+        },
+        "refreshUrl": {
+          "x-ess-field": "refresh_url",
+          "type": "string"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-ess-map-key": "String"
+        }
+      },
+      "required": [
+        "deviceAuthorizationUrl",
+        "tokenUrl",
+        "scopes"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.discovery.ImplicitOAuthFlow": {
+      "title": "ImplicitOAuthFlow",
+      "description": "Deprecated in A2A v1.0.1.",
+      "x-ess-name": "a2a.discovery.ImplicitOAuthFlow",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "authorizationUrl": {
+          "x-ess-field": "authorization_url",
+          "type": "string"
+        },
+        "refreshUrl": {
+          "x-ess-field": "refresh_url",
+          "type": "string"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-ess-map-key": "String"
+        }
+      },
+      "additionalProperties": false
+    },
+    "a2a.discovery.OAuth2SecurityScheme": {
+      "title": "OAuth2SecurityScheme",
+      "x-ess-name": "a2a.discovery.OAuth2SecurityScheme",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "flows": {
+          "$ref": "#/$defs/a2a.discovery.OAuthFlows"
+        },
+        "oauth2MetadataUrl": {
+          "x-ess-field": "oauth2_metadata_url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "flows"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.discovery.OAuthFlows": {
+      "title": "OAuthFlows",
+      "x-ess-name": "a2a.discovery.OAuthFlows",
+      "x-ess-kind": "union",
+      "oneOf": [
+        {
+          "title": "authorizationCode",
+          "type": "object",
+          "properties": {
+            "flow": {
+              "type": "string",
+              "const": "authorizationCode"
+            },
+            "value": {
+              "$ref": "#/$defs/a2a.discovery.AuthorizationCodeOAuthFlow"
+            }
+          },
+          "required": [
+            "flow",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "clientCredentials",
+          "type": "object",
+          "properties": {
+            "flow": {
+              "type": "string",
+              "const": "clientCredentials"
+            },
+            "value": {
+              "$ref": "#/$defs/a2a.discovery.ClientCredentialsOAuthFlow"
+            }
+          },
+          "required": [
+            "flow",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "deviceCode",
+          "type": "object",
+          "properties": {
+            "flow": {
+              "type": "string",
+              "const": "deviceCode"
+            },
+            "value": {
+              "$ref": "#/$defs/a2a.discovery.DeviceCodeOAuthFlow"
+            }
+          },
+          "required": [
+            "flow",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "implicit",
+          "type": "object",
+          "properties": {
+            "flow": {
+              "type": "string",
+              "const": "implicit"
+            },
+            "value": {
+              "$ref": "#/$defs/a2a.discovery.ImplicitOAuthFlow"
+            }
+          },
+          "required": [
+            "flow",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "password",
+          "type": "object",
+          "properties": {
+            "flow": {
+              "type": "string",
+              "const": "password"
+            },
+            "value": {
+              "$ref": "#/$defs/a2a.discovery.PasswordOAuthFlow"
+            }
+          },
+          "required": [
+            "flow",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "x-ess-union-tag": "flow"
+    },
+    "a2a.discovery.PasswordOAuthFlow": {
+      "title": "PasswordOAuthFlow",
+      "description": "Deprecated in A2A v1.0.1.",
+      "x-ess-name": "a2a.discovery.PasswordOAuthFlow",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "tokenUrl": {
+          "x-ess-field": "token_url",
+          "type": "string"
+        },
+        "refreshUrl": {
+          "x-ess-field": "refresh_url",
+          "type": "string"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-ess-map-key": "String"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

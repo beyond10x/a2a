@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContextMismatch payload",
+  "description": "The message's contextId differs from the contextId of the task it names.",
+  "x-ess-name": "a2a.tasks.ContextMismatch",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:85f3d841464999c6fa0d154681458dfe6b0384aba775d5966f487d1de920af87",
+    "regenerate": "ess generate"
+  }
+}

@@ -1,0 +1,7 @@
+format: ess/29
+system: a2a
+version: v1
+
+domains:
+  - a2a.tasks
+  - a2a.discovery

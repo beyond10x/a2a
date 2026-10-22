@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.tasks.TaskPushNotificationConfig",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:a675d6d2c5f3598001ce511388178898ce48368099884cb5467883a7e986dcf8",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.AuthenticationInfo": {
+      "title": "AuthenticationInfo",
+      "x-ess-name": "a2a.tasks.AuthenticationInfo",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "scheme": {
+          "type": "string"
+        },
+        "credentials": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.tasks.PushNotificationConfigId": {
+      "title": "PushNotificationConfigId",
+      "x-ess-name": "a2a.tasks.PushNotificationConfigId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.TaskId": {
+      "title": "TaskId",
+      "description": "Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).",
+      "x-ess-name": "a2a.tasks.TaskId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.TaskPushNotificationConfig": {
+      "title": "TaskPushNotificationConfig",
+      "description": "The wire form of a push-notification configuration (proto TaskPushNotificationConfig).",
+      "x-ess-name": "a2a.tasks.TaskPushNotificationConfig",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "tenant": {
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/$defs/a2a.tasks.PushNotificationConfigId"
+        },
+        "taskId": {
+          "$ref": "#/$defs/a2a.tasks.TaskId",
+          "x-ess-field": "task_id"
+        },
+        "url": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        },
+        "authentication": {
+          "$ref": "#/$defs/a2a.tasks.AuthenticationInfo"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

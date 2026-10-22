@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Subscribe to task response",
+  "description": "Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section 3.1.6; GET /tasks/{id}:subscribe).",
+  "x-ess-name": "a2a.tasks.SubscribeToTask",
+  "x-ess-kind": "command-response",
+  "type": "object",
+  "properties": {
+    "task": {
+      "$ref": "#/$defs/a2a.tasks.TaskSnapshot"
+    }
+  },
+  "required": [
+    "task"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:a7b0b860e506d4e84af5114fb55e2bda85630e30ee13a7080f8db0011db357fc",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.Artifact": {
+      "title": "Artifact",
+      "description": "An output the agent produced for a task (A2A v1.0.1 section 4.1.7).",
+      "x-ess-name": "a2a.tasks.Artifact",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "x-ess-field": "artifact_id",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.tasks.Part"
+          }
+        },
+        "metadata": {},
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "artifactId",
+        "parts"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.tasks.ContextId": {
+      "title": "ContextId",
+      "description": "Identifier grouping related tasks and messages (A2A v1.0.1 section 3.4.1).",
+      "x-ess-name": "a2a.tasks.ContextId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.Message": {
+      "title": "Message",
+      "description": "One turn of communication between client and agent (A2A v1.0.1 section 4.1.4).",
+      "x-ess-name": "a2a.tasks.Message",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "x-ess-field": "message_id",
+          "type": "string"
+        },
+        "contextId": {
+          "$ref": "#/$defs/a2a.tasks.ContextId",
+          "x-ess-field": "context_id"
+        },
+        "taskId": {
+          "$ref": "#/$defs/a2a.tasks.TaskId",
+          "x-ess-field": "task_id"
+        },
+        "role": {
+          "$ref": "#/$defs/a2a.tasks.Role"
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.tasks.Part"
+          }
+        },
+        "metadata": {},
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "referenceTaskIds": {
+          "x-ess-field": "reference_task_ids",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.tasks.TaskId"
+          }
+        }
+      },
+      "required": [
+        "messageId",
+        "role",
+        "parts"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.tasks.Part": {
+      "title": "Part",
+      "description": "One piece of content in a message or artifact (A2A v1.0.1 section 4.1.6).",
+      "x-ess-name": "a2a.tasks.Part",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "raw": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+          "contentEncoding": "base64"
+        },
+        "url": {
+          "type": "string"
+        },
+        "data": {},
+        "metadata": {},
+        "filename": {
+          "type": "string"
+        },
+        "mediaType": {
+          "x-ess-field": "media_type",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "a2a.tasks.Role": {
+      "title": "Role",
+      "x-ess-name": "a2a.tasks.Role",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "ROLE_USER",
+        "ROLE_AGENT"
+      ]
+    },
+    "a2a.tasks.TaskId": {
+      "title": "TaskId",
+      "description": "Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).",
+      "x-ess-name": "a2a.tasks.TaskId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.TaskSnapshot": {
+      "title": "TaskSnapshot",
+      "description": "The wire form of a task, proto message Task (A2A v1.0.1 section 4.1.1).",
+      "x-ess-name": "a2a.tasks.TaskSnapshot",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/a2a.tasks.TaskId"
+        },
+        "contextId": {
+          "$ref": "#/$defs/a2a.tasks.ContextId",
+          "x-ess-field": "context_id"
+        },
+        "status": {
+          "$ref": "#/$defs/a2a.tasks.TaskStatus"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.tasks.Artifact"
+          }
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.tasks.Message"
+          }
+        },
+        "metadata": {}
+      },
+      "required": [
+        "id",
+        "contextId",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.tasks.TaskState": {
+      "title": "TaskState",
+      "x-ess-name": "a2a.tasks.TaskState",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "TASK_STATE_SUBMITTED",
+        "TASK_STATE_WORKING",
+        "TASK_STATE_COMPLETED",
+        "TASK_STATE_FAILED",
+        "TASK_STATE_CANCELED",
+        "TASK_STATE_INPUT_REQUIRED",
+        "TASK_STATE_REJECTED",
+        "TASK_STATE_AUTH_REQUIRED"
+      ]
+    },
+    "a2a.tasks.TaskStatus": {
+      "title": "TaskStatus",
+      "x-ess-name": "a2a.tasks.TaskStatus",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/a2a.tasks.TaskState"
+        },
+        "message": {
+          "$ref": "#/$defs/a2a.tasks.Message"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.AuthorizationCodeOAuthFlow",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:854f49cd7f228c389cc940bcdbf6c8f17021f7eebfa1c4a1455ade19b9a29f0a",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.AuthorizationCodeOAuthFlow": {
+      "title": "AuthorizationCodeOAuthFlow",
+      "x-ess-name": "a2a.discovery.AuthorizationCodeOAuthFlow",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "authorizationUrl": {
+          "x-ess-field": "authorization_url",
+          "type": "string"
+        },
+        "tokenUrl": {
+          "x-ess-field": "token_url",
+          "type": "string"
+        },
+        "refreshUrl": {
+          "x-ess-field": "refresh_url",
+          "type": "string"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-ess-map-key": "String"
+        },
+        "pkceRequired": {
+          "x-ess-field": "pkce_required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "authorizationUrl",
+        "tokenUrl",
+        "scopes"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

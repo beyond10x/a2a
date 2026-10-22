@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.MutualTlsSecurityScheme",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:a4e1f97758fdd111ff5205d4e54d3444927126cb6e6d25ae9e18d3eeb71ce378",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.MutualTlsSecurityScheme": {
+      "title": "MutualTlsSecurityScheme",
+      "x-ess-name": "a2a.discovery.MutualTlsSecurityScheme",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

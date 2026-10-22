@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TaskStateConflict payload",
+  "description": "The task is not in a state this agent-side move starts from, so nothing moved.",
+  "x-ess-name": "a2a.tasks.TaskStateConflict",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "properties": {
+    "state": {
+      "$ref": "#/$defs/a2a.tasks.Task.State"
+    }
+  },
+  "required": [
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:ed91795e1942315cd2b1b95b0e5e91450da772de42697493bcc443c036ed02b4",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.Task.State": {
+      "title": "State",
+      "x-ess-name": "a2a.tasks.Task.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "AuthRequired",
+        "Canceled",
+        "Completed",
+        "Failed",
+        "InputRequired",
+        "Rejected",
+        "Submitted",
+        "Working"
+      ]
+    }
+  }
+}

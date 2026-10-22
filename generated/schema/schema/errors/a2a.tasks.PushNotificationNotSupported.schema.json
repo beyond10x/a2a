@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PushNotificationNotSupported payload",
+  "description": "PushNotificationNotSupportedError (JSON-RPC -32003, HTTP 400): the agent card does not declare capabilities.pushNotifications.",
+  "x-ess-name": "a2a.tasks.PushNotificationNotSupported",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:59c7edb9f8b2bbb9de5bc796dd7ffa3128f6563aea0099b24c869e937aaaff3c",
+    "regenerate": "ess generate"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TaskNotCancelable payload",
+  "description": "TaskNotCancelableError (JSON-RPC -32002, HTTP 400).",
+  "x-ess-name": "a2a.tasks.TaskNotCancelable",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:4c294314ad3fbee368d8075c18f69f61d1bd3e6c23c1ddc741818518fdc0555f",
+    "regenerate": "ess generate"
+  }
+}

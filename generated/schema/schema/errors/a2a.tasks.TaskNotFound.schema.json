@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TaskNotFound payload",
+  "description": "TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.",
+  "x-ess-name": "a2a.tasks.TaskNotFound",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:1c869efd6d568de2096cfadd7910be8dcb4cee730f7f841b54b9b7e377608f64",
+    "regenerate": "ess generate"
+  }
+}

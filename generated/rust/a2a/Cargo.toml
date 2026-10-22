@@ -1,0 +1,25 @@
+# generated from a2a v1
+# model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
+# contract digest f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea
+# do not edit: regenerate with `ess synthesize --layout crate`
+
+[package]
+name = "a2a"
+description = "The `a2a` specification, v1, synthesised as one crate; its HTTP surface is the `server` feature."
+version = "1.0.0"
+edition = "2021"
+
+[features]
+server = ["dep:clap", "dep:uuid", "dep:time"]
+
+[dependencies]
+clap = { version = "=4.6.7", features = ["derive"], optional = true }
+uuid = { version = "=1.26.1", features = ["v4"], optional = true }
+time = { version = "=0.3.45", features = ["formatting"], optional = true }
+
+[[bin]]
+name = "a2a-agent-server"
+path = "src/bin/a2a-agent-server.rs"
+required-features = ["server"]
+
+[workspace]

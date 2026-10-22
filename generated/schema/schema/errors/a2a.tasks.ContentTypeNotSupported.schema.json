@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContentTypeNotSupported payload",
+  "description": "ContentTypeNotSupportedError (JSON-RPC -32005, HTTP 400).",
+  "x-ess-name": "a2a.tasks.ContentTypeNotSupported",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:1089a26827212d864d61e0c17473695671fada40c324bc131a8d18c53a49f156",
+    "regenerate": "ess generate"
+  }
+}

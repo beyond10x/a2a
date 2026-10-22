@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.AgentSkill",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:407489bd563d21f85aa23de80a2b4a865c090da8c1418b7c737d920d9fca1c4d",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.AgentSkill": {
+      "title": "AgentSkill",
+      "x-ess-name": "a2a.discovery.AgentSkill",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "inputModes": {
+          "x-ess-field": "input_modes",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outputModes": {
+          "x-ess-field": "output_modes",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "securityRequirements": {
+          "x-ess-field": "security_requirements",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.discovery.SecurityRequirement"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "tags"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.discovery.SecurityRequirement": {
+      "title": "SecurityRequirement",
+      "x-ess-name": "a2a.discovery.SecurityRequirement",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "schemes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/a2a.discovery.StringList"
+          },
+          "x-ess-map-key": "String"
+        }
+      },
+      "required": [
+        "schemes"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.discovery.StringList": {
+      "title": "StringList",
+      "x-ess-name": "a2a.discovery.StringList",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "list"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

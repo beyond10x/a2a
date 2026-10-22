@@ -1,0 +1,371 @@
+domain: a2a.discovery
+
+summary: >-
+  The Agent Card an A2A agent publishes about itself: identity, interfaces, capabilities, skills and
+  security schemes (A2A v1.0.1 section 4.4, proto messages AgentCard and below).
+
+naming:
+  wire: discovery
+  display: Discovery
+
+types:
+  - name: a2a.discovery.AgentInterface
+    kind: struct
+    naming:
+      summary: A URL and protocol binding the agent is reached at (proto AgentInterface).
+    fields:
+      - name: url
+        type: String
+      - name: protocol_binding
+        type: String
+        naming: {wire: protocolBinding}
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: protocol_version
+        type: String
+        naming: {wire: protocolVersion}
+
+  - name: a2a.discovery.AgentProvider
+    kind: struct
+    fields:
+      - name: url
+        type: String
+      - name: organization
+        type: String
+
+  - name: a2a.discovery.AgentExtension
+    kind: struct
+    fields:
+      - name: uri
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: description
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: required
+        type: Optional<Boolean>
+        presence: omitted_when_absent
+      - name: params
+        type: Optional<Json>
+
+  - name: a2a.discovery.AgentCapabilities
+    kind: struct
+    fields:
+      - name: streaming
+        type: Optional<Boolean>
+        presence: omitted_when_absent
+      - name: push_notifications
+        type: Optional<Boolean>
+        naming: {wire: pushNotifications}
+        presence: omitted_when_absent
+      - name: extensions
+        type: Optional<List<a2a.discovery.AgentExtension>>
+        presence: omitted_when_absent
+      - name: extended_agent_card
+        type: Optional<Boolean>
+        naming: {wire: extendedAgentCard}
+        presence: omitted_when_absent
+
+  - name: a2a.discovery.StringList
+    kind: struct
+    fields:
+      - name: list
+        type: List<String>
+
+  - name: a2a.discovery.SecurityRequirement
+    kind: struct
+    fields:
+      - name: schemes
+        type: Map<String, a2a.discovery.StringList>
+
+  - name: a2a.discovery.AgentSkill
+    kind: struct
+    fields:
+      - name: id
+        type: String
+      - name: name
+        type: String
+      - name: description
+        type: String
+      - name: tags
+        type: List<String>
+      - name: examples
+        type: Optional<List<String>>
+        presence: omitted_when_absent
+      - name: input_modes
+        type: Optional<List<String>>
+        naming: {wire: inputModes}
+        presence: omitted_when_absent
+      - name: output_modes
+        type: Optional<List<String>>
+        naming: {wire: outputModes}
+        presence: omitted_when_absent
+      - name: security_requirements
+        type: Optional<List<a2a.discovery.SecurityRequirement>>
+        naming: {wire: securityRequirements}
+        presence: omitted_when_absent
+
+  - name: a2a.discovery.AgentCardSignature
+    kind: struct
+    fields:
+      - name: protected
+        type: String
+      - name: signature
+        type: String
+      - name: header
+        type: Optional<Json>
+
+  - name: a2a.discovery.APIKeySecurityScheme
+    kind: struct
+    fields:
+      - name: description
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: location
+        type: String
+      - name: name
+        type: String
+
+  - name: a2a.discovery.HTTPAuthSecurityScheme
+    kind: struct
+    fields:
+      - name: description
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: scheme
+        type: String
+      - name: bearer_format
+        type: Optional<String>
+        naming: {wire: bearerFormat}
+        presence: omitted_when_absent
+
+  - name: a2a.discovery.AuthorizationCodeOAuthFlow
+    kind: struct
+    fields:
+      - name: authorization_url
+        type: String
+        naming: {wire: authorizationUrl}
+      - name: token_url
+        type: String
+        naming: {wire: tokenUrl}
+      - name: refresh_url
+        type: Optional<String>
+        naming: {wire: refreshUrl}
+        presence: omitted_when_absent
+      - name: scopes
+        type: Map<String, String>
+      - name: pkce_required
+        type: Optional<Boolean>
+        naming: {wire: pkceRequired}
+        presence: omitted_when_absent
+
+  - name: a2a.discovery.ClientCredentialsOAuthFlow
+    kind: struct
+    fields:
+      - name: token_url
+        type: String
+        naming: {wire: tokenUrl}
+      - name: refresh_url
+        type: Optional<String>
+        naming: {wire: refreshUrl}
+        presence: omitted_when_absent
+      - name: scopes
+        type: Map<String, String>
+
+  - name: a2a.discovery.ImplicitOAuthFlow
+    kind: struct
+    naming:
+      summary: Deprecated in A2A v1.0.1.
+    fields:
+      - name: authorization_url
+        type: Optional<String>
+        naming: {wire: authorizationUrl}
+        presence: omitted_when_absent
+      - name: refresh_url
+        type: Optional<String>
+        naming: {wire: refreshUrl}
+        presence: omitted_when_absent
+      - name: scopes
+        type: Optional<Map<String, String>>
+        presence: omitted_when_absent
+
+  - name: a2a.discovery.PasswordOAuthFlow
+    kind: struct
+    naming:
+      summary: Deprecated in A2A v1.0.1.
+    fields:
+      - name: token_url
+        type: Optional<String>
+        naming: {wire: tokenUrl}
+        presence: omitted_when_absent
+      - name: refresh_url
+        type: Optional<String>
+        naming: {wire: refreshUrl}
+        presence: omitted_when_absent
+      - name: scopes
+        type: Optional<Map<String, String>>
+        presence: omitted_when_absent
+
+  - name: a2a.discovery.DeviceCodeOAuthFlow
+    kind: struct
+    fields:
+      - name: device_authorization_url
+        type: String
+        naming: {wire: deviceAuthorizationUrl}
+      - name: token_url
+        type: String
+        naming: {wire: tokenUrl}
+      - name: refresh_url
+        type: Optional<String>
+        naming: {wire: refreshUrl}
+        presence: omitted_when_absent
+      - name: scopes
+        type: Map<String, String>
+
+  # UNMAPPED: proto `oneof flow` is serialized by ProtoJSON as an object with exactly one member
+  # named after the chosen field (`{"clientCredentials": {...}}`), not as a tagged object. The
+  # union below uses a `flow` tag, which is not the A2A wire form. Open question: does ESS have a
+  # union encoding keyed by member name (externally tagged)? Until it does, this type describes
+  # the choice, not the bytes.
+  - name: a2a.discovery.OAuthFlows
+    kind: union
+    tag: flow
+    variants:
+      authorizationCode: a2a.discovery.AuthorizationCodeOAuthFlow
+      clientCredentials: a2a.discovery.ClientCredentialsOAuthFlow
+      implicit: a2a.discovery.ImplicitOAuthFlow
+      password: a2a.discovery.PasswordOAuthFlow
+      deviceCode: a2a.discovery.DeviceCodeOAuthFlow
+
+  - name: a2a.discovery.OAuth2SecurityScheme
+    kind: struct
+    fields:
+      - name: description
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: flows
+        type: a2a.discovery.OAuthFlows
+      - name: oauth2_metadata_url
+        type: Optional<String>
+        naming: {wire: oauth2MetadataUrl}
+        presence: omitted_when_absent
+
+  - name: a2a.discovery.OpenIdConnectSecurityScheme
+    kind: struct
+    fields:
+      - name: description
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: open_id_connect_url
+        type: String
+        naming: {wire: openIdConnectUrl}
+
+  - name: a2a.discovery.MutualTlsSecurityScheme
+    kind: struct
+    fields:
+      - name: description
+        type: Optional<String>
+        presence: omitted_when_absent
+
+  # UNMAPPED: same `oneof` encoding question as OAuthFlows.
+  - name: a2a.discovery.SecurityScheme
+    kind: union
+    tag: scheme
+    variants:
+      apiKeySecurityScheme: a2a.discovery.APIKeySecurityScheme
+      httpAuthSecurityScheme: a2a.discovery.HTTPAuthSecurityScheme
+      oauth2SecurityScheme: a2a.discovery.OAuth2SecurityScheme
+      openIdConnectSecurityScheme: a2a.discovery.OpenIdConnectSecurityScheme
+      mtlsSecurityScheme: a2a.discovery.MutualTlsSecurityScheme
+
+  - name: a2a.discovery.AgentCard
+    kind: struct
+    naming:
+      summary: Self-describing manifest of an agent (A2A v1.0.1 section 4.4.1).
+    fields:
+      - name: name
+        type: String
+      - name: description
+        type: String
+      - name: supported_interfaces
+        type: List<a2a.discovery.AgentInterface>
+        naming: {wire: supportedInterfaces}
+      - name: provider
+        type: Optional<a2a.discovery.AgentProvider>
+        presence: omitted_when_absent
+      - name: version
+        type: String
+      - name: documentation_url
+        type: Optional<String>
+        naming: {wire: documentationUrl}
+        presence: omitted_when_absent
+      - name: capabilities
+        type: a2a.discovery.AgentCapabilities
+      - name: security_schemes
+        type: Optional<Map<String, a2a.discovery.SecurityScheme>>
+        naming: {wire: securitySchemes}
+        presence: omitted_when_absent
+      - name: security_requirements
+        type: Optional<List<a2a.discovery.SecurityRequirement>>
+        naming: {wire: securityRequirements}
+        presence: omitted_when_absent
+      - name: default_input_modes
+        type: List<String>
+        naming: {wire: defaultInputModes}
+      - name: default_output_modes
+        type: List<String>
+        naming: {wire: defaultOutputModes}
+      - name: skills
+        type: List<a2a.discovery.AgentSkill>
+      - name: signatures
+        type: Optional<List<a2a.discovery.AgentCardSignature>>
+        presence: omitted_when_absent
+      - name: icon_url
+        type: Optional<String>
+        naming: {wire: iconUrl}
+        presence: omitted_when_absent
+
+actors:
+  - name: a2a.discovery.Client
+    naming:
+      display: A2A client
+      summary: An authenticated caller of the agent's A2A interface.
+    may:
+      - a2a.discovery.GetExtendedAgentCard
+
+errors:
+  - name: a2a.discovery.UnsupportedOperation
+    summary: >-
+      UnsupportedOperationError (JSON-RPC -32004, HTTP 400): the agent card does not declare
+      capabilities.extendedAgentCard.
+  - name: a2a.discovery.ExtendedAgentCardNotConfigured
+    summary: >-
+      ExtendedAgentCardNotConfiguredError (JSON-RPC -32007, HTTP 400): the agent declares the
+      capability but has no extended card configured.
+
+commands:
+  - name: a2a.discovery.GetExtendedAgentCard
+    naming:
+      wire: extendedAgentCard
+      display: Get extended agent card
+      summary: >-
+        Return the Agent Card an authenticated client may see, possibly with more skills than the
+        public card (A2A v1.0.1 section 3.1.11; GET /extendedAgentCard).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+    response:
+      - name: card
+        type: a2a.discovery.AgentCard
+    outcomes:
+      - name: not-supported
+        external: the public agent card does not declare capabilities.extendedAgentCard
+        error: a2a.discovery.UnsupportedOperation
+      - name: not-configured
+        external: the agent declares the capability but has no extended card configured
+        error: a2a.discovery.ExtendedAgentCardNotConfigured
+      - name: returned
+        returns: true
+        summary: The extended Agent Card.

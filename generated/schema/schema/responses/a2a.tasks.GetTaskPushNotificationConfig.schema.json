@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Get push notification config response",
+  "description": "Read one push-notification configuration (A2A v1.0.1 section 3.1.8; GET /tasks/{task_id}/pushNotificationConfigs/{id}).",
+  "x-ess-name": "a2a.tasks.GetTaskPushNotificationConfig",
+  "x-ess-kind": "command-response",
+  "type": "object",
+  "properties": {
+    "config": {
+      "$ref": "#/$defs/a2a.tasks.TaskPushNotificationConfig"
+    }
+  },
+  "required": [
+    "config"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:dd8cd2ed78bee7967737cf91b99d281764c84cb9dfd9a81b4db81d71ff26025a",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.AuthenticationInfo": {
+      "title": "AuthenticationInfo",
+      "x-ess-name": "a2a.tasks.AuthenticationInfo",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "scheme": {
+          "type": "string"
+        },
+        "credentials": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.tasks.PushNotificationConfigId": {
+      "title": "PushNotificationConfigId",
+      "x-ess-name": "a2a.tasks.PushNotificationConfigId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.TaskId": {
+      "title": "TaskId",
+      "description": "Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).",
+      "x-ess-name": "a2a.tasks.TaskId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    },
+    "a2a.tasks.TaskPushNotificationConfig": {
+      "title": "TaskPushNotificationConfig",
+      "description": "The wire form of a push-notification configuration (proto TaskPushNotificationConfig).",
+      "x-ess-name": "a2a.tasks.TaskPushNotificationConfig",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "tenant": {
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/$defs/a2a.tasks.PushNotificationConfigId"
+        },
+        "taskId": {
+          "$ref": "#/$defs/a2a.tasks.TaskId",
+          "x-ess-field": "task_id"
+        },
+        "url": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        },
+        "authentication": {
+          "$ref": "#/$defs/a2a.tasks.AuthenticationInfo"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

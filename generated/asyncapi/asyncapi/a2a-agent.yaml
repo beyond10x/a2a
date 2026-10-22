@@ -1,0 +1,206 @@
+# generated from a2a v1
+# model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
+# contract digest slice-sha256/2:349a5c79ccee7624c72184c786551e9b3d64a5586372ebff0bf2daef8fcaddf1
+# do not edit: regenerate with `ess generate`
+asyncapi: 3.0.0
+info:
+  title: a2a-agent
+  version: v1
+  description: |-
+    `a2a-agent` in the `a2a` specification.
+
+    An A2A server agent, reached over JSON-RPC, gRPC or HTTP+JSON (A2A v1.0.1 section 5).
+
+    The specification declares no transport, so each address below is a name and not a topic on a named broker. Servers, protocol bindings, security schemes, message keys, partitioning, retention and ordering are absent because the model does not state them.
+  x-ess-component: a2a-agent
+  x-ess-provenance:
+    system: a2a
+    specification_version: v1
+    source_digest: 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
+    contract_digest: slice-sha256/2:349a5c79ccee7624c72184c786551e9b3d64a5586372ebff0bf2daef8fcaddf1
+defaultContentType: application/json
+channels:
+  a2a.tasks.PushNotificationConfigCreated:
+    address: a2a.tasks.PushNotificationConfigCreated
+    title: PushNotificationConfigCreated
+    messages:
+      a2a.tasks.PushNotificationConfigCreated:
+        $ref: '#/components/messages/a2a.tasks.PushNotificationConfigCreated'
+    x-ess-event: a2a.tasks.PushNotificationConfigCreated
+    x-ess-address-source: qualified-name
+  a2a.tasks.PushNotificationConfigDeleted:
+    address: a2a.tasks.PushNotificationConfigDeleted
+    title: PushNotificationConfigDeleted
+    messages:
+      a2a.tasks.PushNotificationConfigDeleted:
+        $ref: '#/components/messages/a2a.tasks.PushNotificationConfigDeleted'
+    x-ess-event: a2a.tasks.PushNotificationConfigDeleted
+    x-ess-address-source: qualified-name
+  a2a.tasks.TaskCreated:
+    address: a2a.tasks.TaskCreated
+    title: TaskCreated
+    messages:
+      a2a.tasks.TaskCreated:
+        $ref: '#/components/messages/a2a.tasks.TaskCreated'
+    x-ess-event: a2a.tasks.TaskCreated
+    x-ess-address-source: qualified-name
+  a2a.tasks.TaskStatusUpdated:
+    address: a2a.tasks.TaskStatusUpdated
+    title: TaskStatusUpdated
+    summary: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.
+    messages:
+      a2a.tasks.TaskStatusUpdated:
+        $ref: '#/components/messages/a2a.tasks.TaskStatusUpdated'
+    x-ess-event: a2a.tasks.TaskStatusUpdated
+    x-ess-address-source: qualified-name
+operations:
+  send.a2a.tasks.PushNotificationConfigCreated:
+    action: send
+    channel:
+      $ref: '#/channels/a2a.tasks.PushNotificationConfigCreated'
+    title: Publish PushNotificationConfigCreated
+    summary: Publishes `a2a.tasks.PushNotificationConfigCreated`.
+    description: |-
+      Nothing in this specification reacts to `a2a.tasks.PushNotificationConfigCreated`.
+      `a2a.tasks.CreateTaskPushNotificationConfig` emits it on `created`, which creates a `a2a.tasks.PushNotificationConfig` in `Active`. It carries the new instance's identity in `config_id`.
+    messages:
+    - $ref: '#/channels/a2a.tasks.PushNotificationConfigCreated/messages/a2a.tasks.PushNotificationConfigCreated'
+  send.a2a.tasks.PushNotificationConfigDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/a2a.tasks.PushNotificationConfigDeleted'
+    title: Publish PushNotificationConfigDeleted
+    summary: Publishes `a2a.tasks.PushNotificationConfigDeleted`.
+    description: |-
+      Nothing in this specification reacts to `a2a.tasks.PushNotificationConfigDeleted`.
+      `a2a.tasks.DeleteTaskPushNotificationConfig` emits it on `deleted`, which removes a `a2a.tasks.PushNotificationConfig`.
+    messages:
+    - $ref: '#/channels/a2a.tasks.PushNotificationConfigDeleted/messages/a2a.tasks.PushNotificationConfigDeleted'
+  send.a2a.tasks.TaskCreated:
+    action: send
+    channel:
+      $ref: '#/channels/a2a.tasks.TaskCreated'
+    title: Publish TaskCreated
+    summary: Publishes `a2a.tasks.TaskCreated`.
+    description: |-
+      Nothing in this specification reacts to `a2a.tasks.TaskCreated`.
+      `a2a.tasks.SendMessage` emits it on `task-created`, which creates a `a2a.tasks.Task` in `Submitted`. It carries the new instance's identity in `task_id`.
+      `a2a.tasks.SendStreamingMessage` emits it on `task-created`, which creates a `a2a.tasks.Task` in `Submitted`. It carries the new instance's identity in `task_id`.
+    messages:
+    - $ref: '#/channels/a2a.tasks.TaskCreated/messages/a2a.tasks.TaskCreated'
+  send.a2a.tasks.TaskStatusUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/a2a.tasks.TaskStatusUpdated'
+    title: Publish TaskStatusUpdated
+    summary: Publishes `a2a.tasks.TaskStatusUpdated`.
+    description: |-
+      Nothing in this specification reacts to `a2a.tasks.TaskStatusUpdated`.
+      `a2a.tasks.CancelTask` emits it on `canceled`, which moves a `a2a.tasks.Task` to `Canceled` along `cancel`.
+      `a2a.tasks.CompleteTask` emits it on `moved`, which moves a `a2a.tasks.Task` to `Completed` along `complete`.
+      `a2a.tasks.FailTask` emits it on `moved`, which moves a `a2a.tasks.Task` to `Failed` along `fail`.
+      `a2a.tasks.RejectTask` emits it on `moved`, which moves a `a2a.tasks.Task` to `Rejected` along `reject`.
+      `a2a.tasks.RequireAuth` emits it on `moved`, which moves a `a2a.tasks.Task` to `AuthRequired` along `require_auth`.
+      `a2a.tasks.RequireInput` emits it on `moved`, which moves a `a2a.tasks.Task` to `InputRequired` along `require_input`.
+      `a2a.tasks.StartWorking` emits it on `moved`, which moves a `a2a.tasks.Task` to `Working` along `work`.
+    messages:
+    - $ref: '#/channels/a2a.tasks.TaskStatusUpdated/messages/a2a.tasks.TaskStatusUpdated'
+components:
+  messages:
+    a2a.tasks.PushNotificationConfigCreated:
+      name: a2a.tasks.PushNotificationConfigCreated
+      title: PushNotificationConfigCreated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/event.a2a.tasks.PushNotificationConfigCreated'
+    a2a.tasks.PushNotificationConfigDeleted:
+      name: a2a.tasks.PushNotificationConfigDeleted
+      title: PushNotificationConfigDeleted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/event.a2a.tasks.PushNotificationConfigDeleted'
+    a2a.tasks.TaskCreated:
+      name: a2a.tasks.TaskCreated
+      title: TaskCreated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/event.a2a.tasks.TaskCreated'
+    a2a.tasks.TaskStatusUpdated:
+      name: a2a.tasks.TaskStatusUpdated
+      title: TaskStatusUpdated
+      summary: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/event.a2a.tasks.TaskStatusUpdated'
+  schemas:
+    event.a2a.tasks.PushNotificationConfigCreated:
+      title: PushNotificationConfigCreated payload
+      x-ess-name: a2a.tasks.PushNotificationConfigCreated
+      x-ess-kind: event-payload
+      type: object
+      properties:
+        config_id:
+          $ref: '#/components/schemas/type.a2a.tasks.PushNotificationConfigId'
+        task_id:
+          $ref: '#/components/schemas/type.a2a.tasks.TaskId'
+      required:
+      - config_id
+      - task_id
+      additionalProperties: false
+    event.a2a.tasks.PushNotificationConfigDeleted:
+      title: PushNotificationConfigDeleted payload
+      x-ess-name: a2a.tasks.PushNotificationConfigDeleted
+      x-ess-kind: event-payload
+      type: object
+      properties:
+        config_id:
+          $ref: '#/components/schemas/type.a2a.tasks.PushNotificationConfigId'
+        task_id:
+          $ref: '#/components/schemas/type.a2a.tasks.TaskId'
+      required:
+      - config_id
+      - task_id
+      additionalProperties: false
+    event.a2a.tasks.TaskCreated:
+      title: TaskCreated payload
+      x-ess-name: a2a.tasks.TaskCreated
+      x-ess-kind: event-payload
+      type: object
+      properties:
+        task_id:
+          $ref: '#/components/schemas/type.a2a.tasks.TaskId'
+      required:
+      - task_id
+      additionalProperties: false
+    event.a2a.tasks.TaskStatusUpdated:
+      title: TaskStatusUpdated payload
+      description: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.
+      x-ess-name: a2a.tasks.TaskStatusUpdated
+      x-ess-kind: event-payload
+      type: object
+      properties:
+        task_id:
+          $ref: '#/components/schemas/type.a2a.tasks.TaskId'
+        context_id:
+          $ref: '#/components/schemas/type.a2a.tasks.ContextId'
+      required:
+      - task_id
+      - context_id
+      additionalProperties: false
+    type.a2a.tasks.ContextId:
+      title: ContextId
+      description: Identifier grouping related tasks and messages (A2A v1.0.1 section 3.4.1).
+      x-ess-name: a2a.tasks.ContextId
+      x-ess-kind: newtype
+      type: string
+    type.a2a.tasks.PushNotificationConfigId:
+      title: PushNotificationConfigId
+      x-ess-name: a2a.tasks.PushNotificationConfigId
+      x-ess-kind: newtype
+      type: string
+    type.a2a.tasks.TaskId:
+      title: TaskId
+      description: Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).
+      x-ess-name: a2a.tasks.TaskId
+      x-ess-kind: newtype
+      type: string

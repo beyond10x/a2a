@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.AgentInterface",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:45009e49e67777c66c6b0637058992349782e1b76e82f14e9c1251a4b82718d0",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.AgentInterface": {
+      "title": "AgentInterface",
+      "description": "A URL and protocol binding the agent is reached at (proto AgentInterface).",
+      "x-ess-name": "a2a.discovery.AgentInterface",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "protocolBinding": {
+          "x-ess-field": "protocol_binding",
+          "type": "string"
+        },
+        "tenant": {
+          "type": "string"
+        },
+        "protocolVersion": {
+          "x-ess-field": "protocol_version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "protocolBinding",
+        "protocolVersion"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

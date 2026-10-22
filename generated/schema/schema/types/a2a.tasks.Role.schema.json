@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.tasks.Role",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:3fae03fc2924874cbbacf466b9ae54ec06c1090595fca78b0fb3a6f65d74d39b",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.Role": {
+      "title": "Role",
+      "x-ess-name": "a2a.tasks.Role",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "ROLE_USER",
+        "ROLE_AGENT"
+      ]
+    }
+  }
+}

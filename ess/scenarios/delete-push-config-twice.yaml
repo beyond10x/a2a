@@ -1,0 +1,49 @@
+# A2A v1.0.1 section 3.1.10: deleting a push-notification configuration MUST be idempotent.
+# Synthesis arranges no task row for `already-gone` (ESS-SYNTH-008), so this scenario creates
+# the task, creates and deletes a configuration, then deletes it again.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: delete-push-config-twice
+summary: A second delete of the same push-notification configuration succeeds and changes nothing.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-01-06T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-06T09:00:01Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-1
+      url: https://client.example.test/webhook
+    outcome: created
+
+  - at: 2026-01-06T09:00:02Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-1
+    outcome: deleted
+
+  - at: 2026-01-06T09:00:03Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-1
+    outcome: already-gone

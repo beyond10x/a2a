@@ -1,0 +1,11 @@
+[package]
+name = "a2a-xtask"
+description = "Repository checks for a2a: generated-model drift."
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+clap = { workspace = true }

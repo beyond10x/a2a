@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.discovery.AgentExtension",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:4feb66292ce9fb7a43a90581948ace8ef1b261fdb1e7aaa15f7424bf9d9f5fe9",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.discovery.AgentExtension": {
+      "title": "AgentExtension",
+      "x-ess-name": "a2a.discovery.AgentExtension",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "params": {}
+      },
+      "additionalProperties": false
+    }
+  }
+}

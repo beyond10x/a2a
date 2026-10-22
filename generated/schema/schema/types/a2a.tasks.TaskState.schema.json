@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.tasks.TaskState",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
+    "contract_digest": "slice-sha256/2:168cc22f0c25f1ca71c03797936ad8845adf8976a50e165ba4020c856f84fdd5",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.TaskState": {
+      "title": "TaskState",
+      "x-ess-name": "a2a.tasks.TaskState",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "TASK_STATE_SUBMITTED",
+        "TASK_STATE_WORKING",
+        "TASK_STATE_COMPLETED",
+        "TASK_STATE_FAILED",
+        "TASK_STATE_CANCELED",
+        "TASK_STATE_INPUT_REQUIRED",
+        "TASK_STATE_REJECTED",
+        "TASK_STATE_AUTH_REQUIRED"
+      ]
+    }
+  }
+}

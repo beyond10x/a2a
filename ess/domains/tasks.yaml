@@ -1,0 +1,1010 @@
+domain: a2a.tasks
+
+summary: >-
+  Tasks an A2A agent runs for its clients, the messages and artifacts they carry, and the
+  push-notification configurations that follow them (A2A v1.0.1 sections 3 and 4.1-4.3, proto
+  service A2AService).
+
+naming:
+  wire: tasks
+  display: Tasks
+
+types:
+  - name: a2a.tasks.TaskId
+    kind: newtype
+    of: String
+    naming:
+      summary: Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).
+
+  - name: a2a.tasks.ContextId
+    kind: newtype
+    of: String
+    naming:
+      summary: Identifier grouping related tasks and messages (A2A v1.0.1 section 3.4.1).
+
+  - name: a2a.tasks.PushNotificationConfigId
+    kind: newtype
+    of: String
+
+  - name: a2a.tasks.Role
+    kind: enum
+    variants: [ROLE_USER, ROLE_AGENT]
+
+  # The wire value of `status.state`. The lifecycle of a2a.tasks.Task names the same states in
+  # upper camel case: TASK_STATE_INPUT_REQUIRED is InputRequired, and so on.
+  # TASK_STATE_UNSPECIFIED is the proto3 zero value and no state a task holds.
+  - name: a2a.tasks.TaskState
+    kind: enum
+    naming: {code: WireTaskState}
+    variants:
+      - TASK_STATE_SUBMITTED
+      - TASK_STATE_WORKING
+      - TASK_STATE_COMPLETED
+      - TASK_STATE_FAILED
+      - TASK_STATE_CANCELED
+      - TASK_STATE_INPUT_REQUIRED
+      - TASK_STATE_REJECTED
+      - TASK_STATE_AUTH_REQUIRED
+
+  # UNMAPPED: proto `oneof content` admits exactly one of text, raw, url and data. ProtoJSON
+  # writes the chosen member inline, so the four are Optional here and the exactly-one rule is
+  # not declared. Open question: an invariant that counts defined members.
+  - name: a2a.tasks.Part
+    kind: struct
+    naming:
+      summary: One piece of content in a message or artifact (A2A v1.0.1 section 4.1.6).
+    fields:
+      - name: text
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: raw
+        type: Optional<Bytes>
+        presence: omitted_when_absent
+      - name: url
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: data
+        type: Optional<Json>
+      - name: metadata
+        type: Optional<Json>
+      - name: filename
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: media_type
+        type: Optional<String>
+        naming: {wire: mediaType}
+        presence: omitted_when_absent
+
+  - name: a2a.tasks.Message
+    kind: struct
+    naming:
+      summary: One turn of communication between client and agent (A2A v1.0.1 section 4.1.4).
+    fields:
+      - name: message_id
+        type: String
+        naming: {wire: messageId}
+      - name: context_id
+        type: Optional<a2a.tasks.ContextId>
+        naming: {wire: contextId}
+        presence: omitted_when_absent
+      - name: task_id
+        type: Optional<a2a.tasks.TaskId>
+        naming: {wire: taskId}
+        presence: omitted_when_absent
+      - name: role
+        type: a2a.tasks.Role
+      - name: parts
+        type: List<a2a.tasks.Part>
+      - name: metadata
+        type: Optional<Json>
+      - name: extensions
+        type: Optional<List<String>>
+        presence: omitted_when_absent
+      - name: reference_task_ids
+        type: Optional<List<a2a.tasks.TaskId>>
+        naming: {wire: referenceTaskIds}
+        presence: omitted_when_absent
+
+  - name: a2a.tasks.Artifact
+    kind: struct
+    naming:
+      summary: An output the agent produced for a task (A2A v1.0.1 section 4.1.7).
+    fields:
+      - name: artifact_id
+        type: String
+        naming: {wire: artifactId}
+      - name: name
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: description
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: parts
+        type: List<a2a.tasks.Part>
+      - name: metadata
+        type: Optional<Json>
+      - name: extensions
+        type: Optional<List<String>>
+        presence: omitted_when_absent
+
+  - name: a2a.tasks.TaskStatus
+    kind: struct
+    fields:
+      - name: state
+        type: a2a.tasks.TaskState
+      - name: message
+        type: Optional<a2a.tasks.Message>
+        presence: omitted_when_absent
+      - name: timestamp
+        type: Optional<Timestamp>
+        presence: omitted_when_absent
+
+  - name: a2a.tasks.TaskSnapshot
+    kind: struct
+    naming:
+      summary: The wire form of a task, proto message Task (A2A v1.0.1 section 4.1.1).
+    fields:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: context_id
+        type: a2a.tasks.ContextId
+        naming: {wire: contextId}
+      - name: status
+        type: a2a.tasks.TaskStatus
+      - name: artifacts
+        type: Optional<List<a2a.tasks.Artifact>>
+        presence: omitted_when_absent
+      - name: history
+        type: Optional<List<a2a.tasks.Message>>
+        presence: omitted_when_absent
+      - name: metadata
+        type: Optional<Json>
+
+  - name: a2a.tasks.AuthenticationInfo
+    kind: struct
+    fields:
+      - name: scheme
+        type: String
+      - name: credentials
+        type: Optional<String>
+        presence: omitted_when_absent
+
+  - name: a2a.tasks.TaskPushNotificationConfig
+    kind: struct
+    naming:
+      summary: The wire form of a push-notification configuration (proto TaskPushNotificationConfig).
+    fields:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: id
+        type: Optional<a2a.tasks.PushNotificationConfigId>
+        presence: omitted_when_absent
+      - name: task_id
+        type: Optional<a2a.tasks.TaskId>
+        naming: {wire: taskId}
+        presence: omitted_when_absent
+      - name: url
+        type: String
+      - name: token
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: authentication
+        type: Optional<a2a.tasks.AuthenticationInfo>
+        presence: omitted_when_absent
+
+  - name: a2a.tasks.SendMessageConfiguration
+    kind: struct
+    fields:
+      - name: accepted_output_modes
+        type: Optional<List<String>>
+        naming: {wire: acceptedOutputModes}
+        presence: omitted_when_absent
+      - name: task_push_notification_config
+        type: Optional<a2a.tasks.TaskPushNotificationConfig>
+        naming: {wire: taskPushNotificationConfig}
+        presence: omitted_when_absent
+      - name: history_length
+        type: Optional<Integer>
+        naming: {wire: historyLength}
+        presence: omitted_when_absent
+      - name: return_immediately
+        type: Optional<Boolean>
+        naming: {wire: returnImmediately}
+        presence: omitted_when_absent
+
+entities:
+  - name: a2a.tasks.Task
+    naming:
+      summary: >-
+        A stateful unit of work an agent runs for a client. Its lifecycle state is the wire
+        `status.state`; the other status members are fields here.
+    identity:
+      name: id
+      type: a2a.tasks.TaskId
+    fields:
+      - name: context_id
+        type: a2a.tasks.ContextId
+      - name: status_message
+        type: Optional<a2a.tasks.Message>
+      - name: status_timestamp
+        type: Optional<Timestamp>
+      - name: artifacts
+        type: Optional<List<a2a.tasks.Artifact>>
+      - name: history
+        type: Optional<List<a2a.tasks.Message>>
+      - name: metadata
+        type: Optional<Json>
+    relations:
+      - name: push_notification_configs
+        kind: owns
+        target: a2a.tasks.PushNotificationConfig
+        cardinality: many
+        via: task_id
+    # A2A v1.0.1 fixes which states are terminal (Completed, Failed, Canceled, Rejected) and
+    # which are interrupted (InputRequired, AuthRequired); it fixes no other edge. The agent's
+    # transitions below therefore leave every non-terminal state.
+    # UNMAPPED: whether an agent may return a task to Submitted, or move it between
+    # InputRequired and AuthRequired without passing Working. Neither is stated.
+    lifecycle:
+      initial: Submitted
+      states: [Submitted, Working, InputRequired, AuthRequired, Completed, Failed, Canceled, Rejected]
+      terminal: [Completed, Failed, Canceled, Rejected]
+      transitions:
+        - name: work
+          from: [Submitted, InputRequired, AuthRequired]
+          to: Working
+        - name: require_input
+          from: [Submitted, Working]
+          to: InputRequired
+        - name: require_auth
+          from: [Submitted, Working]
+          to: AuthRequired
+        - name: complete
+          from: [Submitted, Working, InputRequired, AuthRequired]
+          to: Completed
+        - name: fail
+          from: [Submitted, Working, InputRequired, AuthRequired]
+          to: Failed
+        - name: reject
+          from: [Submitted, Working, InputRequired, AuthRequired]
+          to: Rejected
+        - name: cancel
+          from: [Submitted, Working, InputRequired, AuthRequired]
+          to: Canceled
+
+  - name: a2a.tasks.PushNotificationConfig
+    naming:
+      summary: >-
+        A webhook the agent posts task updates to. It persists until the task completes or the
+        client deletes it (A2A v1.0.1 section 3.1.7).
+    identity:
+      name: id
+      type: a2a.tasks.PushNotificationConfigId
+    # UNMAPPED: the REST paths nest a configuration under its task
+    # (/tasks/{task_id}/pushNotificationConfigs/{id}), so `id` may be unique per task only. A2A
+    # v1.0.1 suggests a UUID and says no more. Modelled here as unique per agent.
+    fields:
+      - name: task_id
+        type: a2a.tasks.TaskId
+      - name: tenant
+        type: Optional<String>
+      - name: url
+        type: String
+      - name: token
+        type: Optional<String>
+      - name: authentication
+        type: Optional<a2a.tasks.AuthenticationInfo>
+    lifecycle:
+      initial: Active
+      states: [Active]
+      terminal: [Active]
+
+actors:
+  - name: a2a.tasks.Client
+    naming:
+      display: A2A client
+      summary: An authenticated caller of the agent's A2A interface.
+    may:
+      - a2a.tasks.SendMessage
+      - a2a.tasks.SendStreamingMessage
+      - a2a.tasks.GetTask
+      - a2a.tasks.CancelTask
+      - a2a.tasks.SubscribeToTask
+      - a2a.tasks.CreateTaskPushNotificationConfig
+      - a2a.tasks.GetTaskPushNotificationConfig
+      - a2a.tasks.DeleteTaskPushNotificationConfig
+
+  - name: a2a.tasks.Agent
+    system: true
+    naming:
+      display: Agent
+      summary: The agent moving its own tasks while it processes them.
+    may:
+      - a2a.tasks.StartWorking
+      - a2a.tasks.RequireInput
+      - a2a.tasks.RequireAuth
+      - a2a.tasks.CompleteTask
+      - a2a.tasks.FailTask
+      - a2a.tasks.RejectTask
+
+errors:
+  - name: a2a.tasks.TaskNotFound
+    summary: >-
+      TaskNotFoundError (JSON-RPC -32001, HTTP 404): the task, or the push-notification
+      configuration, does not exist or is not accessible to the caller.
+  - name: a2a.tasks.TaskNotCancelable
+    summary: TaskNotCancelableError (JSON-RPC -32002, HTTP 400).
+  - name: a2a.tasks.PushNotificationNotSupported
+    summary: >-
+      PushNotificationNotSupportedError (JSON-RPC -32003, HTTP 400): the agent card does not
+      declare capabilities.pushNotifications.
+  - name: a2a.tasks.UnsupportedOperation
+    summary: UnsupportedOperationError (JSON-RPC -32004, HTTP 400).
+  - name: a2a.tasks.ContentTypeNotSupported
+    summary: ContentTypeNotSupportedError (JSON-RPC -32005, HTTP 400).
+  - name: a2a.tasks.ExtensionSupportRequired
+    summary: ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).
+  - name: a2a.tasks.VersionNotSupported
+    summary: VersionNotSupportedError (JSON-RPC -32009, HTTP 400).
+  # UNMAPPED: A2A v1.0.1 section 3.4.3 says an agent MUST reject a message whose contextId
+  # differs from its task's, and names no error type for it. Open question for the owner.
+  - name: a2a.tasks.ContextMismatch
+    summary: The message's contextId differs from the contextId of the task it names.
+  # Not an A2A wire error: the agent-side commands below are internal to the agent, and this is
+  # what they answer from a state their transition does not leave.
+  - name: a2a.tasks.TaskStateConflict
+    summary: The task is not in a state this agent-side move starts from, so nothing moved.
+    fields:
+      - name: state
+        type: a2a.tasks.Task.State
+
+outcome_groups:
+  - name: protocol-negotiation
+    actor: a2a.tasks.Client
+    outcomes:
+      - name: version-not-supported
+        external: the A2A-Version service parameter names a version the agent does not support
+        error: a2a.tasks.VersionNotSupported
+      - name: extension-required
+        external: the agent card marks an extension required and the request does not declare it
+        error: a2a.tasks.ExtensionSupportRequired
+
+  - name: push-notifications-capability
+    commands:
+      - a2a.tasks.CreateTaskPushNotificationConfig
+      - a2a.tasks.GetTaskPushNotificationConfig
+      - a2a.tasks.DeleteTaskPushNotificationConfig
+    outcomes:
+      - name: push-not-supported
+        external: the agent card does not declare capabilities.pushNotifications
+        error: a2a.tasks.PushNotificationNotSupported
+
+  - name: streaming-capability
+    commands:
+      - a2a.tasks.SendStreamingMessage
+      - a2a.tasks.SubscribeToTask
+    outcomes:
+      - name: streaming-not-supported
+        external: the agent card does not declare capabilities.streaming
+        error: a2a.tasks.UnsupportedOperation
+
+commands:
+  - name: a2a.tasks.SendMessage
+    naming:
+      wire: message:send
+      display: Send message
+      summary: >-
+        Send a message to the agent, which answers with a task tracking its work or with a direct
+        message (A2A v1.0.1 section 3.1.1; POST /message:send).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: message
+        type: a2a.tasks.Message
+      - name: configuration
+        type: Optional<a2a.tasks.SendMessageConfiguration>
+        presence: omitted_when_absent
+      - name: metadata
+        type: Optional<Json>
+    response:
+      - name: task
+        type: Optional<a2a.tasks.TaskSnapshot>
+        presence: omitted_when_absent
+      - name: reply
+        type: Optional<a2a.tasks.Message>
+        naming: {wire: message}
+        presence: omitted_when_absent
+    outcomes:
+      # UNMAPPED: the next four branches depend on `message.taskId`, a member of the `message`
+      # input. ESS 0.67.0 reads `when_related: {via: …}` and `instance:` from top-level input
+      # fields only (ESS-COMMAND-001), so they are written as `external:` and nothing checks
+      # them. Open question for ESS: addressing a row through a struct input's member.
+      - name: task-not-found
+        external: message.taskId names no task the caller can access (section 3.4.2)
+        error: a2a.tasks.TaskNotFound
+      - name: task-terminal
+        external: message.taskId names a task in Completed, Failed, Canceled or Rejected
+        error: a2a.tasks.UnsupportedOperation
+      - name: context-mismatch
+        external: message.contextId differs from the contextId of the task message.taskId names
+        error: a2a.tasks.ContextMismatch
+      - name: content-type-not-supported
+        external: a part's media type is not supported by the agent
+        error: a2a.tasks.ContentTypeNotSupported
+      # UNMAPPED: what a message to a running task changes. A2A v1.0.1 says the agent may
+      # continue or refine the task and keeps `history`; it fixes no state change.
+      - name: continued
+        external: message.taskId names a non-terminal task, and the agent takes the message into it
+        returns: true
+        summary: The agent answers with the task the message continued.
+      - name: direct-message
+        external: the agent answers with a message and creates no task
+        returns: true
+      - name: task-created
+        creates: a2a.tasks.Task
+        instance: task_id
+        sets:
+          context_id: {input: message.context_id, else: {generated: true}}
+        emits: [a2a.tasks.TaskCreated]
+        payload:
+          a2a.tasks.TaskCreated:
+            task_id: {generated: true}
+        returns: true
+        summary: A new task in Submitted; the agent works on it after the answer.
+
+  - name: a2a.tasks.SendStreamingMessage
+    naming:
+      wire: message:stream
+      display: Send streaming message
+      summary: >-
+        Send a message and stream the answer: one message, or the task followed by its status and
+        artifact updates until it is terminal or interrupted (A2A v1.0.1 section 3.1.2; POST /message:stream).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: message
+        type: a2a.tasks.Message
+      - name: configuration
+        type: Optional<a2a.tasks.SendMessageConfiguration>
+        presence: omitted_when_absent
+      - name: metadata
+        type: Optional<Json>
+    response:
+      - name: task
+        type: Optional<a2a.tasks.TaskSnapshot>
+        presence: omitted_when_absent
+      - name: reply
+        type: Optional<a2a.tasks.Message>
+        naming: {wire: message}
+        presence: omitted_when_absent
+    outcomes:
+      # UNMAPPED: the next four branches depend on `message.taskId`, a member of the `message`
+      # input. ESS 0.67.0 reads `when_related: {via: …}` and `instance:` from top-level input
+      # fields only (ESS-COMMAND-001), so they are written as `external:` and nothing checks
+      # them. Open question for ESS: addressing a row through a struct input's member.
+      - name: task-not-found
+        external: message.taskId names no task the caller can access (section 3.4.2)
+        error: a2a.tasks.TaskNotFound
+      - name: task-terminal
+        external: message.taskId names a task in Completed, Failed, Canceled or Rejected
+        error: a2a.tasks.UnsupportedOperation
+      - name: context-mismatch
+        external: message.contextId differs from the contextId of the task message.taskId names
+        error: a2a.tasks.ContextMismatch
+      - name: content-type-not-supported
+        external: a part's media type is not supported by the agent
+        error: a2a.tasks.ContentTypeNotSupported
+      # UNMAPPED: what a message to a running task changes. A2A v1.0.1 says the agent may
+      # continue or refine the task and keeps `history`; it fixes no state change.
+      - name: continued
+        external: message.taskId names a non-terminal task, and the agent takes the message into it
+        returns: true
+        summary: The agent answers with the task the message continued.
+      - name: direct-message
+        external: the agent answers with a message and creates no task
+        returns: true
+      - name: task-created
+        creates: a2a.tasks.Task
+        instance: task_id
+        sets:
+          context_id: {input: message.context_id, else: {generated: true}}
+        emits: [a2a.tasks.TaskCreated]
+        payload:
+          a2a.tasks.TaskCreated:
+            task_id: {generated: true}
+        returns: true
+        summary: A new task in Submitted; the agent works on it after the answer.
+
+  - name: a2a.tasks.GetTask
+    naming:
+      wire: tasks:get
+      display: Get task
+      summary: Read a task's current state (A2A v1.0.1 section 3.1.3; GET /tasks/{id}).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: history_length
+        type: Optional<Integer>
+        naming: {wire: historyLength}
+        presence: omitted_when_absent
+    response:
+      - name: task
+        type: a2a.tasks.TaskSnapshot
+    outcomes:
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: found
+        preserves: a2a.tasks.Task
+        instance: id
+        returns: true
+
+  - name: a2a.tasks.CancelTask
+    naming:
+      wire: tasks:cancel
+      display: Cancel task
+      summary: Ask the agent to cancel a task (A2A v1.0.1 section 3.1.5; POST /tasks/{id}:cancel).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: metadata
+        type: Optional<Json>
+    response:
+      - name: task
+        type: a2a.tasks.TaskSnapshot
+    outcomes:
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: not-cancelable-now
+        external: the agent cannot cancel the task at its current stage
+        error: a2a.tasks.TaskNotCancelable
+      - name: canceled
+        moves: a2a.tasks.Task.cancel
+        instance: id
+        emits: [a2a.tasks.TaskStatusUpdated]
+        payload:
+          a2a.tasks.TaskStatusUpdated:
+            task_id: input.id
+            context_id: {subject: context_id}
+        returns: true
+      - name: not-cancelable
+        wrong_state: true
+        error: a2a.tasks.TaskNotCancelable
+        summary: The task is in a terminal state.
+
+  - name: a2a.tasks.SubscribeToTask
+    naming:
+      wire: tasks:subscribe
+      display: Subscribe to task
+      summary: >-
+        Open a stream of a task's updates, starting with the task itself (A2A v1.0.1 section
+        3.1.6; GET /tasks/{id}:subscribe).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: id
+        type: a2a.tasks.TaskId
+    response:
+      - name: task
+        type: a2a.tasks.TaskSnapshot
+    outcomes:
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: task-terminal
+        when_subject:
+          predicate:
+            state: [Completed, Failed, Canceled, Rejected]
+        error: a2a.tasks.UnsupportedOperation
+      - name: subscribed
+        preserves: a2a.tasks.Task
+        instance: id
+        returns: true
+
+  - name: a2a.tasks.CreateTaskPushNotificationConfig
+    naming:
+      wire: pushNotificationConfigs:create
+      display: Create push notification config
+      summary: >-
+        Register a webhook for a task's updates (A2A v1.0.1 section 3.1.7;
+        POST /tasks/{task_id}/pushNotificationConfigs).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: id
+        type: Optional<a2a.tasks.PushNotificationConfigId>
+        presence: omitted_when_absent
+      - name: task_id
+        type: a2a.tasks.TaskId
+        naming: {wire: taskId}
+      - name: url
+        type: String
+      - name: token
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: authentication
+        type: Optional<a2a.tasks.AuthenticationInfo>
+        presence: omitted_when_absent
+    response:
+      - name: config
+        type: a2a.tasks.TaskPushNotificationConfig
+    # UNMAPPED: the answer to an `id` a configuration already carries, and to a task in a
+    # terminal state. A2A v1.0.1 states neither.
+    outcomes:
+      - name: task-not-found
+        when_related:
+          via: input.task_id
+          exists: false
+        error: a2a.tasks.TaskNotFound
+      - name: created
+        creates: a2a.tasks.PushNotificationConfig
+        instance: config_id
+        sets:
+          task_id: input.task_id
+          tenant: input.tenant
+          url: input.url
+          token: input.token
+          authentication: input.authentication
+        emits: [a2a.tasks.PushNotificationConfigCreated]
+        payload:
+          a2a.tasks.PushNotificationConfigCreated:
+            config_id: {input: id, else: {generated: true}}
+            task_id: input.task_id
+        returns: true
+
+  - name: a2a.tasks.GetTaskPushNotificationConfig
+    naming:
+      wire: pushNotificationConfigs:get
+      display: Get push notification config
+      summary: >-
+        Read one push-notification configuration (A2A v1.0.1 section 3.1.8;
+        GET /tasks/{task_id}/pushNotificationConfigs/{id}).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: task_id
+        type: a2a.tasks.TaskId
+        naming: {wire: taskId}
+      - name: id
+        type: a2a.tasks.PushNotificationConfigId
+    response:
+      - name: config
+        type: a2a.tasks.TaskPushNotificationConfig
+    outcomes:
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: other-task
+        when_subject:
+          predicate: task_id != input.task_id
+        error: a2a.tasks.TaskNotFound
+      - name: found
+        preserves: a2a.tasks.PushNotificationConfig
+        instance: id
+        returns: true
+
+  - name: a2a.tasks.DeleteTaskPushNotificationConfig
+    naming:
+      wire: pushNotificationConfigs:delete
+      display: Delete push notification config
+      summary: >-
+        Remove a push-notification configuration; deleting it again has the same effect (A2A
+        v1.0.1 section 3.1.10; DELETE /tasks/{task_id}/pushNotificationConfigs/{id}).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: task_id
+        type: a2a.tasks.TaskId
+        naming: {wire: taskId}
+      - name: id
+        type: a2a.tasks.PushNotificationConfigId
+    outcomes:
+      - name: task-not-found
+        when_related:
+          via: input.task_id
+          exists: false
+        error: a2a.tasks.TaskNotFound
+      - name: already-gone
+        unknown_instance: true
+        refuses: false
+      - name: deleted
+        deletes: a2a.tasks.PushNotificationConfig
+        instance: id
+        emits: [a2a.tasks.PushNotificationConfigDeleted]
+        payload:
+          a2a.tasks.PushNotificationConfigDeleted:
+            config_id: input.id
+            task_id: input.task_id
+
+  - name: a2a.tasks.StartWorking
+    naming:
+      wire: tasks:work
+      display: Start working
+      summary: The agent works on the task (TASK_STATE_WORKING).
+    input:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: status_message
+        type: Optional<a2a.tasks.Message>
+    outcomes:
+      - name: moved
+        moves: a2a.tasks.Task.work
+        instance: id
+        sets:
+          status_message: input.status_message
+          status_timestamp: {generated: true}
+        emits: [a2a.tasks.TaskStatusUpdated]
+        payload:
+          a2a.tasks.TaskStatusUpdated:
+            task_id: input.id
+            context_id: {subject: context_id}
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: wrong-state
+        wrong_state: true
+        error: a2a.tasks.TaskStateConflict
+
+  - name: a2a.tasks.RequireInput
+    naming:
+      wire: tasks:require_input
+      display: Require input
+      summary: The agent needs more input from the client (TASK_STATE_INPUT_REQUIRED, section 3.4.3).
+    input:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: status_message
+        type: Optional<a2a.tasks.Message>
+    outcomes:
+      - name: moved
+        moves: a2a.tasks.Task.require_input
+        instance: id
+        sets:
+          status_message: input.status_message
+          status_timestamp: {generated: true}
+        emits: [a2a.tasks.TaskStatusUpdated]
+        payload:
+          a2a.tasks.TaskStatusUpdated:
+            task_id: input.id
+            context_id: {subject: context_id}
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: wrong-state
+        wrong_state: true
+        error: a2a.tasks.TaskStateConflict
+
+  - name: a2a.tasks.RequireAuth
+    naming:
+      wire: tasks:require_auth
+      display: Require authorization
+      summary: The agent needs the client to authorize (TASK_STATE_AUTH_REQUIRED, section 7.6).
+    input:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: status_message
+        type: Optional<a2a.tasks.Message>
+    outcomes:
+      - name: moved
+        moves: a2a.tasks.Task.require_auth
+        instance: id
+        sets:
+          status_message: input.status_message
+          status_timestamp: {generated: true}
+        emits: [a2a.tasks.TaskStatusUpdated]
+        payload:
+          a2a.tasks.TaskStatusUpdated:
+            task_id: input.id
+            context_id: {subject: context_id}
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: wrong-state
+        wrong_state: true
+        error: a2a.tasks.TaskStateConflict
+
+  - name: a2a.tasks.CompleteTask
+    naming:
+      wire: tasks:complete
+      display: Complete task
+      summary: The task finished successfully (TASK_STATE_COMPLETED).
+    input:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: status_message
+        type: Optional<a2a.tasks.Message>
+    outcomes:
+      - name: moved
+        moves: a2a.tasks.Task.complete
+        instance: id
+        sets:
+          status_message: input.status_message
+          status_timestamp: {generated: true}
+        emits: [a2a.tasks.TaskStatusUpdated]
+        payload:
+          a2a.tasks.TaskStatusUpdated:
+            task_id: input.id
+            context_id: {subject: context_id}
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: wrong-state
+        wrong_state: true
+        error: a2a.tasks.TaskStateConflict
+
+  - name: a2a.tasks.FailTask
+    naming:
+      wire: tasks:fail
+      display: Fail task
+      summary: The task finished with an error (TASK_STATE_FAILED).
+    input:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: status_message
+        type: Optional<a2a.tasks.Message>
+    outcomes:
+      - name: moved
+        moves: a2a.tasks.Task.fail
+        instance: id
+        sets:
+          status_message: input.status_message
+          status_timestamp: {generated: true}
+        emits: [a2a.tasks.TaskStatusUpdated]
+        payload:
+          a2a.tasks.TaskStatusUpdated:
+            task_id: input.id
+            context_id: {subject: context_id}
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: wrong-state
+        wrong_state: true
+        error: a2a.tasks.TaskStateConflict
+
+  - name: a2a.tasks.RejectTask
+    naming:
+      wire: tasks:reject
+      display: Reject task
+      summary: The agent declines the task (TASK_STATE_REJECTED).
+    input:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: status_message
+        type: Optional<a2a.tasks.Message>
+    outcomes:
+      - name: moved
+        moves: a2a.tasks.Task.reject
+        instance: id
+        sets:
+          status_message: input.status_message
+          status_timestamp: {generated: true}
+        emits: [a2a.tasks.TaskStatusUpdated]
+        payload:
+          a2a.tasks.TaskStatusUpdated:
+            task_id: input.id
+            context_id: {subject: context_id}
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: wrong-state
+        wrong_state: true
+        error: a2a.tasks.TaskStateConflict
+
+events:
+  - name: a2a.tasks.TaskCreated
+    fields:
+      - name: task_id
+        type: a2a.tasks.TaskId
+
+  - name: a2a.tasks.TaskStatusUpdated
+    naming:
+      summary: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.
+    fields:
+      - name: task_id
+        type: a2a.tasks.TaskId
+      - name: context_id
+        type: a2a.tasks.ContextId
+
+  - name: a2a.tasks.PushNotificationConfigCreated
+    fields:
+      - name: config_id
+        type: a2a.tasks.PushNotificationConfigId
+      - name: task_id
+        type: a2a.tasks.TaskId
+
+  - name: a2a.tasks.PushNotificationConfigDeleted
+    fields:
+      - name: config_id
+        type: a2a.tasks.PushNotificationConfigId
+      - name: task_id
+        type: a2a.tasks.TaskId
+
+views:
+  # UNMAPPED: ListTasks (A2A v1.0.1 section 3.1.4) filters by an optional contextId, an
+  # optional status and an optional statusTimestampAfter, pages by cursor and orders by status
+  # timestamp descending. Only the unfiltered read is declared.
+  - name: a2a.tasks.Tasks
+    source: a2a.tasks.Task
+    consistency: read_your_writes
+    naming:
+      wire: tasks
+      display: List tasks
+    fields:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: context_id
+        type: a2a.tasks.ContextId
+      - name: state
+        type: a2a.tasks.Task.State
+      - name: status_message
+        type: Optional<a2a.tasks.Message>
+      - name: status_timestamp
+        type: Optional<Timestamp>
+      - name: artifacts
+        type: Optional<List<a2a.tasks.Artifact>>
+      - name: history
+        type: Optional<List<a2a.tasks.Message>>
+      - name: metadata
+        type: Optional<Json>
+
+  - name: a2a.tasks.TaskPushNotificationConfigs
+    source: a2a.tasks.PushNotificationConfig
+    consistency: read_your_writes
+    params:
+      - name: task_id
+        type: a2a.tasks.TaskId
+    filter: task_id == param.task_id
+    naming:
+      wire: pushNotificationConfigs
+      display: List push notification configs
+    fields:
+      - name: id
+        type: a2a.tasks.PushNotificationConfigId
+      - name: task_id
+        type: a2a.tasks.TaskId
+      - name: tenant
+        type: Optional<String>
+      - name: url
+        type: String
+      - name: token
+        type: Optional<String>
+      - name: authentication
+        type: Optional<a2a.tasks.AuthenticationInfo>
+
+  # Not an A2A operation: every configuration with its identity and state, so a conformance run
+  # can observe a configuration it did not address by task.
+  - name: a2a.tasks.PushNotificationConfigs
+    source: a2a.tasks.PushNotificationConfig
+    consistency: read_your_writes
+    naming:
+      wire: allPushNotificationConfigs
+      display: All push notification configs
+    fields:
+      - name: id
+        type: a2a.tasks.PushNotificationConfigId
+      - name: state
+        type: a2a.tasks.PushNotificationConfig.State
+      - name: task_id
+        type: a2a.tasks.TaskId
+      - name: tenant
+        type: Optional<String>
+      - name: url
+        type: String
+      - name: token
+        type: Optional<String>
+      - name: authentication
+        type: Optional<a2a.tasks.AuthenticationInfo>
