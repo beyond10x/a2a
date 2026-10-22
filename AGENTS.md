@@ -55,7 +55,12 @@ nothing is on a registry.
 - The tag is the bot's, on that commit:
   `b10x-gates bot --repository beyond10x/a2a -- tag -a <version> -m "a2a <version>" <commit>`, then
   `b10x-gates bot --repository beyond10x/a2a -- push origin <version>`.
+- The GitHub Release is the bot's, created right after the tag push:
+  `b10x-gates api --method POST --path /repos/beyond10x/a2a/releases --input <request.json> …` with
+  `tag_name` and `name` set to the version and a body that passes `b10x-gates scan-text`: 1–2 lines,
+  then `### Breaking` and `### Changed` (at most 8 items each), then a link to the CHANGELOG entry.
 - `.github/workflows/release.yml` runs on the tag: `release-check`, then `check.yml`, then
-  `task release-artifacts` and the GitHub Release with the version's CHANGELOG section as notes.
+  `task release-artifacts`, and uploads the assets to the bot's Release once it exists (it waits up
+  to 30 minutes). It never creates the Release.
 - A release is finished when the tag, the green `release` run and the Release with every asset of
   `task release-artifacts` are verified. Never move or delete a pushed tag; fix forward.

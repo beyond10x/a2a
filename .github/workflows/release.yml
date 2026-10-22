@@ -78,21 +78,19 @@ jobs:
       - name: Package the specification artifacts
         run: task release-artifacts TAG="$TAG" OUT=dist
 
-      - name: Release notes from CHANGELOG.md
-        run: |
-          set -euo pipefail
-          awk -v head="## [$TAG] - " 'index($0, head) == 1 { found = 1; next } found && (/^## / || /^\[[^]]+\]: /) { exit } found { print }' CHANGELOG.md > notes.md
-          grep -q '[^[:space:]]' notes.md
-          printf '\nFull entry: https://github.com/%s/blob/%s/CHANGELOG.md\n' "$GITHUB_REPOSITORY" "$TAG" >> notes.md
-
-      - name: Create the GitHub Release
+      - name: Upload the assets to the bot's GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          if gh release view "$TAG" > /dev/null 2>&1; then
-            gh release upload "$TAG" dist/* --clobber
-          else
-            gh release create "$TAG" dist/* --title "$TAG" --notes-file notes.md --verify-tag
-          fi
+          for attempt in $(seq 1 60); do
+            if gh release view "$TAG" > /dev/null 2>&1; then
+              gh release upload "$TAG" dist/* --clobber
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "release: no GitHub Release for $TAG after 30 minutes; the bot creates it" >&2
+          exit 1
+
