@@ -2,8 +2,8 @@
   "provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
-    "contract_digest": "f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44"
+    "source_digest": "19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf",
+    "contract_digest": "b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58"
   },
   "scope": {
     "profile": "component-skeletons",
@@ -236,6 +236,13 @@
     },
     {
       "kind": "domain_type",
+      "source": "a2a.tasks.TaskArtifactUpdateEvent",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
       "source": "a2a.tasks.TaskId",
       "disposition": {
         "disposition": "generated"
@@ -265,6 +272,13 @@
     {
       "kind": "domain_type",
       "source": "a2a.tasks.TaskStatus",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "domain_type",
+      "source": "a2a.tasks.TaskStatusUpdateEvent",
       "disposition": {
         "disposition": "generated"
       }
@@ -521,7 +535,7 @@
           "class": "undetermined",
           "construct": "a typed response (`response:`)"
         },
-        "contract": "given `a2a.tasks.SendStreamingMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it); `direct-message` externally decided (the agent answers with a message and creates no task); `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`"
+        "contract": "given `a2a.tasks.SendStreamingMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it), emits `a2a.tasks.MessageStreamResponse`; `direct-message` externally decided (the agent answers with a message and creates no task), emits `a2a.tasks.MessageStreamResponse`; `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`, emits `a2a.tasks.MessageStreamResponse`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`"
       }
     },
     {
@@ -573,6 +587,13 @@
     },
     {
       "kind": "event_type",
+      "source": "a2a.tasks.MessageStreamResponse",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "event_type",
       "source": "a2a.tasks.PushNotificationConfigCreated",
       "disposition": {
         "disposition": "generated"
@@ -602,6 +623,13 @@
     {
       "kind": "event_type",
       "source": "a2a.tasks.TaskStatusUpdated",
+      "disposition": {
+        "disposition": "generated"
+      }
+    },
+    {
+      "kind": "event_type",
+      "source": "a2a.tasks.TaskSubscriptionResponse",
       "disposition": {
         "disposition": "generated"
       }

@@ -8,8 +8,8 @@
     "x-ess-provenance": {
       "system": "a2a",
       "specification_version": "v1",
-      "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
-      "contract_digest": "slice-sha256/2:f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44"
+      "source_digest": "19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf",
+      "contract_digest": "slice-sha256/2:b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58"
     },
     "x-ess-reached-by": "network"
   },
@@ -4746,6 +4746,30 @@
         ],
         "additionalProperties": false
       },
+      "a2a.tasks.MessageStreamResponse.Event": {
+        "title": "Message stream response payload",
+        "description": "One element of the stream SendStreamingMessage answers with (proto StreamResponse; A2A v1.0.1 sections 3.1.2 and 3.2.3).",
+        "x-ess-name": "a2a.tasks.MessageStreamResponse",
+        "x-ess-kind": "event-payload",
+        "type": "object",
+        "properties": {
+          "task": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskSnapshot"
+          },
+          "message": {
+            "$ref": "#/components/schemas/a2a.tasks.Message"
+          },
+          "statusUpdate": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskStatusUpdateEvent",
+            "x-ess-field": "status_update"
+          },
+          "artifactUpdate": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskArtifactUpdateEvent",
+            "x-ess-field": "artifact_update"
+          }
+        },
+        "additionalProperties": false
+      },
       "a2a.tasks.Part": {
         "title": "Part",
         "description": "One piece of content in a message or artifact (A2A v1.0.1 section 4.1.6).",
@@ -5717,7 +5741,7 @@
       },
       "a2a.tasks.SendStreamingMessage.continued.Response": {
         "additionalProperties": false,
-        "description": "The agent answers with the task the message continued, in the state it holds. Decided outside the request: message.taskId names a non-terminal task, and the agent takes the message into it.",
+        "description": "The agent answers with the task the message continued, in the state it holds. Decided outside the request: message.taskId names a non-terminal task, and the agent takes the message into it. Emits `message:stream`, published to consumers and listed under `published`.",
         "properties": {
           "outcome": {
             "const": "continued",
@@ -5725,7 +5749,28 @@
           },
           "published": {
             "description": "Every event this branch published, in publication order: its qualified name and its payload.",
-            "maxItems": 0,
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "a2a.tasks.MessageStreamResponse",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/a2a.tasks.MessageStreamResponse.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
             "type": "array"
           },
           "response": {
@@ -5741,7 +5786,7 @@
       },
       "a2a.tasks.SendStreamingMessage.direct-message.Response": {
         "additionalProperties": false,
-        "description": "Decided outside the request: the agent answers with a message and creates no task.",
+        "description": "Decided outside the request: the agent answers with a message and creates no task. Emits `message:stream`, published to consumers and listed under `published`.",
         "properties": {
           "outcome": {
             "const": "direct-message",
@@ -5749,7 +5794,28 @@
           },
           "published": {
             "description": "Every event this branch published, in publication order: its qualified name and its payload.",
-            "maxItems": 0,
+            "items": false,
+            "maxItems": 1,
+            "minItems": 1,
+            "prefixItems": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "a2a.tasks.MessageStreamResponse",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/a2a.tasks.MessageStreamResponse.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              }
+            ],
             "type": "array"
           },
           "response": {
@@ -5817,7 +5883,7 @@
       },
       "a2a.tasks.SendStreamingMessage.task-created.Response": {
         "additionalProperties": false,
-        "description": "A new task in Submitted; the agent works on it after the answer. Taken when no other outcome's condition matched. A `a2a.tasks.Task` now exists, in `Submitted`. Its identity is published as `task_id` on `a2a.tasks.TaskCreated`. Emits `TaskCreated`, published to consumers and listed under `published`.",
+        "description": "A new task in Submitted; the agent works on it after the answer. Taken when no other outcome's condition matched. A `a2a.tasks.Task` now exists, in `Submitted`. Its identity is published as `task_id` on `a2a.tasks.TaskCreated`. Emits `TaskCreated` and `message:stream`, published to consumers and listed under `published`.",
         "properties": {
           "outcome": {
             "const": "task-created",
@@ -5826,8 +5892,8 @@
           "published": {
             "description": "Every event this branch published, in publication order: its qualified name and its payload.",
             "items": false,
-            "maxItems": 1,
-            "minItems": 1,
+            "maxItems": 2,
+            "minItems": 2,
             "prefixItems": [
               {
                 "additionalProperties": false,
@@ -5838,6 +5904,23 @@
                   },
                   "payload": {
                     "$ref": "#/components/schemas/a2a.tasks.TaskCreated.Event"
+                  }
+                },
+                "required": [
+                  "event",
+                  "payload"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "event": {
+                    "const": "a2a.tasks.MessageStreamResponse",
+                    "type": "string"
+                  },
+                  "payload": {
+                    "$ref": "#/components/schemas/a2a.tasks.MessageStreamResponse.Event"
                   }
                 },
                 "required": [
@@ -6259,6 +6342,40 @@
           "Working"
         ]
       },
+      "a2a.tasks.TaskArtifactUpdateEvent": {
+        "title": "TaskArtifactUpdateEvent",
+        "description": "\"A task delta where an artifact has been generated\" (a2a.proto TaskArtifactUpdateEvent; A2A v1.0.1 section 4.2.2).",
+        "x-ess-name": "a2a.tasks.TaskArtifactUpdateEvent",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskId",
+            "x-ess-field": "task_id"
+          },
+          "contextId": {
+            "$ref": "#/components/schemas/a2a.tasks.ContextId",
+            "x-ess-field": "context_id"
+          },
+          "artifact": {
+            "$ref": "#/components/schemas/a2a.tasks.Artifact"
+          },
+          "append": {
+            "type": "boolean"
+          },
+          "lastChunk": {
+            "x-ess-field": "last_chunk",
+            "type": "boolean"
+          },
+          "metadata": {}
+        },
+        "required": [
+          "taskId",
+          "contextId",
+          "artifact"
+        ],
+        "additionalProperties": false
+      },
       "a2a.tasks.TaskArtifactUpdated.Event": {
         "title": "TaskArtifactUpdated payload",
         "description": "An artifact the agent generated; streamed and pushed as the a2a.proto message TaskArtifactUpdateEvent, whose task_id, context_id and artifact it marks REQUIRED.",
@@ -6428,7 +6545,6 @@
         },
         "required": [
           "id",
-          "contextId",
           "status"
         ],
         "additionalProperties": false
@@ -6484,6 +6600,33 @@
         },
         "required": [
           "state"
+        ],
+        "additionalProperties": false
+      },
+      "a2a.tasks.TaskStatusUpdateEvent": {
+        "title": "TaskStatusUpdateEvent",
+        "description": "\"An event sent by the agent to notify the client of a change in a task's status\" (a2a.proto TaskStatusUpdateEvent; A2A v1.0.1 section 4.2.1).",
+        "x-ess-name": "a2a.tasks.TaskStatusUpdateEvent",
+        "x-ess-kind": "struct",
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskId",
+            "x-ess-field": "task_id"
+          },
+          "contextId": {
+            "$ref": "#/components/schemas/a2a.tasks.ContextId",
+            "x-ess-field": "context_id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/a2a.tasks.TaskStatus"
+          },
+          "metadata": {}
+        },
+        "required": [
+          "taskId",
+          "contextId",
+          "status"
         ],
         "additionalProperties": false
       },

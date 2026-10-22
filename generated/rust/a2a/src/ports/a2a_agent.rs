@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
-// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
+// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
+// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! a2a-agent — the `a2a-agent` component of `a2a` v1.
@@ -18,6 +18,8 @@
 /// An event this component declares it publishes, on its way to the system's transport.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublishedEvent {
+    /// `a2a.tasks.MessageStreamResponse`.
+    MessageStreamResponse(crate::tasks::MessageStreamResponse),
     /// `a2a.tasks.PushNotificationConfigCreated`.
     PushNotificationConfigCreated(crate::tasks::PushNotificationConfigCreated),
     /// `a2a.tasks.PushNotificationConfigDeleted`.
@@ -28,6 +30,8 @@ pub enum PublishedEvent {
     TaskCreated(crate::tasks::TaskCreated),
     /// `a2a.tasks.TaskStatusUpdated`.
     TaskStatusUpdated(crate::tasks::TaskStatusUpdated),
+    /// `a2a.tasks.TaskSubscriptionResponse`.
+    TaskSubscriptionResponse(crate::tasks::TaskSubscriptionResponse),
 }
 
 /// a2a-agent — the port over the component's obligations.
@@ -313,10 +317,15 @@ where
             crate::tasks::SendStreamingMessageOutcome::ContextMismatch { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::ContextNotAccepted { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::ContentTypeNotSupported { .. } => {}
-            crate::tasks::SendStreamingMessageOutcome::Continued { .. } => {}
-            crate::tasks::SendStreamingMessageOutcome::DirectMessage { .. } => {}
-            crate::tasks::SendStreamingMessageOutcome::TaskCreated { task_created, .. } => {
+            crate::tasks::SendStreamingMessageOutcome::Continued { message_stream_response, .. } => {
+                self.outbox.push(PublishedEvent::MessageStreamResponse(message_stream_response.clone()));
+            }
+            crate::tasks::SendStreamingMessageOutcome::DirectMessage { message_stream_response, .. } => {
+                self.outbox.push(PublishedEvent::MessageStreamResponse(message_stream_response.clone()));
+            }
+            crate::tasks::SendStreamingMessageOutcome::TaskCreated { task_created, message_stream_response, .. } => {
                 self.outbox.push(PublishedEvent::TaskCreated(task_created.clone()));
+                self.outbox.push(PublishedEvent::MessageStreamResponse(message_stream_response.clone()));
             }
             crate::tasks::SendStreamingMessageOutcome::VersionNotSupported { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::ExtensionRequired { .. } => {}

@@ -164,9 +164,11 @@ types:
     fields:
       - name: id
         type: a2a.tasks.TaskId
+      # a2a.proto, Task: `string context_id = 2;` carries no REQUIRED, unlike `id` and `status`.
       - name: context_id
-        type: a2a.tasks.ContextId
+        type: Optional<a2a.tasks.ContextId>
         naming: {wire: contextId}
+        presence: omitted_when_absent
       - name: status
         type: a2a.tasks.TaskStatus
       - name: artifacts
@@ -174,6 +176,52 @@ types:
         presence: omitted_when_absent
       - name: history
         type: Optional<List<a2a.tasks.Message>>
+        presence: omitted_when_absent
+      - name: metadata
+        type: Optional<Json>
+
+  # The two update members of a stream element (proto StreamResponse.status_update and
+  # .artifact_update). They repeat the fields of the events a2a.tasks.TaskStatusUpdated and
+  # a2a.tasks.TaskArtifactUpdated because an ESS event is not a type a field can hold.
+  - name: a2a.tasks.TaskStatusUpdateEvent
+    kind: struct
+    naming:
+      summary: >-
+        "An event sent by the agent to notify the client of a change in a task's status"
+        (a2a.proto TaskStatusUpdateEvent; A2A v1.0.1 section 4.2.1).
+    fields:
+      - name: task_id
+        type: a2a.tasks.TaskId
+        naming: {wire: taskId}
+      - name: context_id
+        type: a2a.tasks.ContextId
+        naming: {wire: contextId}
+      - name: status
+        type: a2a.tasks.TaskStatus
+      - name: metadata
+        type: Optional<Json>
+
+  - name: a2a.tasks.TaskArtifactUpdateEvent
+    kind: struct
+    naming:
+      summary: >-
+        "A task delta where an artifact has been generated" (a2a.proto TaskArtifactUpdateEvent;
+        A2A v1.0.1 section 4.2.2).
+    fields:
+      - name: task_id
+        type: a2a.tasks.TaskId
+        naming: {wire: taskId}
+      - name: context_id
+        type: a2a.tasks.ContextId
+        naming: {wire: contextId}
+      - name: artifact
+        type: a2a.tasks.Artifact
+      - name: append
+        type: Optional<Boolean>
+        presence: omitted_when_absent
+      - name: last_chunk
+        type: Optional<Boolean>
+        naming: {wire: lastChunk}
         presence: omitted_when_absent
       - name: metadata
         type: Optional<Json>
@@ -609,13 +657,31 @@ commands:
       # a specific task"; section 3.7: "The agent is responsible to determine which Messages are
       # persisted in the Task History." The agent moves the task afterwards with the agent-side
       # commands below (StartWorking, RequireInput, …).
+      # Each answering branch emits the first element of its stream. Section 3.1.2: "If the
+      # agent returns a Message, the stream MUST contain exactly one Message object and then
+      # close immediately", and "If the agent returns a Task, the stream MUST begin with the Task
+      # object". The element carries what the answer carries.
       - name: continued
         external: message.taskId names a non-terminal task, and the agent takes the message into it
         returns: true
+        emits: [a2a.tasks.MessageStreamResponse]
+        payload:
+          a2a.tasks.MessageStreamResponse:
+            task: {response: task}
+            message: {response: reply}
+            status_update: {generated: true}
+            artifact_update: {generated: true}
         summary: The agent answers with the task the message continued, in the state it holds.
       - name: direct-message
         external: the agent answers with a message and creates no task
         returns: true
+        emits: [a2a.tasks.MessageStreamResponse]
+        payload:
+          a2a.tasks.MessageStreamResponse:
+            task: {response: task}
+            message: {response: reply}
+            status_update: {generated: true}
+            artifact_update: {generated: true}
       # UNMAPPED (ESS gap): a2a.proto, SendMessageConfiguration.task_push_notification_config:
       # "Configuration for the agent to send push notifications for task updates. Task id
       # should be empty when sending this configuration in a SendMessage request." The task
@@ -628,10 +694,18 @@ commands:
         sets:
           context_id: {input: message.context_id, else: {generated: true}}
           status_timestamp: {generated: true}
-        emits: [a2a.tasks.TaskCreated]
+        emits: [a2a.tasks.TaskCreated, a2a.tasks.MessageStreamResponse]
         payload:
           a2a.tasks.TaskCreated:
             task_id: {generated: true}
+          # The stream's first element is the task the answer carries. Section 3.1.2: "If the
+          # agent returns a Task, the stream MUST begin with the Task object"; it fixes no state
+          # for it (the section 6.2 example streams TASK_STATE_WORKING first).
+          a2a.tasks.MessageStreamResponse:
+            task: {response: task}
+            message: {response: reply}
+            status_update: {generated: true}
+            artifact_update: {generated: true}
         returns: true
         summary: A new task in Submitted; the agent works on it after the answer.
 
@@ -741,6 +815,14 @@ commands:
           predicate:
             state: [Completed, Failed, Canceled, Rejected]
         error: a2a.tasks.UnsupportedOperation
+      # The answer `task` is the first element of the stream. Section 3.1.6: "The operation MUST
+      # return a `Task` object as the first event in the stream, representing the current state
+      # of the task at the time of subscription."
+      # UNMAPPED (ESS gap): nothing emits a2a.tasks.TaskSubscriptionResponse. Subscribing changes
+      # no task, and a preserving outcome that emits is refused: "ESS-COMMAND-004: a preserving
+      # outcome declares no assignment, event or error". `updates:` is accepted but projects
+      # "changes a `a2a.tasks.Task` without moving it", which subscribing does not. Missing
+      # construct: an outcome that reads its subject unchanged and emits an event.
       - name: subscribed
         preserves: a2a.tasks.Task
         instance: id
@@ -1254,6 +1336,81 @@ events:
       - name: last_chunk
         type: Optional<Boolean>
         naming: {wire: lastChunk}
+
+  # The two streams. a2a.proto answers SendStreamingMessage and SubscribeToTask each with
+  # `stream StreamResponse`, "A wrapper object used in streaming operations to encapsulate
+  # different types of response data", whose `oneof payload` is task, message, status_update or
+  # artifact_update. Section 11.7: "REST streaming uses Server-Sent Events with the `data` field
+  # containing JSON serializations of the protocol data objects", one `data: { /* StreamResponse
+  # object */ }` per element. Each stream is one event here, so each gets its own channel; the
+  # channel address is the wire name of the command that opens the stream.
+  # The four members are Optional, as in a2a.discovery.SecurityScheme: ProtoJSON writes the
+  # chosen member inline under its own name (section 6.2: `data: {"task": …}`,
+  # `{"artifactUpdate": {"taskId": …}}`, `{"statusUpdate": …}`).
+  # UNMAPPED (ESS gap): the exactly-one rule of the oneof. ESS 0.67.0 has no externally tagged
+  # union (a union without `tag:` is refused: "missing field `tag`"), and an emitting outcome must
+  # source every member, the absent ones included: leaving `message` out of the payload is
+  # refused, "ESS-COMMAND-005: emitted payload field has no source; declare a mapping or
+  # {generated: true} ownership", and `message: {cleared: true}` is refused, "ESS-COMMAND-001:
+  # `message` is filled `{cleared: true}`, which says a field holds nothing — an entity's field,
+  # not an event's". So the members a stream element leaves out are `{generated: true}` below.
+  # Missing constructs: a union keyed by member name, and an absent source for an Optional event
+  # field.
+  # UNMAPPED (ESS gap): the elements after the first. Section 3.1.2 follows the first Task with
+  # "zero or more TaskStatusUpdateEvent or TaskArtifactUpdateEvent objects", and section 3.5.2:
+  # "Events MUST be broadcast to all active streams for that task" and "Each stream MUST receive
+  # the same events in the same order". Those are a2a.tasks.TaskStatusUpdated and
+  # a2a.tasks.TaskArtifactUpdated, which the agent moves and UpdateArtifact emit. ESS 0.67.0
+  # emits an event from the outcome that causes it; it has no construct that delivers one onto
+  # the streams other commands opened for the same task and closes those streams when the task
+  # reaches a terminal state. Having every agent move also emit a stream element would assert one
+  # where no stream is open. Missing construct: a response stream a command opens, keyed by a
+  # row, that later events of that row are delivered on until a lifecycle state ends it.
+  - name: a2a.tasks.MessageStreamResponse
+    naming:
+      wire: message:stream
+      display: Message stream response
+      summary: >-
+        One element of the stream SendStreamingMessage answers with (proto StreamResponse;
+        A2A v1.0.1 sections 3.1.2 and 3.2.3).
+    fields:
+      - name: task
+        type: Optional<a2a.tasks.TaskSnapshot>
+        presence: omitted_when_absent
+      - name: message
+        type: Optional<a2a.tasks.Message>
+        presence: omitted_when_absent
+      - name: status_update
+        type: Optional<a2a.tasks.TaskStatusUpdateEvent>
+        naming: {wire: statusUpdate}
+        presence: omitted_when_absent
+      - name: artifact_update
+        type: Optional<a2a.tasks.TaskArtifactUpdateEvent>
+        naming: {wire: artifactUpdate}
+        presence: omitted_when_absent
+
+  - name: a2a.tasks.TaskSubscriptionResponse
+    naming:
+      wire: tasks:subscribe
+      display: Task subscription response
+      summary: >-
+        One element of the stream SubscribeToTask answers with (proto StreamResponse;
+        A2A v1.0.1 sections 3.1.6 and 3.2.3).
+    fields:
+      - name: task
+        type: Optional<a2a.tasks.TaskSnapshot>
+        presence: omitted_when_absent
+      - name: message
+        type: Optional<a2a.tasks.Message>
+        presence: omitted_when_absent
+      - name: status_update
+        type: Optional<a2a.tasks.TaskStatusUpdateEvent>
+        naming: {wire: statusUpdate}
+        presence: omitted_when_absent
+      - name: artifact_update
+        type: Optional<a2a.tasks.TaskArtifactUpdateEvent>
+        naming: {wire: artifactUpdate}
+        presence: omitted_when_absent
 
   - name: a2a.tasks.PushNotificationConfigCreated
     fields:

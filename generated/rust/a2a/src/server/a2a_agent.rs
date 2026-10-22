@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
-// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
+// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
+// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! The `a2a-agent` component of `a2a` v1, on the wire.
@@ -61,7 +61,7 @@ pub const ROUTES: &[(&str, &str)] = &[
 /// Everything outside `runtime` is the same in every language this plan is emitted into, and
 /// `cargo xtask synth --check` starts both and compares them.
 pub const STARTUP: &[&str] = &[
-    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"a2a\",\"version\":\"v1\",\"model_digest\":\"d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d\",\"contract_digest\":\"f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44\",\"components\":[\"a2a-agent\"],\"capabilities\":{\"generated\":93,\"obligations\":12,\"refused\":0}",
+    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"a2a\",\"version\":\"v1\",\"model_digest\":\"19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf\",\"contract_digest\":\"b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58\",\"components\":[\"a2a-agent\"],\"capabilities\":{\"generated\":97,\"obligations\":12,\"refused\":0}",
     "{\"log\":\"ess/1\",\"event\":\"surface.serving\",\"component\":\"a2a-agent\",\"reached_by\":\"network\",\"transport\":\"http/1.1\",\"routes\":23,\"paths\":[{\"method\":\"POST\",\"path\":\"/discovery/commands/extendedAgentCard\",\"serves\":\"command\",\"name\":\"a2a.discovery.GetExtendedAgentCard\"},{\"method\":\"GET\",\"path\":\"/docs\",\"serves\":\"documentation\",\"name\":\"docs\"},{\"method\":\"GET\",\"path\":\"/openapi.json\",\"serves\":\"contract\",\"name\":\"openapi\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/message:send\",\"serves\":\"command\",\"name\":\"a2a.tasks.SendMessage\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/message:stream\",\"serves\":\"command\",\"name\":\"a2a.tasks.SendStreamingMessage\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/pushNotificationConfigs:create\",\"serves\":\"command\",\"name\":\"a2a.tasks.CreateTaskPushNotificationConfig\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/pushNotificationConfigs:delete\",\"serves\":\"command\",\"name\":\"a2a.tasks.DeleteTaskPushNotificationConfig\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/pushNotificationConfigs:get\",\"serves\":\"command\",\"name\":\"a2a.tasks.GetTaskPushNotificationConfig\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/pushNotificationConfigs:list\",\"serves\":\"command\",\"name\":\"a2a.tasks.ListTaskPushNotificationConfigs\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:cancel\",\"serves\":\"command\",\"name\":\"a2a.tasks.CancelTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:complete\",\"serves\":\"command\",\"name\":\"a2a.tasks.CompleteTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:fail\",\"serves\":\"command\",\"name\":\"a2a.tasks.FailTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:get\",\"serves\":\"command\",\"name\":\"a2a.tasks.GetTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:reject\",\"serves\":\"command\",\"name\":\"a2a.tasks.RejectTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:require_auth\",\"serves\":\"command\",\"name\":\"a2a.tasks.RequireAuth\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:require_input\",\"serves\":\"command\",\"name\":\"a2a.tasks.RequireInput\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:subscribe\",\"serves\":\"command\",\"name\":\"a2a.tasks.SubscribeToTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:update_artifact\",\"serves\":\"command\",\"name\":\"a2a.tasks.UpdateArtifact\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:work\",\"serves\":\"command\",\"name\":\"a2a.tasks.StartWorking\"},{\"method\":\"GET\",\"path\":\"/tasks/views/allPushNotificationConfigs\",\"serves\":\"view\",\"name\":\"a2a.tasks.PushNotificationConfigs\"},{\"method\":\"GET\",\"path\":\"/tasks/views/allTasks\",\"serves\":\"view\",\"name\":\"a2a.tasks.AllTasks\"},{\"method\":\"GET\",\"path\":\"/tasks/views/pushNotificationConfigs\",\"serves\":\"view\",\"name\":\"a2a.tasks.TaskPushNotificationConfigs\"},{\"method\":\"GET\",\"path\":\"/tasks/views/tasks\",\"serves\":\"view\",\"name\":\"a2a.tasks.Tasks\"}]",
     "{\"log\":\"ess/1\",\"event\":\"system.ready\",\"system\":\"a2a\",\"surfaces\":1",
 ];
@@ -922,27 +922,39 @@ fn answer_a2a_tasks_send_streaming_message(outcome: &crate::tasks::SendStreaming
             json::push_text(&mut body, "a2a.tasks.ContentTypeNotSupported");
             502
         }
-        crate::tasks::SendStreamingMessageOutcome::Continued { response, .. } => {
+        crate::tasks::SendStreamingMessageOutcome::Continued { response, message_stream_response, .. } => {
             json::member(&mut body, "outcome");
             json::push_text(&mut body, "continued");
             json::member(&mut body, "published");
             body.push('[');
+            body.push('{');
+            json::member(&mut body, "event");
+            json::push_text(&mut body, "a2a.tasks.MessageStreamResponse");
+            json::member(&mut body, "payload");
+            wire::encode_event_a2a_tasks_message_stream_response(message_stream_response, &mut body);
+            body.push('}');
             body.push(']');
             json::member(&mut body, "response");
             wire::encode_response_a2a_tasks_send_streaming_message(response, &mut body);
             200
         }
-        crate::tasks::SendStreamingMessageOutcome::DirectMessage { response, .. } => {
+        crate::tasks::SendStreamingMessageOutcome::DirectMessage { response, message_stream_response, .. } => {
             json::member(&mut body, "outcome");
             json::push_text(&mut body, "direct-message");
             json::member(&mut body, "published");
             body.push('[');
+            body.push('{');
+            json::member(&mut body, "event");
+            json::push_text(&mut body, "a2a.tasks.MessageStreamResponse");
+            json::member(&mut body, "payload");
+            wire::encode_event_a2a_tasks_message_stream_response(message_stream_response, &mut body);
+            body.push('}');
             body.push(']');
             json::member(&mut body, "response");
             wire::encode_response_a2a_tasks_send_streaming_message(response, &mut body);
             200
         }
-        crate::tasks::SendStreamingMessageOutcome::TaskCreated { response, task_created, .. } => {
+        crate::tasks::SendStreamingMessageOutcome::TaskCreated { response, task_created, message_stream_response, .. } => {
             json::member(&mut body, "outcome");
             json::push_text(&mut body, "task-created");
             json::member(&mut body, "published");
@@ -952,6 +964,13 @@ fn answer_a2a_tasks_send_streaming_message(outcome: &crate::tasks::SendStreaming
             json::push_text(&mut body, "a2a.tasks.TaskCreated");
             json::member(&mut body, "payload");
             wire::encode_event_a2a_tasks_task_created(task_created, &mut body);
+            body.push('}');
+            body.push(',');
+            body.push('{');
+            json::member(&mut body, "event");
+            json::push_text(&mut body, "a2a.tasks.MessageStreamResponse");
+            json::member(&mut body, "payload");
+            wire::encode_event_a2a_tasks_message_stream_response(message_stream_response, &mut body);
             body.push('}');
             body.push(']');
             json::member(&mut body, "response");
