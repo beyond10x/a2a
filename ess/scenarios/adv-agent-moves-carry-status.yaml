@@ -1,0 +1,109 @@
+# Adversary case. a2a.proto, TaskStatusUpdateEvent: `status` is REQUIRED ("The new status of the
+# task"), and TaskStatus.state is the state the task moved to. The unit added `status` to every
+# agent move's TaskStatusUpdated payload, but only CancelTask and RequireAuth have a scenario that
+# reads it; the synthesized `moved` scenarios of the six agent moves end in `error`. This case reads
+# the state each remaining move publishes.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: adv-agent-moves-carry-status
+summary: StartWorking, RequireInput, CompleteTask, FailTask and RejectTask each publish the state they moved the task to.
+
+arrange:
+  - instance: done
+    entity: a2a.tasks.Task
+  - instance: failed
+    entity: a2a.tasks.Task
+  - instance: rejected
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-01-14T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: first
+    outcome: task-created
+    capture: {instance: done, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-14T09:00:01Z
+    command: a2a.tasks.StartWorking
+    input:
+      id: {$instance: done}
+    outcome: moved
+    events:
+      - event: a2a.tasks.TaskStatusUpdated
+        payload:
+          status:
+            state: TASK_STATE_WORKING
+
+  - at: 2026-01-14T09:00:02Z
+    command: a2a.tasks.RequireInput
+    input:
+      id: {$instance: done}
+    outcome: moved
+    events:
+      - event: a2a.tasks.TaskStatusUpdated
+        payload:
+          status:
+            state: TASK_STATE_INPUT_REQUIRED
+
+  - at: 2026-01-14T09:00:03Z
+    command: a2a.tasks.CompleteTask
+    input:
+      id: {$instance: done}
+    outcome: moved
+    events:
+      - event: a2a.tasks.TaskStatusUpdated
+        payload:
+          status:
+            state: TASK_STATE_COMPLETED
+
+  - at: 2026-01-14T09:00:04Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-2
+        role: ROLE_USER
+        parts:
+          - text: second
+    outcome: task-created
+    capture: {instance: failed, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-14T09:00:05Z
+    command: a2a.tasks.FailTask
+    input:
+      id: {$instance: failed}
+    outcome: moved
+    events:
+      - event: a2a.tasks.TaskStatusUpdated
+        payload:
+          status:
+            state: TASK_STATE_FAILED
+
+  - at: 2026-01-14T09:00:06Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-3
+        role: ROLE_USER
+        parts:
+          - text: third
+    outcome: task-created
+    capture: {instance: rejected, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-14T09:00:07Z
+    command: a2a.tasks.RejectTask
+    input:
+      id: {$instance: rejected}
+    outcome: moved
+    events:
+      - event: a2a.tasks.TaskStatusUpdated
+        payload:
+          status:
+            state: TASK_STATE_REJECTED

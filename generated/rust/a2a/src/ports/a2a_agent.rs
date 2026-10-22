@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-// contract digest f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea
+// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! a2a-agent — the `a2a-agent` component of `a2a` v1.
@@ -22,6 +22,8 @@ pub enum PublishedEvent {
     PushNotificationConfigCreated(crate::tasks::PushNotificationConfigCreated),
     /// `a2a.tasks.PushNotificationConfigDeleted`.
     PushNotificationConfigDeleted(crate::tasks::PushNotificationConfigDeleted),
+    /// `a2a.tasks.TaskArtifactUpdated`.
+    TaskArtifactUpdated(crate::tasks::TaskArtifactUpdated),
     /// `a2a.tasks.TaskCreated`.
     TaskCreated(crate::tasks::TaskCreated),
     /// `a2a.tasks.TaskStatusUpdated`.
@@ -58,7 +60,7 @@ impl<B> A2aAgent<B> {
 
 impl<B> A2aAgent<B>
 where
-    B: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
+    B: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
     /// Accepts `a2a.discovery.GetExtendedAgentCard`: runs the behaviour obligation, then publishes the declared events
     /// the outcome carries.
@@ -71,6 +73,8 @@ where
             crate::discovery::GetExtendedAgentCardOutcome::NotSupported { .. } => {}
             crate::discovery::GetExtendedAgentCardOutcome::NotConfigured { .. } => {}
             crate::discovery::GetExtendedAgentCardOutcome::Returned { .. } => {}
+            crate::discovery::GetExtendedAgentCardOutcome::VersionNotSupported { .. } => {}
+            crate::discovery::GetExtendedAgentCardOutcome::ExtensionRequired { .. } => {}
         }
         Ok(outcome)
     }
@@ -124,6 +128,9 @@ where
             crate::tasks::CreateTaskPushNotificationConfigOutcome::Created { push_notification_config_created, .. } => {
                 self.outbox.push(PublishedEvent::PushNotificationConfigCreated(push_notification_config_created.clone()));
             }
+            crate::tasks::CreateTaskPushNotificationConfigOutcome::Assigned { push_notification_config_created, .. } => {
+                self.outbox.push(PublishedEvent::PushNotificationConfigCreated(push_notification_config_created.clone()));
+            }
             crate::tasks::CreateTaskPushNotificationConfigOutcome::VersionNotSupported { .. } => {}
             crate::tasks::CreateTaskPushNotificationConfigOutcome::ExtensionRequired { .. } => {}
             crate::tasks::CreateTaskPushNotificationConfigOutcome::PushNotSupported { .. } => {}
@@ -140,7 +147,6 @@ where
         let outcome = self.behaviors.delete_task_push_notification_config(input)?;
         match &outcome {
             crate::tasks::DeleteTaskPushNotificationConfigOutcome::TaskNotFound { .. } => {}
-            crate::tasks::DeleteTaskPushNotificationConfigOutcome::AlreadyGone { .. } => {}
             crate::tasks::DeleteTaskPushNotificationConfigOutcome::Deleted { push_notification_config_deleted, .. } => {
                 self.outbox.push(PublishedEvent::PushNotificationConfigDeleted(push_notification_config_deleted.clone()));
             }
@@ -192,12 +198,29 @@ where
     pub fn get_task_push_notification_config(&mut self, input: crate::tasks::GetTaskPushNotificationConfig) -> Result<crate::tasks::GetTaskPushNotificationConfigOutcome, crate::obligation::UnmetObligation> {
         let outcome = self.behaviors.get_task_push_notification_config(input)?;
         match &outcome {
-            crate::tasks::GetTaskPushNotificationConfigOutcome::NotFound { .. } => {}
-            crate::tasks::GetTaskPushNotificationConfigOutcome::OtherTask { .. } => {}
-            crate::tasks::GetTaskPushNotificationConfigOutcome::Found { .. } => {}
             crate::tasks::GetTaskPushNotificationConfigOutcome::VersionNotSupported { .. } => {}
             crate::tasks::GetTaskPushNotificationConfigOutcome::ExtensionRequired { .. } => {}
             crate::tasks::GetTaskPushNotificationConfigOutcome::PushNotSupported { .. } => {}
+            crate::tasks::GetTaskPushNotificationConfigOutcome::NotFound { .. } => {}
+            crate::tasks::GetTaskPushNotificationConfigOutcome::ConfigNotFound { .. } => {}
+            crate::tasks::GetTaskPushNotificationConfigOutcome::Found { .. } => {}
+        }
+        Ok(outcome)
+    }
+
+    /// Accepts `a2a.tasks.ListTaskPushNotificationConfigs`: runs the behaviour obligation, then publishes the declared events
+    /// the outcome carries.
+    ///
+    /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
+    /// arrives as a variant of the outcome type, refusals included.
+    pub fn list_task_push_notification_configs(&mut self, input: crate::tasks::ListTaskPushNotificationConfigs) -> Result<crate::tasks::ListTaskPushNotificationConfigsOutcome, crate::obligation::UnmetObligation> {
+        let outcome = self.behaviors.list_task_push_notification_configs(input)?;
+        match &outcome {
+            crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { .. } => {}
+            crate::tasks::ListTaskPushNotificationConfigsOutcome::Listed { .. } => {}
+            crate::tasks::ListTaskPushNotificationConfigsOutcome::VersionNotSupported { .. } => {}
+            crate::tasks::ListTaskPushNotificationConfigsOutcome::ExtensionRequired { .. } => {}
+            crate::tasks::ListTaskPushNotificationConfigsOutcome::PushNotSupported { .. } => {}
         }
         Ok(outcome)
     }
@@ -264,6 +287,7 @@ where
             crate::tasks::SendMessageOutcome::TaskNotFound { .. } => {}
             crate::tasks::SendMessageOutcome::TaskTerminal { .. } => {}
             crate::tasks::SendMessageOutcome::ContextMismatch { .. } => {}
+            crate::tasks::SendMessageOutcome::ContextNotAccepted { .. } => {}
             crate::tasks::SendMessageOutcome::ContentTypeNotSupported { .. } => {}
             crate::tasks::SendMessageOutcome::Continued { .. } => {}
             crate::tasks::SendMessageOutcome::DirectMessage { .. } => {}
@@ -287,6 +311,7 @@ where
             crate::tasks::SendStreamingMessageOutcome::TaskNotFound { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::TaskTerminal { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::ContextMismatch { .. } => {}
+            crate::tasks::SendStreamingMessageOutcome::ContextNotAccepted { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::ContentTypeNotSupported { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::Continued { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::DirectMessage { .. } => {}
@@ -335,6 +360,27 @@ where
         Ok(outcome)
     }
 
+    /// Accepts `a2a.tasks.UpdateArtifact`: runs the behaviour obligation, then publishes the declared events
+    /// the outcome carries.
+    ///
+    /// `Err` is the typed refusal of an unmet obligation — never a domain outcome, which always
+    /// arrives as a variant of the outcome type, refusals included.
+    pub fn update_artifact(&mut self, input: crate::tasks::UpdateArtifact) -> Result<crate::tasks::UpdateArtifactOutcome, crate::obligation::UnmetObligation> {
+        let outcome = self.behaviors.update_artifact(input)?;
+        match &outcome {
+            crate::tasks::UpdateArtifactOutcome::NotFound { .. } => {}
+            crate::tasks::UpdateArtifactOutcome::Updated { task_artifact_updated, .. } => {
+                self.outbox.push(PublishedEvent::TaskArtifactUpdated(task_artifact_updated.clone()));
+            }
+        }
+        Ok(outcome)
+    }
+
+    /// Serves `a2a.tasks.AllTasks` at `read_your_writes` consistency, from the owed projection.
+    pub fn all_tasks(&self) -> Result<Vec<crate::tasks::AllTasks>, crate::obligation::UnmetObligation> {
+        self.behaviors.all_tasks()
+    }
+
     /// Serves `a2a.tasks.PushNotificationConfigs` at `read_your_writes` consistency, from the owed projection.
     pub fn push_notification_configs(&self) -> Result<Vec<crate::tasks::PushNotificationConfigs>, crate::obligation::UnmetObligation> {
         self.behaviors.push_notification_configs()
@@ -346,7 +392,7 @@ where
     }
 
     /// Serves `a2a.tasks.Tasks` at `read_your_writes` consistency, from the owed projection.
-    pub fn tasks(&self) -> Result<Vec<crate::tasks::Tasks>, crate::obligation::UnmetObligation> {
-        self.behaviors.tasks()
+    pub fn tasks(&self, context_id: Option<crate::tasks::ContextId>, status: Option<crate::tasks::TaskState>, status_timestamp_after: Option<crate::primitives::Timestamp>) -> Result<Vec<crate::tasks::Tasks>, crate::obligation::UnmetObligation> {
+        self.behaviors.tasks(context_id, status, status_timestamp_after)
     }
 }

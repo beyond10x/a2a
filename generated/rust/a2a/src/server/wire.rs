@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-// contract digest f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea
+// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
 // do not edit: regenerate with `ess synthesize --layout crate`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -1080,48 +1080,28 @@ pub fn decode_a2a_discovery_o_auth2_security_scheme(value: &json::Value, at: &st
 
 /// Writes `a2a.discovery.OAuthFlows` as JSON.
 pub fn encode_a2a_discovery_o_auth_flows(value: &crate::discovery::OAuthFlows, out: &mut String) {
-    match value {
-        crate::discovery::OAuthFlows::AuthorizationCode(held) => {
-            out.push('{');
-            json::member(out, "flow");
-            json::push_text(out, "authorizationCode");
-            json::member(out, "value");
-            encode_a2a_discovery_authorization_code_o_auth_flow(&*held, out);
-            out.push('}');
-        }
-        crate::discovery::OAuthFlows::ClientCredentials(held) => {
-            out.push('{');
-            json::member(out, "flow");
-            json::push_text(out, "clientCredentials");
-            json::member(out, "value");
-            encode_a2a_discovery_client_credentials_o_auth_flow(&*held, out);
-            out.push('}');
-        }
-        crate::discovery::OAuthFlows::DeviceCode(held) => {
-            out.push('{');
-            json::member(out, "flow");
-            json::push_text(out, "deviceCode");
-            json::member(out, "value");
-            encode_a2a_discovery_device_code_o_auth_flow(&*held, out);
-            out.push('}');
-        }
-        crate::discovery::OAuthFlows::Implicit(held) => {
-            out.push('{');
-            json::member(out, "flow");
-            json::push_text(out, "implicit");
-            json::member(out, "value");
-            encode_a2a_discovery_implicit_o_auth_flow(&*held, out);
-            out.push('}');
-        }
-        crate::discovery::OAuthFlows::Password(held) => {
-            out.push('{');
-            json::member(out, "flow");
-            json::push_text(out, "password");
-            json::member(out, "value");
-            encode_a2a_discovery_password_o_auth_flow(&*held, out);
-            out.push('}');
-        }
+    out.push('{');
+    if let Some(held0) = &value.authorization_code {
+        json::member(out, "authorizationCode");
+        encode_a2a_discovery_authorization_code_o_auth_flow(&*held0, out);
     }
+    if let Some(held0) = &value.client_credentials {
+        json::member(out, "clientCredentials");
+        encode_a2a_discovery_client_credentials_o_auth_flow(&*held0, out);
+    }
+    if let Some(held0) = &value.implicit {
+        json::member(out, "implicit");
+        encode_a2a_discovery_implicit_o_auth_flow(&*held0, out);
+    }
+    if let Some(held0) = &value.password {
+        json::member(out, "password");
+        encode_a2a_discovery_password_o_auth_flow(&*held0, out);
+    }
+    if let Some(held0) = &value.device_code {
+        json::member(out, "deviceCode");
+        encode_a2a_discovery_device_code_o_auth_flow(&*held0, out);
+    }
+    out.push('}');
 }
 
 /// Reads `a2a.discovery.OAuthFlows` from JSON.
@@ -1130,35 +1110,42 @@ pub fn encode_a2a_discovery_o_auth_flows(value: &crate::discovery::OAuthFlows, o
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_o_auth_flows(value: &json::Value, at: &str) -> Result<crate::discovery::OAuthFlows, json::DecodeError> {
-    let tag = json::member_at(value, at, "flow")?;
-    let at_tag = json::nested(at, "flow");
-    Ok(match json::text_at(tag, &at_tag, "one of `authorizationCode`, `clientCredentials`, `deviceCode`, `implicit`, `password`")? {
-        "authorizationCode" => crate::discovery::OAuthFlows::AuthorizationCode({
-            let at0 = json::nested(at, "value");
-            let member0 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_authorization_code_o_auth_flow(member0, &at0)?
-        }),
-        "clientCredentials" => crate::discovery::OAuthFlows::ClientCredentials({
-            let at1 = json::nested(at, "value");
-            let member1 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_client_credentials_o_auth_flow(member1, &at1)?
-        }),
-        "deviceCode" => crate::discovery::OAuthFlows::DeviceCode({
-            let at2 = json::nested(at, "value");
-            let member2 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_device_code_o_auth_flow(member2, &at2)?
-        }),
-        "implicit" => crate::discovery::OAuthFlows::Implicit({
-            let at3 = json::nested(at, "value");
-            let member3 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_implicit_o_auth_flow(member3, &at3)?
-        }),
-        "password" => crate::discovery::OAuthFlows::Password({
-            let at4 = json::nested(at, "value");
-            let member4 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_password_o_auth_flow(member4, &at4)?
-        }),
-        other => return Err(json::DecodeError { at: at_tag.clone(), expected: "one of `authorizationCode`, `clientCredentials`, `deviceCode`, `implicit`, `password`".to_owned(), found: format!("`{other}`") }),
+    Ok(crate::discovery::OAuthFlows {
+        authorization_code: match value.member("authorizationCode") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "authorizationCode");
+                Some(decode_a2a_discovery_authorization_code_o_auth_flow(member0, &at0)?)
+            }
+        },
+        client_credentials: match value.member("clientCredentials") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "clientCredentials");
+                Some(decode_a2a_discovery_client_credentials_o_auth_flow(member1, &at1)?)
+            }
+        },
+        implicit: match value.member("implicit") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "implicit");
+                Some(decode_a2a_discovery_implicit_o_auth_flow(member2, &at2)?)
+            }
+        },
+        password: match value.member("password") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "password");
+                Some(decode_a2a_discovery_password_o_auth_flow(member3, &at3)?)
+            }
+        },
+        device_code: match value.member("deviceCode") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "deviceCode");
+                Some(decode_a2a_discovery_device_code_o_auth_flow(member4, &at4)?)
+            }
+        },
     })
 }
 
@@ -1302,48 +1289,28 @@ pub fn decode_a2a_discovery_security_requirement(value: &json::Value, at: &str) 
 
 /// Writes `a2a.discovery.SecurityScheme` as JSON.
 pub fn encode_a2a_discovery_security_scheme(value: &crate::discovery::SecurityScheme, out: &mut String) {
-    match value {
-        crate::discovery::SecurityScheme::ApiKeySecurityScheme(held) => {
-            out.push('{');
-            json::member(out, "scheme");
-            json::push_text(out, "apiKeySecurityScheme");
-            json::member(out, "value");
-            encode_a2a_discovery_a_p_i_key_security_scheme(&*held, out);
-            out.push('}');
-        }
-        crate::discovery::SecurityScheme::HttpAuthSecurityScheme(held) => {
-            out.push('{');
-            json::member(out, "scheme");
-            json::push_text(out, "httpAuthSecurityScheme");
-            json::member(out, "value");
-            encode_a2a_discovery_h_t_t_p_auth_security_scheme(&*held, out);
-            out.push('}');
-        }
-        crate::discovery::SecurityScheme::MtlsSecurityScheme(held) => {
-            out.push('{');
-            json::member(out, "scheme");
-            json::push_text(out, "mtlsSecurityScheme");
-            json::member(out, "value");
-            encode_a2a_discovery_mutual_tls_security_scheme(&*held, out);
-            out.push('}');
-        }
-        crate::discovery::SecurityScheme::Oauth2SecurityScheme(held) => {
-            out.push('{');
-            json::member(out, "scheme");
-            json::push_text(out, "oauth2SecurityScheme");
-            json::member(out, "value");
-            encode_a2a_discovery_o_auth2_security_scheme(&*held, out);
-            out.push('}');
-        }
-        crate::discovery::SecurityScheme::OpenIdConnectSecurityScheme(held) => {
-            out.push('{');
-            json::member(out, "scheme");
-            json::push_text(out, "openIdConnectSecurityScheme");
-            json::member(out, "value");
-            encode_a2a_discovery_open_id_connect_security_scheme(&*held, out);
-            out.push('}');
-        }
+    out.push('{');
+    if let Some(held0) = &value.api_key_security_scheme {
+        json::member(out, "apiKeySecurityScheme");
+        encode_a2a_discovery_a_p_i_key_security_scheme(&*held0, out);
     }
+    if let Some(held0) = &value.http_auth_security_scheme {
+        json::member(out, "httpAuthSecurityScheme");
+        encode_a2a_discovery_h_t_t_p_auth_security_scheme(&*held0, out);
+    }
+    if let Some(held0) = &value.oauth2_security_scheme {
+        json::member(out, "oauth2SecurityScheme");
+        encode_a2a_discovery_o_auth2_security_scheme(&*held0, out);
+    }
+    if let Some(held0) = &value.open_id_connect_security_scheme {
+        json::member(out, "openIdConnectSecurityScheme");
+        encode_a2a_discovery_open_id_connect_security_scheme(&*held0, out);
+    }
+    if let Some(held0) = &value.mtls_security_scheme {
+        json::member(out, "mtlsSecurityScheme");
+        encode_a2a_discovery_mutual_tls_security_scheme(&*held0, out);
+    }
+    out.push('}');
 }
 
 /// Reads `a2a.discovery.SecurityScheme` from JSON.
@@ -1352,35 +1319,42 @@ pub fn encode_a2a_discovery_security_scheme(value: &crate::discovery::SecuritySc
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_security_scheme(value: &json::Value, at: &str) -> Result<crate::discovery::SecurityScheme, json::DecodeError> {
-    let tag = json::member_at(value, at, "scheme")?;
-    let at_tag = json::nested(at, "scheme");
-    Ok(match json::text_at(tag, &at_tag, "one of `apiKeySecurityScheme`, `httpAuthSecurityScheme`, `mtlsSecurityScheme`, `oauth2SecurityScheme`, `openIdConnectSecurityScheme`")? {
-        "apiKeySecurityScheme" => crate::discovery::SecurityScheme::ApiKeySecurityScheme({
-            let at0 = json::nested(at, "value");
-            let member0 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_a_p_i_key_security_scheme(member0, &at0)?
-        }),
-        "httpAuthSecurityScheme" => crate::discovery::SecurityScheme::HttpAuthSecurityScheme({
-            let at1 = json::nested(at, "value");
-            let member1 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_h_t_t_p_auth_security_scheme(member1, &at1)?
-        }),
-        "mtlsSecurityScheme" => crate::discovery::SecurityScheme::MtlsSecurityScheme({
-            let at2 = json::nested(at, "value");
-            let member2 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_mutual_tls_security_scheme(member2, &at2)?
-        }),
-        "oauth2SecurityScheme" => crate::discovery::SecurityScheme::Oauth2SecurityScheme({
-            let at3 = json::nested(at, "value");
-            let member3 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_o_auth2_security_scheme(member3, &at3)?
-        }),
-        "openIdConnectSecurityScheme" => crate::discovery::SecurityScheme::OpenIdConnectSecurityScheme({
-            let at4 = json::nested(at, "value");
-            let member4 = json::member_at(value, at, "value")?;
-            decode_a2a_discovery_open_id_connect_security_scheme(member4, &at4)?
-        }),
-        other => return Err(json::DecodeError { at: at_tag.clone(), expected: "one of `apiKeySecurityScheme`, `httpAuthSecurityScheme`, `mtlsSecurityScheme`, `oauth2SecurityScheme`, `openIdConnectSecurityScheme`".to_owned(), found: format!("`{other}`") }),
+    Ok(crate::discovery::SecurityScheme {
+        api_key_security_scheme: match value.member("apiKeySecurityScheme") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "apiKeySecurityScheme");
+                Some(decode_a2a_discovery_a_p_i_key_security_scheme(member0, &at0)?)
+            }
+        },
+        http_auth_security_scheme: match value.member("httpAuthSecurityScheme") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "httpAuthSecurityScheme");
+                Some(decode_a2a_discovery_h_t_t_p_auth_security_scheme(member1, &at1)?)
+            }
+        },
+        oauth2_security_scheme: match value.member("oauth2SecurityScheme") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "oauth2SecurityScheme");
+                Some(decode_a2a_discovery_o_auth2_security_scheme(member2, &at2)?)
+            }
+        },
+        open_id_connect_security_scheme: match value.member("openIdConnectSecurityScheme") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "openIdConnectSecurityScheme");
+                Some(decode_a2a_discovery_open_id_connect_security_scheme(member3, &at3)?)
+            }
+        },
+        mtls_security_scheme: match value.member("mtlsSecurityScheme") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "mtlsSecurityScheme");
+                Some(decode_a2a_discovery_mutual_tls_security_scheme(member4, &at4)?)
+            }
+        },
     })
 }
 
@@ -1831,6 +1805,20 @@ pub fn decode_a2a_tasks_push_notification_config_id(value: &json::Value, at: &st
     Ok(crate::tasks::PushNotificationConfigId(json::text_at(value, at, "a string")?.to_owned()))
 }
 
+/// Writes `a2a.tasks.PushNotificationConfigRow` as JSON.
+pub fn encode_a2a_tasks_push_notification_config_row(value: &crate::tasks::PushNotificationConfigRow, out: &mut String) {
+    json::push_text(out, &value.0);
+}
+
+/// Reads `a2a.tasks.PushNotificationConfigRow` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_a2a_tasks_push_notification_config_row(value: &json::Value, at: &str) -> Result<crate::tasks::PushNotificationConfigRow, json::DecodeError> {
+    Ok(crate::tasks::PushNotificationConfigRow(json::text_at(value, at, "a string")?.to_owned()))
+}
+
 /// Writes `a2a.tasks.Role` as JSON.
 pub fn encode_a2a_tasks_role(value: &crate::tasks::Role, out: &mut String) {
     match value {
@@ -2230,6 +2218,8 @@ pub fn decode_a2a_tasks_task_status(value: &json::Value, at: &str) -> Result<cra
 /// Writes the event `a2a.tasks.PushNotificationConfigCreated` as JSON.
 pub fn encode_event_a2a_tasks_push_notification_config_created(value: &crate::tasks::PushNotificationConfigCreated, out: &mut String) {
     out.push('{');
+    json::member(out, "row");
+    encode_a2a_tasks_push_notification_config_row(&value.row, out);
     json::member(out, "config_id");
     encode_a2a_tasks_push_notification_config_id(&value.config_id, out);
     json::member(out, "task_id");
@@ -2244,6 +2234,26 @@ pub fn encode_event_a2a_tasks_push_notification_config_deleted(value: &crate::ta
     encode_a2a_tasks_push_notification_config_id(&value.config_id, out);
     json::member(out, "task_id");
     encode_a2a_tasks_task_id(&value.task_id, out);
+    out.push('}');
+}
+
+/// Writes the event `a2a.tasks.TaskArtifactUpdated` as JSON.
+pub fn encode_event_a2a_tasks_task_artifact_updated(value: &crate::tasks::TaskArtifactUpdated, out: &mut String) {
+    out.push('{');
+    json::member(out, "taskId");
+    encode_a2a_tasks_task_id(&value.task_id, out);
+    json::member(out, "contextId");
+    encode_a2a_tasks_context_id(&value.context_id, out);
+    json::member(out, "artifact");
+    encode_a2a_tasks_artifact(&value.artifact, out);
+    if let Some(held0) = &value.append {
+        json::member(out, "append");
+        json::push_bool(out, *held0);
+    }
+    if let Some(held0) = &value.last_chunk {
+        json::member(out, "lastChunk");
+        json::push_bool(out, *held0);
+    }
     out.push('}');
 }
 
@@ -2262,6 +2272,8 @@ pub fn encode_event_a2a_tasks_task_status_updated(value: &crate::tasks::TaskStat
     encode_a2a_tasks_task_id(&value.task_id, out);
     json::member(out, "context_id");
     encode_a2a_tasks_context_id(&value.context_id, out);
+    json::member(out, "status");
+    encode_a2a_tasks_task_status(&value.status, out);
     out.push('}');
 }
 
@@ -2271,8 +2283,20 @@ pub fn encode_error_a2a_discovery_extended_agent_card_not_configured(_value: &cr
     out.push('}');
 }
 
+/// Writes the declared error `a2a.discovery.ExtensionSupportRequired` as JSON.
+pub fn encode_error_a2a_discovery_extension_support_required(_value: &crate::discovery::ExtensionSupportRequired, out: &mut String) {
+    out.push('{');
+    out.push('}');
+}
+
 /// Writes the declared error `a2a.discovery.UnsupportedOperation` as JSON.
 pub fn encode_error_a2a_discovery_unsupported_operation(_value: &crate::discovery::UnsupportedOperation, out: &mut String) {
+    out.push('{');
+    out.push('}');
+}
+
+/// Writes the declared error `a2a.discovery.VersionNotSupported` as JSON.
+pub fn encode_error_a2a_discovery_version_not_supported(_value: &crate::discovery::VersionNotSupported, out: &mut String) {
     out.push('{');
     out.push('}');
 }
@@ -2285,6 +2309,12 @@ pub fn encode_error_a2a_tasks_content_type_not_supported(_value: &crate::tasks::
 
 /// Writes the declared error `a2a.tasks.ContextMismatch` as JSON.
 pub fn encode_error_a2a_tasks_context_mismatch(_value: &crate::tasks::ContextMismatch, out: &mut String) {
+    out.push('{');
+    out.push('}');
+}
+
+/// Writes the declared error `a2a.tasks.ContextNotAccepted` as JSON.
+pub fn encode_error_a2a_tasks_context_not_accepted(_value: &crate::tasks::ContextNotAccepted, out: &mut String) {
     out.push('{');
     out.push('}');
 }
@@ -2333,11 +2363,59 @@ pub fn encode_error_a2a_tasks_version_not_supported(_value: &crate::tasks::Versi
     out.push('}');
 }
 
+/// Writes one row of the view `a2a.tasks.AllTasks` as JSON.
+pub fn encode_view_a2a_tasks_all_tasks(value: &crate::tasks::AllTasks, out: &mut String) {
+    out.push('{');
+    json::member(out, "id");
+    encode_a2a_tasks_task_id(&value.id, out);
+    json::member(out, "context_id");
+    encode_a2a_tasks_context_id(&value.context_id, out);
+    json::member(out, "state");
+    encode_a2a_tasks_task_state(&value.state, out);
+    if let Some(held0) = &value.status_message {
+        json::member(out, "status_message");
+        encode_a2a_tasks_message(&*held0, out);
+    }
+    if let Some(held0) = &value.status_timestamp {
+        json::member(out, "status_timestamp");
+        json::push_text(out, &(*held0).0);
+    }
+    if let Some(held0) = &value.artifacts {
+        json::member(out, "artifacts");
+        out.push('[');
+        for (index1, item1) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            encode_a2a_tasks_artifact(&*item1, out);
+        }
+        out.push(']');
+    }
+    if let Some(held0) = &value.history {
+        json::member(out, "history");
+        out.push('[');
+        for (index1, item1) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            encode_a2a_tasks_message(&*item1, out);
+        }
+        out.push(']');
+    }
+    if let Some(held0) = &value.metadata {
+        json::member(out, "metadata");
+        json::push_value(out, &*held0);
+    }
+    out.push('}');
+}
+
 /// Writes one row of the view `a2a.tasks.PushNotificationConfigs` as JSON.
 pub fn encode_view_a2a_tasks_push_notification_configs(value: &crate::tasks::PushNotificationConfigs, out: &mut String) {
     out.push('{');
-    json::member(out, "id");
-    encode_a2a_tasks_push_notification_config_id(&value.id, out);
+    json::member(out, "row");
+    encode_a2a_tasks_push_notification_config_row(&value.row, out);
+    json::member(out, "config_id");
+    encode_a2a_tasks_push_notification_config_id(&value.config_id, out);
     json::member(out, "state");
     encode_a2a_tasks_push_notification_config_state(&value.state, out);
     json::member(out, "task_id");
@@ -2362,8 +2440,8 @@ pub fn encode_view_a2a_tasks_push_notification_configs(value: &crate::tasks::Pus
 /// Writes one row of the view `a2a.tasks.TaskPushNotificationConfigs` as JSON.
 pub fn encode_view_a2a_tasks_task_push_notification_configs(value: &crate::tasks::TaskPushNotificationConfigs, out: &mut String) {
     out.push('{');
-    json::member(out, "id");
-    encode_a2a_tasks_push_notification_config_id(&value.id, out);
+    json::member(out, "config_id");
+    encode_a2a_tasks_push_notification_config_id(&value.config_id, out);
     json::member(out, "task_id");
     encode_a2a_tasks_task_id(&value.task_id, out);
     if let Some(held0) = &value.tenant {
@@ -2444,6 +2522,37 @@ pub fn encode_view_a2a_tasks_tasks(value: &crate::tasks::Tasks, out: &mut String
     out.push('}');
 }
 
+/// Reads the parameters of `a2a.tasks.Tasks` from an object keyed by their wire names.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
+pub fn decode_params_a2a_tasks_tasks(value: &json::Value, at: &str) -> Result<(Option<crate::tasks::ContextId>, Option<crate::tasks::TaskState>, Option<crate::primitives::Timestamp>,), json::DecodeError> {
+    Ok((
+        match value.member("context_id") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "context_id");
+                Some(decode_a2a_tasks_context_id(member0, &at0)?)
+            }
+        },
+        match value.member("status") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "status");
+                Some(decode_a2a_tasks_task_state(member1, &at1)?)
+            }
+        },
+        match value.member("status_timestamp_after") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "status_timestamp_after");
+                Some(crate::primitives::Timestamp(json::text_at(member2, &at2, "an RFC 3339 instant")?.to_owned()))
+            }
+        },
+    ))
+}
+
 /// Writes the input of `a2a.discovery.GetExtendedAgentCard` as JSON.
 pub fn encode_command_a2a_discovery_get_extended_agent_card(value: &crate::discovery::GetExtendedAgentCard, out: &mut String) {
     out.push('{');
@@ -2518,6 +2627,34 @@ pub fn encode_outcome_a2a_discovery_get_extended_agent_card(value: &crate::disco
             json::member(out, "published");
             out.push('[');
             out.push(']');
+        }
+        crate::discovery::GetExtendedAgentCardOutcome::VersionNotSupported { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "version-not-supported");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.discovery.VersionNotSupported");
+            json::member(out, "payload");
+            encode_error_a2a_discovery_version_not_supported(error, out);
+            out.push('}');
+        }
+        crate::discovery::GetExtendedAgentCardOutcome::ExtensionRequired { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "extension-required");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.discovery.ExtensionSupportRequired");
+            json::member(out, "payload");
+            encode_error_a2a_discovery_extension_support_required(error, out);
+            out.push('}');
         }
     }
     out.push('}');
@@ -2866,6 +3003,19 @@ pub fn encode_outcome_a2a_tasks_create_task_push_notification_config(value: &cra
             out.push('}');
             out.push(']');
         }
+        crate::tasks::CreateTaskPushNotificationConfigOutcome::Assigned { push_notification_config_created, .. } => {
+            json::member(out, "outcome");
+            json::push_text(out, "assigned");
+            json::member(out, "published");
+            out.push('[');
+            out.push('{');
+            json::member(out, "event");
+            json::push_text(out, "a2a.tasks.PushNotificationConfigCreated");
+            json::member(out, "payload");
+            encode_event_a2a_tasks_push_notification_config_created(push_notification_config_created, out);
+            out.push('}');
+            out.push(']');
+        }
         crate::tasks::CreateTaskPushNotificationConfigOutcome::VersionNotSupported { error } => {
             json::member(out, "outcome");
             json::push_text(out, "version-not-supported");
@@ -2971,13 +3121,6 @@ pub fn encode_outcome_a2a_tasks_delete_task_push_notification_config(value: &cra
             json::member(out, "payload");
             encode_error_a2a_tasks_task_not_found(error, out);
             out.push('}');
-        }
-        crate::tasks::DeleteTaskPushNotificationConfigOutcome::AlreadyGone => {
-            json::member(out, "outcome");
-            json::push_text(out, "already-gone");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
         }
         crate::tasks::DeleteTaskPushNotificationConfigOutcome::Deleted { push_notification_config_deleted } => {
             json::member(out, "outcome");
@@ -3287,41 +3430,6 @@ pub fn encode_response_a2a_tasks_get_task_push_notification_config(value: &crate
 pub fn encode_outcome_a2a_tasks_get_task_push_notification_config(value: &crate::tasks::GetTaskPushNotificationConfigOutcome, out: &mut String) {
     out.push('{');
     match value {
-        crate::tasks::GetTaskPushNotificationConfigOutcome::NotFound { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "not-found");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.TaskNotFound");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_task_not_found(error, out);
-            out.push('}');
-        }
-        crate::tasks::GetTaskPushNotificationConfigOutcome::OtherTask { error } => {
-            json::member(out, "outcome");
-            json::push_text(out, "other-task");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-            json::member(out, "refusal");
-            out.push('{');
-            json::member(out, "error");
-            json::push_text(out, "a2a.tasks.TaskNotFound");
-            json::member(out, "payload");
-            encode_error_a2a_tasks_task_not_found(error, out);
-            out.push('}');
-        }
-        crate::tasks::GetTaskPushNotificationConfigOutcome::Found { .. } => {
-            json::member(out, "outcome");
-            json::push_text(out, "found");
-            json::member(out, "published");
-            out.push('[');
-            out.push(']');
-        }
         crate::tasks::GetTaskPushNotificationConfigOutcome::VersionNotSupported { error } => {
             json::member(out, "outcome");
             json::push_text(out, "version-not-supported");
@@ -3351,6 +3459,190 @@ pub fn encode_outcome_a2a_tasks_get_task_push_notification_config(value: &crate:
             out.push('}');
         }
         crate::tasks::GetTaskPushNotificationConfigOutcome::PushNotSupported { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "push-not-supported");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.PushNotificationNotSupported");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_push_notification_not_supported(error, out);
+            out.push('}');
+        }
+        crate::tasks::GetTaskPushNotificationConfigOutcome::NotFound { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::GetTaskPushNotificationConfigOutcome::ConfigNotFound { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "config-not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::GetTaskPushNotificationConfigOutcome::Found { .. } => {
+            json::member(out, "outcome");
+            json::push_text(out, "found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+        }
+    }
+    out.push('}');
+}
+
+/// Writes the input of `a2a.tasks.ListTaskPushNotificationConfigs` as JSON.
+pub fn encode_command_a2a_tasks_list_task_push_notification_configs(value: &crate::tasks::ListTaskPushNotificationConfigs, out: &mut String) {
+    out.push('{');
+    if let Some(held0) = &value.tenant {
+        json::member(out, "tenant");
+        json::push_text(out, &*held0);
+    }
+    json::member(out, "taskId");
+    encode_a2a_tasks_task_id(&value.task_id, out);
+    if let Some(held0) = &value.page_size {
+        json::member(out, "pageSize");
+        json::push_integer(out, *held0);
+    }
+    if let Some(held0) = &value.page_token {
+        json::member(out, "pageToken");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads the input of `a2a.tasks.ListTaskPushNotificationConfigs` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_command_a2a_tasks_list_task_push_notification_configs(value: &json::Value, at: &str) -> Result<crate::tasks::ListTaskPushNotificationConfigs, json::DecodeError> {
+    Ok(crate::tasks::ListTaskPushNotificationConfigs {
+        tenant: match value.member("tenant") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "tenant");
+                Some(json::text_at(member0, &at0, "a string")?.to_owned())
+            }
+        },
+        task_id: {
+            let at1 = json::nested(at, "taskId");
+            let member1 = json::member_at(value, at, "taskId")?;
+            decode_a2a_tasks_task_id(member1, &at1)?
+        },
+        page_size: match value.member("pageSize") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "pageSize");
+                Some(json::integer_at(member2, &at2, "an integer")?)
+            }
+        },
+        page_token: match value.member("pageToken") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "pageToken");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
+            }
+        },
+    })
+}
+
+/// Writes the response of `a2a.tasks.ListTaskPushNotificationConfigs` as JSON.
+pub fn encode_response_a2a_tasks_list_task_push_notification_configs(value: &crate::tasks::ListTaskPushNotificationConfigsResponse, out: &mut String) {
+    out.push('{');
+    if let Some(held0) = &value.configs {
+        json::member(out, "configs");
+        out.push('[');
+        for (index1, item1) in (*held0).iter().enumerate() {
+            if index1 > 0 {
+                out.push(',');
+            }
+            encode_a2a_tasks_task_push_notification_config(&*item1, out);
+        }
+        out.push(']');
+    }
+    if let Some(held0) = &value.next_page_token {
+        json::member(out, "nextPageToken");
+        json::push_text(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Writes the outcome of `a2a.tasks.ListTaskPushNotificationConfigs` as JSON: the branch taken, what it published, and the declared
+/// refusal it carries where it carries one.
+pub fn encode_outcome_a2a_tasks_list_task_push_notification_configs(value: &crate::tasks::ListTaskPushNotificationConfigsOutcome, out: &mut String) {
+    out.push('{');
+    match value {
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "task-not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::Listed { .. } => {
+            json::member(out, "outcome");
+            json::push_text(out, "listed");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+        }
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::VersionNotSupported { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "version-not-supported");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.VersionNotSupported");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_version_not_supported(error, out);
+            out.push('}');
+        }
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::ExtensionRequired { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "extension-required");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.ExtensionSupportRequired");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_extension_support_required(error, out);
+            out.push('}');
+        }
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::PushNotSupported { error } => {
             json::member(out, "outcome");
             json::push_text(out, "push-not-supported");
             json::member(out, "published");
@@ -3737,6 +4029,20 @@ pub fn encode_outcome_a2a_tasks_send_message(value: &crate::tasks::SendMessageOu
             encode_error_a2a_tasks_context_mismatch(error, out);
             out.push('}');
         }
+        crate::tasks::SendMessageOutcome::ContextNotAccepted { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "context-not-accepted");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.ContextNotAccepted");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_context_not_accepted(error, out);
+            out.push('}');
+        }
         crate::tasks::SendMessageOutcome::ContentTypeNotSupported { error } => {
             json::member(out, "outcome");
             json::push_text(out, "content-type-not-supported");
@@ -3925,6 +4231,20 @@ pub fn encode_outcome_a2a_tasks_send_streaming_message(value: &crate::tasks::Sen
             json::push_text(out, "a2a.tasks.ContextMismatch");
             json::member(out, "payload");
             encode_error_a2a_tasks_context_mismatch(error, out);
+            out.push('}');
+        }
+        crate::tasks::SendStreamingMessageOutcome::ContextNotAccepted { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "context-not-accepted");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.ContextNotAccepted");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_context_not_accepted(error, out);
             out.push('}');
         }
         crate::tasks::SendStreamingMessageOutcome::ContentTypeNotSupported { error } => {
@@ -4226,6 +4546,86 @@ pub fn encode_outcome_a2a_tasks_subscribe_to_task(value: &crate::tasks::Subscrib
     out.push('}');
 }
 
+/// Writes the input of `a2a.tasks.UpdateArtifact` as JSON.
+pub fn encode_command_a2a_tasks_update_artifact(value: &crate::tasks::UpdateArtifact, out: &mut String) {
+    out.push('{');
+    json::member(out, "id");
+    encode_a2a_tasks_task_id(&value.id, out);
+    json::member(out, "artifact");
+    encode_a2a_tasks_artifact(&value.artifact, out);
+    json::member(out, "append");
+    json::push_bool(out, value.append);
+    json::member(out, "last_chunk");
+    json::push_bool(out, value.last_chunk);
+    out.push('}');
+}
+
+/// Reads the input of `a2a.tasks.UpdateArtifact` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_command_a2a_tasks_update_artifact(value: &json::Value, at: &str) -> Result<crate::tasks::UpdateArtifact, json::DecodeError> {
+    Ok(crate::tasks::UpdateArtifact {
+        id: {
+            let at0 = json::nested(at, "id");
+            let member0 = json::member_at(value, at, "id")?;
+            decode_a2a_tasks_task_id(member0, &at0)?
+        },
+        artifact: {
+            let at1 = json::nested(at, "artifact");
+            let member1 = json::member_at(value, at, "artifact")?;
+            decode_a2a_tasks_artifact(member1, &at1)?
+        },
+        append: {
+            let at2 = json::nested(at, "append");
+            let member2 = json::member_at(value, at, "append")?;
+            json::bool_at(member2, &at2, "a boolean")?
+        },
+        last_chunk: {
+            let at3 = json::nested(at, "last_chunk");
+            let member3 = json::member_at(value, at, "last_chunk")?;
+            json::bool_at(member3, &at3, "a boolean")?
+        },
+    })
+}
+
+/// Writes the outcome of `a2a.tasks.UpdateArtifact` as JSON: the branch taken, what it published, and the declared
+/// refusal it carries where it carries one.
+pub fn encode_outcome_a2a_tasks_update_artifact(value: &crate::tasks::UpdateArtifactOutcome, out: &mut String) {
+    out.push('{');
+    match value {
+        crate::tasks::UpdateArtifactOutcome::NotFound { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::UpdateArtifactOutcome::Updated { task_artifact_updated } => {
+            json::member(out, "outcome");
+            json::push_text(out, "updated");
+            json::member(out, "published");
+            out.push('[');
+            out.push('{');
+            json::member(out, "event");
+            json::push_text(out, "a2a.tasks.TaskArtifactUpdated");
+            json::member(out, "payload");
+            encode_event_a2a_tasks_task_artifact_updated(task_artifact_updated, out);
+            out.push('}');
+            out.push(']');
+        }
+    }
+    out.push('}');
+}
+
 /// Writes any event on the system's log as JSON: its qualified name and its payload,
 /// `{"event": …, "payload": {…}}`, the envelope a command's answer lists it in.
 pub fn encode_system_event(value: &crate::system::SystemEvent) -> String {
@@ -4236,6 +4636,7 @@ pub fn encode_system_event(value: &crate::system::SystemEvent) -> String {
     match value {
         crate::system::SystemEvent::PushNotificationConfigCreated(event) => encode_event_a2a_tasks_push_notification_config_created(event, &mut out),
         crate::system::SystemEvent::PushNotificationConfigDeleted(event) => encode_event_a2a_tasks_push_notification_config_deleted(event, &mut out),
+        crate::system::SystemEvent::TaskArtifactUpdated(event) => encode_event_a2a_tasks_task_artifact_updated(event, &mut out),
         crate::system::SystemEvent::TaskCreated(event) => encode_event_a2a_tasks_task_created(event, &mut out),
         crate::system::SystemEvent::TaskStatusUpdated(event) => encode_event_a2a_tasks_task_status_updated(event, &mut out),
     }

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Update artifact input",
+  "description": "The agent generates an artifact of the task, or a chunk of one (TaskArtifactUpdateEvent).",
+  "x-ess-name": "a2a.tasks.UpdateArtifact",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/a2a.tasks.TaskId"
+    },
+    "artifact": {
+      "$ref": "#/$defs/a2a.tasks.Artifact"
+    },
+    "append": {
+      "type": "boolean"
+    },
+    "last_chunk": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "artifact",
+    "append",
+    "last_chunk"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:a767fe7ac8688e5874b4b32c2e8d7c4b9d68135fe30b4cada19f90d1bb3a606e",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.Artifact": {
+      "title": "Artifact",
+      "description": "An output the agent produced for a task (A2A v1.0.1 section 4.1.7).",
+      "x-ess-name": "a2a.tasks.Artifact",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "x-ess-field": "artifact_id",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/a2a.tasks.Part"
+          }
+        },
+        "metadata": {},
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "artifactId",
+        "parts"
+      ],
+      "additionalProperties": false
+    },
+    "a2a.tasks.Part": {
+      "title": "Part",
+      "description": "One piece of content in a message or artifact (A2A v1.0.1 section 4.1.6).",
+      "x-ess-name": "a2a.tasks.Part",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "raw": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+          "contentEncoding": "base64"
+        },
+        "url": {
+          "type": "string"
+        },
+        "data": {},
+        "metadata": {},
+        "filename": {
+          "type": "string"
+        },
+        "mediaType": {
+          "x-ess-field": "media_type",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "a2a.tasks.TaskId": {
+      "title": "TaskId",
+      "description": "Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).",
+      "x-ess-name": "a2a.tasks.TaskId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    }
+  }
+}

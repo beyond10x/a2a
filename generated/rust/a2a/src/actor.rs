@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-// contract digest f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea
+// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Every actor the specification declares, and the commands each may invoke — as data.
@@ -53,6 +53,7 @@ pub fn may(actor: Actor) -> &'static [&'static str] {
             "a2a.tasks.RequireAuth",
             "a2a.tasks.RequireInput",
             "a2a.tasks.StartWorking",
+            "a2a.tasks.UpdateArtifact",
         ],
         Actor::TasksClient => &[
             "a2a.tasks.CancelTask",
@@ -60,6 +61,7 @@ pub fn may(actor: Actor) -> &'static [&'static str] {
             "a2a.tasks.DeleteTaskPushNotificationConfig",
             "a2a.tasks.GetTask",
             "a2a.tasks.GetTaskPushNotificationConfig",
+            "a2a.tasks.ListTaskPushNotificationConfigs",
             "a2a.tasks.SendMessage",
             "a2a.tasks.SendStreamingMessage",
             "a2a.tasks.SubscribeToTask",
@@ -83,5 +85,29 @@ impl Caller {
     /// `true` when this caller may invoke `command`, named by its qualified name.
     pub fn may(&self, command: &str) -> bool {
         may(self.actor).contains(&command)
+    }
+}
+
+/// The qualified names of the views `actor` may read, ordered by name: the views its grant
+/// names. A view no actor's grant names is open to every caller and listed for none.
+pub fn may_read(actor: Actor) -> &'static [&'static str] {
+    match actor {
+        Actor::DiscoveryClient => &[],
+        Actor::TasksAgent => &[
+            "a2a.tasks.AllTasks",
+            "a2a.tasks.PushNotificationConfigs",
+        ],
+        Actor::TasksClient => &[
+            "a2a.tasks.TaskPushNotificationConfigs",
+            "a2a.tasks.Tasks",
+        ],
+    }
+}
+
+impl Caller {
+    /// `true` when this caller may read `view`, a view some actor's grant names, named by
+    /// its qualified name.
+    pub fn may_read(&self, view: &str) -> bool {
+        may_read(self.actor).contains(&view)
     }
 }

@@ -26,6 +26,12 @@ types:
     kind: newtype
     of: String
 
+  # No A2A source: the opaque row identity of PushNotificationConfig, which stands in for the
+  # struct (task_id, config_id) ESS 0.67.0 refuses (see PushNotificationConfig).
+  - name: a2a.tasks.PushNotificationConfigRow
+    kind: newtype
+    of: String
+
   - name: a2a.tasks.Role
     kind: enum
     variants: [ROLE_USER, ROLE_AGENT]
@@ -46,9 +52,15 @@ types:
       - TASK_STATE_REJECTED
       - TASK_STATE_AUTH_REQUIRED
 
-  # UNMAPPED: proto `oneof content` admits exactly one of text, raw, url and data. ProtoJSON
-  # writes the chosen member inline, so the four are Optional here and the exactly-one rule is
-  # not declared. Open question: an invariant that counts defined members.
+  # proto `oneof content` (a2a.proto, message Part) admits exactly one of text, raw, url and
+  # data, and ProtoJSON writes the chosen member inline under its own name, so the four are
+  # Optional members here: that is the wire form.
+  # UNMAPPED (ESS gap): the exactly-one rule. ESS 0.67.0 validates it as a type invariant
+  # (`any: [all: [defined(text), not defined(raw), …], …]`), but Part is reachable from the
+  # typed responses of GetTask, CancelTask, SubscribeToTask and SendMessage, and synthesis then
+  # refuses each returning outcome: "ESS-SYNTH-001: … record invariant on a response type
+  # a2a.tasks.Part has no executable observer". Missing construct: a record invariant on a
+  # response type that the response observer checks.
   - name: a2a.tasks.Part
     kind: struct
     naming:
@@ -105,6 +117,12 @@ types:
         naming: {wire: referenceTaskIds}
         presence: omitted_when_absent
 
+  # UNMAPPED (ESS gap): a2a.proto, Artifact.artifact_id: "It must be unique within a task", and
+  # Artifact.parts: "Must contain at least one part." The second validates as a type invariant
+  # (`parts.count >= 1`), but synthesis refuses it: "record invariant on a response type
+  # `a2a.tasks.Artifact` has no executable observer". The first needs a uniqueness rule over the
+  # members of a stored list, which ESS 0.67.0 has no construct for. Missing constructs: a
+  # response-type invariant the response observer checks, and a key over a stored list.
   - name: a2a.tasks.Artifact
     kind: struct
     naming:
@@ -242,10 +260,15 @@ entities:
         cardinality: many
         via: task_id
     # A2A v1.0.1 fixes which states are terminal (Completed, Failed, Canceled, Rejected) and
-    # which are interrupted (InputRequired, AuthRequired); it fixes no other edge. The agent's
-    # transitions below therefore leave every non-terminal state.
-    # UNMAPPED: whether an agent may return a task to Submitted, or move it between
-    # InputRequired and AuthRequired without passing Working. Neither is stated.
+    # which are interrupted (InputRequired, AuthRequired), and no other edge. Resolved from
+    # a2a.proto, enum TaskState:
+    # - Submitted is entered once: "Indicates that a task has been successfully submitted and
+    #   acknowledged." Acknowledging is not repeated, so no transition returns to it.
+    # - The two interrupted states reach each other directly: InputRequired is "an interrupted
+    #   state" and AuthRequired is "an interrupted state", and section 7.6.1 has the agent
+    #   "transition the TaskState to TASK_STATE_AUTH_REQUIRED" whenever it needs authorization,
+    #   naming no state it must leave first. Every non-terminal state other than the target is
+    #   therefore a source of require_input and require_auth.
     lifecycle:
       initial: Submitted
       states: [Submitted, Working, InputRequired, AuthRequired, Completed, Failed, Canceled, Rejected]
@@ -255,10 +278,10 @@ entities:
           from: [Submitted, InputRequired, AuthRequired]
           to: Working
         - name: require_input
-          from: [Submitted, Working]
+          from: [Submitted, Working, AuthRequired]
           to: InputRequired
         - name: require_auth
-          from: [Submitted, Working]
+          from: [Submitted, Working, InputRequired]
           to: AuthRequired
         - name: complete
           from: [Submitted, Working, InputRequired, AuthRequired]
@@ -276,15 +299,26 @@ entities:
   - name: a2a.tasks.PushNotificationConfig
     naming:
       summary: >-
-        A webhook the agent posts task updates to. It persists until the task completes or the
-        client deletes it (A2A v1.0.1 section 3.1.7).
+        A webhook the agent posts task updates to. A2A v1.0.1 section 3.1.7: "The configuration
+        MUST persist until task completion or explicit deletion"; it states no end of a
+        configuration, so it lives until DeleteTaskPushNotificationConfig removes it.
     identity:
-      name: id
-      type: a2a.tasks.PushNotificationConfigId
-    # UNMAPPED: the REST paths nest a configuration under its task
-    # (/tasks/{task_id}/pushNotificationConfigs/{id}), so `id` may be unique per task only. A2A
-    # v1.0.1 suggests a UUID and says no more. Modelled here as unique per agent.
+      name: row
+      type: a2a.tasks.PushNotificationConfigRow
+    # A configuration is scoped to its parent task: a2a.proto, Get and Delete requests,
+    # task_id is "The parent task resource ID" and id is "The resource ID of the configuration",
+    # and the REST path /tasks/{task_id}/pushNotificationConfigs/{id} nests it under the task.
+    # Commands address it by the stored pair (task_id, config_id), never by config_id alone.
+    # UNMAPPED (ESS gap): the natural identity is the struct (task_id, config_id). ESS 0.67.0
+    # refuses both ways to create one: `instance: {task_id: input.task_id, id: input.id}` gives
+    # "invalid type: map, expected a string", and a struct identity published by the creating
+    # event gives SYNTH-001 "a struct held by reference has no member projection". So `row` is
+    # an opaque ESS row identity (a2a.tasks.PushNotificationConfigRow) with no A2A source. It is
+    # served nonetheless: in the event a2a.tasks.PushNotificationConfigCreated and the view
+    # a2a.tasks.PushNotificationConfigs, where ESS refuses to drop it (UNMAPPED markers there).
     fields:
+      - name: config_id
+        type: a2a.tasks.PushNotificationConfigId
       - name: task_id
         type: a2a.tasks.TaskId
       - name: tenant
@@ -313,7 +347,12 @@ actors:
       - a2a.tasks.SubscribeToTask
       - a2a.tasks.CreateTaskPushNotificationConfig
       - a2a.tasks.GetTaskPushNotificationConfig
+      - a2a.tasks.ListTaskPushNotificationConfigs
       - a2a.tasks.DeleteTaskPushNotificationConfig
+      # Section 13.1: List Tasks "MUST only return tasks visible to the authenticated client"; the read grant refuses other actors and anonymous callers.
+      # UNMAPPED (ESS gap): the per-row boundary (which tasks and configurations this client may see); ESS 0.67.0 grants a whole view to an actor.
+      - a2a.tasks.Tasks
+      - a2a.tasks.TaskPushNotificationConfigs
 
   - name: a2a.tasks.Agent
     system: true
@@ -327,6 +366,9 @@ actors:
       - a2a.tasks.CompleteTask
       - a2a.tasks.FailTask
       - a2a.tasks.RejectTask
+      - a2a.tasks.UpdateArtifact
+      - a2a.tasks.AllTasks
+      - a2a.tasks.PushNotificationConfigs
 
 errors:
   - name: a2a.tasks.TaskNotFound
@@ -344,13 +386,23 @@ errors:
   - name: a2a.tasks.ContentTypeNotSupported
     summary: ContentTypeNotSupportedError (JSON-RPC -32005, HTTP 400).
   - name: a2a.tasks.ExtensionSupportRequired
-    summary: ExtensionSupportRequiredError (JSON-RPC -32008, HTTP 400).
+    summary: ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
   - name: a2a.tasks.VersionNotSupported
-    summary: VersionNotSupportedError (JSON-RPC -32009, HTTP 400).
-  # UNMAPPED: A2A v1.0.1 section 3.4.3 says an agent MUST reject a message whose contextId
-  # differs from its task's, and names no error type for it. Open question for the owner.
+    summary: VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+  # A2A v1.0.1 section 3.4.3: "Agents MUST reject messages containing mismatching contextId and
+  # taskId", and section 3.4.1: "If an agent cannot accept a client-provided contextId, it MUST
+  # reject the request with an error". Neither names an A2A error, so both answer the error of
+  # the category section 3.3.2 gives invalid input: "Validation Errors: Invalid input parameters
+  # or message format … JSON-RPC -32602 Invalid params", gRPC INVALID_ARGUMENT, HTTP 400
+  # (InvalidParamsError, section 9.5).
   - name: a2a.tasks.ContextMismatch
-    summary: The message's contextId differs from the contextId of the task it names.
+    summary: >-
+      InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the message's
+      contextId differs from the contextId of the task it names.
+  - name: a2a.tasks.ContextNotAccepted
+    summary: >-
+      InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the agent cannot
+      accept the contextId the client provided.
   # Not an A2A wire error: the agent-side commands below are internal to the agent, and this is
   # what they answer from a state their transition does not leave.
   - name: a2a.tasks.TaskStateConflict
@@ -362,6 +414,7 @@ errors:
 outcome_groups:
   - name: protocol-negotiation
     actor: a2a.tasks.Client
+    except: [a2a.tasks.GetTaskPushNotificationConfig]
     outcomes:
       - name: version-not-supported
         external: the A2A-Version service parameter names a version the agent does not support
@@ -373,7 +426,7 @@ outcome_groups:
   - name: push-notifications-capability
     commands:
       - a2a.tasks.CreateTaskPushNotificationConfig
-      - a2a.tasks.GetTaskPushNotificationConfig
+      - a2a.tasks.ListTaskPushNotificationConfigs
       - a2a.tasks.DeleteTaskPushNotificationConfig
     outcomes:
       - name: push-not-supported
@@ -397,6 +450,21 @@ commands:
       summary: >-
         Send a message to the agent, which answers with a task tracking its work or with a direct
         message (A2A v1.0.1 section 3.1.1; POST /message:send).
+    # Upstream contradicts itself on when SendMessage answers. Chosen: the proto, which section
+    # 1.4 makes "the single authoritative normative definition of all protocol data objects and
+    # request/response messages". a2a.proto, SendMessageConfiguration.return_immediately: "If
+    # `true`, the operation returns immediately after creating the task, even if processing is
+    # still in progress. If `false` (default), the operation MUST wait until the task reaches a
+    # terminal (`COMPLETED`, `FAILED`, `CANCELED`, `REJECTED`) or interrupted
+    # (`INPUT_REQUIRED`, `AUTH_REQUIRED`) state before returning." Section 3.2.2 agrees:
+    # "Operations are blocking by default". Section 3.1.1 says the opposite and loses: "The
+    # operation MUST return immediately with either task information or response message. Task
+    # processing MAY continue asynchronously after the response when a Task is returned."
+    # UNMAPPED (ESS gap): ESS 0.67.0 answers a command when its outcome commits. Missing
+    # construct: an answer deferred until later commands (StartWorking, Complete, RequireInput,
+    # …) move the created row into a named set of states. So `task-created` commits the task in
+    # Submitted, and nothing checks that a blocking answer carries a terminal or interrupted
+    # task.
     input:
       - name: tenant
         type: Optional<String>
@@ -417,10 +485,14 @@ commands:
         naming: {wire: message}
         presence: omitted_when_absent
     outcomes:
-      # UNMAPPED: the next four branches depend on `message.taskId`, a member of the `message`
-      # input. ESS 0.67.0 reads `when_related: {via: …}` and `instance:` from top-level input
-      # fields only (ESS-COMMAND-001), so they are written as `external:` and nothing checks
-      # them. Open question for ESS: addressing a row through a struct input's member.
+      # UNMAPPED (ESS gap): task-not-found, task-terminal, context-mismatch and continued
+      # depend on `message.taskId`, a member of the `message` input. ESS 0.67.0 addresses a row
+      # (`instance:`, `when_related: {via: …}`) through a top-level input only:
+      # `when_related: {via: input.message.task_id, exists: false}` is refused with
+      # "ESS-COMMAND-001: `message.task_id` is not an input of `a2a.tasks.SendMessage`". So
+      # they are written as `external:` and nothing checks them, and neither does anything check
+      # section 3.4.3 "Agents MUST infer contextId from the task if only taskId is provided" on
+      # `continued`. Missing construct: a row addressed through a member of a struct input.
       - name: task-not-found
         external: message.taskId names no task the caller can access (section 3.4.2)
         error: a2a.tasks.TaskNotFound
@@ -430,29 +502,46 @@ commands:
       - name: context-mismatch
         external: message.contextId differs from the contextId of the task message.taskId names
         error: a2a.tasks.ContextMismatch
+      - name: context-not-accepted
+        external: >-
+          the agent cannot accept the contextId the client provided, and generates none in its
+          place (section 3.4.1)
+        error: a2a.tasks.ContextNotAccepted
       - name: content-type-not-supported
         external: a part's media type is not supported by the agent
         error: a2a.tasks.ContentTypeNotSupported
-      # UNMAPPED: what a message to a running task changes. A2A v1.0.1 says the agent may
-      # continue or refine the task and keeps `history`; it fixes no state change.
+      # A message to a running task changes no state and no stored field the protocol fixes.
+      # Section 3.4.3: "Clients MAY use taskId (with or without contextId) to continue or refine
+      # a specific task"; section 3.7: "The agent is responsible to determine which Messages are
+      # persisted in the Task History." The agent moves the task afterwards with the agent-side
+      # commands below (StartWorking, RequireInput, …).
       - name: continued
         external: message.taskId names a non-terminal task, and the agent takes the message into it
         returns: true
-        summary: The agent answers with the task the message continued.
+        summary: The agent answers with the task the message continued, in the state it holds.
       - name: direct-message
         external: the agent answers with a message and creates no task
         returns: true
+      # UNMAPPED (ESS gap): a2a.proto, SendMessageConfiguration.task_push_notification_config:
+      # "Configuration for the agent to send push notifications for task updates. Task id
+      # should be empty when sending this configuration in a SendMessage request." The task
+      # this branch creates should therefore also get a PushNotificationConfig when the input
+      # carries one. ESS 0.67.0 creates one row per outcome. Missing construct: a second row
+      # created by the same outcome, conditional on an Optional input member.
       - name: task-created
         creates: a2a.tasks.Task
         instance: task_id
         sets:
           context_id: {input: message.context_id, else: {generated: true}}
+          status_timestamp: {generated: true}
         emits: [a2a.tasks.TaskCreated]
         payload:
           a2a.tasks.TaskCreated:
             task_id: {generated: true}
         returns: true
-        summary: A new task in Submitted; the agent works on it after the answer.
+        summary: >-
+          A new task. With returnImmediately true the answer carries it as created; otherwise
+          the answer waits until it is terminal or interrupted.
 
   - name: a2a.tasks.SendStreamingMessage
     naming:
@@ -460,7 +549,15 @@ commands:
       display: Send streaming message
       summary: >-
         Send a message and stream the answer: one message, or the task followed by its status and
-        artifact updates until it is terminal or interrupted (A2A v1.0.1 section 3.1.2; POST /message:stream).
+        artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).
+    # Upstream contradicts itself on when the stream ends. Chosen: section 3.1.2, the section
+    # this command cites: "The stream MUST close when the task reaches a terminal state
+    # (TASK_STATE_COMPLETED, TASK_STATE_FAILED, TASK_STATE_CANCELED, TASK_STATE_REJECTED)." The
+    # other reading, section 11.7: "then zero or more status or artifact update events until the
+    # task reaches a terminal or interrupted state, at which point the stream closes." Section
+    # 7.6.1 backs the choice for AUTH_REQUIRED when the credential comes out-of-band: "If the
+    # credential is received out-of-band, the agent SHOULD maintain any active response streams
+    # with the client after setting the TaskState to `TASK_STATE_AUTH_REQUIRED`."
     input:
       - name: tenant
         type: Optional<String>
@@ -481,10 +578,15 @@ commands:
         naming: {wire: message}
         presence: omitted_when_absent
     outcomes:
-      # UNMAPPED: the next four branches depend on `message.taskId`, a member of the `message`
-      # input. ESS 0.67.0 reads `when_related: {via: …}` and `instance:` from top-level input
-      # fields only (ESS-COMMAND-001), so they are written as `external:` and nothing checks
-      # them. Open question for ESS: addressing a row through a struct input's member.
+      # UNMAPPED (ESS gap): task-not-found, task-terminal, context-mismatch and continued
+      # depend on `message.taskId`, a member of the `message` input. ESS 0.67.0 addresses a row
+      # (`instance:`, `when_related: {via: …}`) through a top-level input only:
+      # `when_related: {via: input.message.task_id, exists: false}` is refused with
+      # "ESS-COMMAND-001: `message.task_id` is not an input of
+      # `a2a.tasks.SendStreamingMessage`". So they are written as `external:` and nothing checks
+      # them, and neither does anything check section 3.4.3 "Agents MUST infer contextId from the
+      # task if only taskId is provided" on `continued`. Missing construct: a row addressed
+      # through a member of a struct input.
       - name: task-not-found
         external: message.taskId names no task the caller can access (section 3.4.2)
         error: a2a.tasks.TaskNotFound
@@ -494,23 +596,38 @@ commands:
       - name: context-mismatch
         external: message.contextId differs from the contextId of the task message.taskId names
         error: a2a.tasks.ContextMismatch
+      - name: context-not-accepted
+        external: >-
+          the agent cannot accept the contextId the client provided, and generates none in its
+          place (section 3.4.1)
+        error: a2a.tasks.ContextNotAccepted
       - name: content-type-not-supported
         external: a part's media type is not supported by the agent
         error: a2a.tasks.ContentTypeNotSupported
-      # UNMAPPED: what a message to a running task changes. A2A v1.0.1 says the agent may
-      # continue or refine the task and keeps `history`; it fixes no state change.
+      # A message to a running task changes no state and no stored field the protocol fixes.
+      # Section 3.4.3: "Clients MAY use taskId (with or without contextId) to continue or refine
+      # a specific task"; section 3.7: "The agent is responsible to determine which Messages are
+      # persisted in the Task History." The agent moves the task afterwards with the agent-side
+      # commands below (StartWorking, RequireInput, …).
       - name: continued
         external: message.taskId names a non-terminal task, and the agent takes the message into it
         returns: true
-        summary: The agent answers with the task the message continued.
+        summary: The agent answers with the task the message continued, in the state it holds.
       - name: direct-message
         external: the agent answers with a message and creates no task
         returns: true
+      # UNMAPPED (ESS gap): a2a.proto, SendMessageConfiguration.task_push_notification_config:
+      # "Configuration for the agent to send push notifications for task updates. Task id
+      # should be empty when sending this configuration in a SendMessage request." The task
+      # this branch creates should therefore also get a PushNotificationConfig when the input
+      # carries one. ESS 0.67.0 creates one row per outcome. Missing construct: a second row
+      # created by the same outcome, conditional on an Optional input member.
       - name: task-created
         creates: a2a.tasks.Task
         instance: task_id
         sets:
           context_id: {input: message.context_id, else: {generated: true}}
+          status_timestamp: {generated: true}
         emits: [a2a.tasks.TaskCreated]
         payload:
           a2a.tasks.TaskCreated:
@@ -529,6 +646,11 @@ commands:
         presence: omitted_when_absent
       - name: id
         type: a2a.tasks.TaskId
+      # UNMAPPED (ESS gap): a2a.proto, GetTaskRequest.history_length: "The server MUST NOT
+      # return more messages than the provided value, but MAY apply a lower limit." Nothing
+      # below bounds the returned `task.history` by it. Missing construct: a response list
+      # bounded by an input (`task.history.count <= input.history_length`) that the response
+      # observer checks.
       - name: history_length
         type: Optional<Integer>
         naming: {wire: historyLength}
@@ -571,16 +693,28 @@ commands:
       - name: canceled
         moves: a2a.tasks.Task.cancel
         instance: id
+        sets:
+          status_message: {generated: true}
+          status_timestamp: {generated: true}
         emits: [a2a.tasks.TaskStatusUpdated]
         payload:
           a2a.tasks.TaskStatusUpdated:
             task_id: input.id
             context_id: {subject: context_id}
+            status:
+              state: TASK_STATE_CANCELED
+              message: {generated: true}
+              timestamp: {generated: true}
         returns: true
+      # Upstream contradicts itself on a second cancel. Chosen: section 3.1.5, the section this
+      # command cites, whose errors include "TaskNotCancelableError: The task is not in a
+      # cancelable state (e.g., already completed, failed, or canceled)." So a task already in
+      # Canceled answers TaskNotCancelable. The other reading, section 3.3.1: "Cancel Task
+      # operations are idempotent - multiple cancellation requests have the same effect."
       - name: not-cancelable
         wrong_state: true
         error: a2a.tasks.TaskNotCancelable
-        summary: The task is in a terminal state.
+        summary: The task is in a terminal state, Canceled included.
 
   - name: a2a.tasks.SubscribeToTask
     naming:
@@ -640,8 +774,16 @@ commands:
     response:
       - name: config
         type: a2a.tasks.TaskPushNotificationConfig
-    # UNMAPPED: the answer to an `id` a configuration already carries, and to a task in a
-    # terminal state. A2A v1.0.1 states neither.
+    # A task in a terminal state is not refused: section 3.1.7 lists exactly two errors,
+    # PushNotificationNotSupportedError and TaskNotFoundError ("The task ID does not exist or is
+    # not accessible").
+    # UNMAPPED: A2A v1.0.1 is silent on a second create with an `id` a configuration of the
+    # same task already carries; `created` then adds a second row with that pair.
+    # The same `id` under another task is a distinct configuration (parent-scoped, see
+    # PushNotificationConfig).
+    # UNMAPPED (ESS gap): `assigned` writes `row` and `config_id` as two independent
+    # `{generated: true}` values; ESS 0.67.0 has no construct to generate the id once and reuse
+    # it in the stored field and the event payload, so nothing checks they agree.
     outcomes:
       - name: task-not-found
         when_related:
@@ -649,9 +791,11 @@ commands:
           exists: false
         error: a2a.tasks.TaskNotFound
       - name: created
+        when: defined(id)
         creates: a2a.tasks.PushNotificationConfig
-        instance: config_id
+        instance: row
         sets:
+          config_id: input.id
           task_id: input.task_id
           tenant: input.tenant
           url: input.url
@@ -660,7 +804,25 @@ commands:
         emits: [a2a.tasks.PushNotificationConfigCreated]
         payload:
           a2a.tasks.PushNotificationConfigCreated:
-            config_id: {input: id, else: {generated: true}}
+            row: {generated: true}
+            config_id: input.id
+            task_id: input.task_id
+        returns: true
+      - name: assigned
+        creates: a2a.tasks.PushNotificationConfig
+        instance: row
+        sets:
+          config_id: {generated: true}
+          task_id: input.task_id
+          tenant: input.tenant
+          url: input.url
+          token: input.token
+          authentication: input.authentication
+        emits: [a2a.tasks.PushNotificationConfigCreated]
+        payload:
+          a2a.tasks.PushNotificationConfigCreated:
+            row: {generated: true}
+            config_id: {generated: true}
             task_id: input.task_id
         returns: true
 
@@ -683,17 +845,84 @@ commands:
     response:
       - name: config
         type: a2a.tasks.TaskPushNotificationConfig
+    # The groups protocol-negotiation and push-notifications-capability skip this command and
+    # their three refusals are declared here with `before_row: true`: they depend on the request
+    # alone (sections 3.3.4 and 3.6.2), and in a group (no `before_row:` key there) they answer
+    # after the config-not-found row-set guard, where synthesis refuses them ("ESS-SYNTH-001: …
+    # `config-not-found` is not decidedly passed over: its row set is True").
     outcomes:
+      - name: version-not-supported
+        external: the A2A-Version service parameter names a version the agent does not support
+        before_row: true
+        error: a2a.tasks.VersionNotSupported
+      - name: extension-required
+        external: the agent card marks an extension required and the request does not declare it
+        before_row: true
+        error: a2a.tasks.ExtensionSupportRequired
+      - name: push-not-supported
+        external: the agent card does not declare capabilities.pushNotifications
+        before_row: true
+        error: a2a.tasks.PushNotificationNotSupported
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
-      - name: other-task
-        when_subject:
-          predicate: task_id != input.task_id
+      - name: config-not-found
+        when_related:
+          entity: a2a.tasks.PushNotificationConfig
+          where: {all: [task_id == input.task_id, config_id == input.id]}
+          exists: false
         error: a2a.tasks.TaskNotFound
+      # UNMAPPED (ESS gap): the `config` answered is not bound to the matched row; a typed response is opaque to ESS 0.67.0, as on ListTaskPushNotificationConfigs.
       - name: found
-        preserves: a2a.tasks.PushNotificationConfig
-        instance: id
+        preserves: a2a.tasks.Task
+        instance: task_id
+        returns: true
+
+  - name: a2a.tasks.ListTaskPushNotificationConfigs
+    naming:
+      wire: pushNotificationConfigs:list
+      display: List push notification configs
+      summary: >-
+        Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9;
+        GET /tasks/{task_id}/pushNotificationConfigs).
+    input:
+      - name: tenant
+        type: Optional<String>
+        presence: omitted_when_absent
+      - name: task_id
+        type: a2a.tasks.TaskId
+        naming: {wire: taskId}
+      - name: page_size
+        type: Optional<Integer>
+        naming: {wire: pageSize}
+        presence: omitted_when_absent
+      - name: page_token
+        type: Optional<String>
+        naming: {wire: pageToken}
+        presence: omitted_when_absent
+    response:
+      - name: configs
+        type: Optional<List<a2a.tasks.TaskPushNotificationConfig>>
+        presence: omitted_when_absent
+      - name: next_page_token
+        type: Optional<String>
+        naming: {wire: nextPageToken}
+        presence: omitted_when_absent
+    # Both fields are Optional: a2a.proto ListTaskPushNotificationConfigsResponse declares
+    # `repeated TaskPushNotificationConfig configs = 1;` and `string next_page_token = 2;` with
+    # no REQUIRED behavior, and ProtoJSON omits an empty list and an empty string (section 5.7).
+    # UNMAPPED (ESS gap): which rows `configs` holds. Section 3.1.9: "The operation MUST return
+    # all active push notification configurations for the specified task and MAY support
+    # pagination". A typed response is opaque to ESS 0.67.0: no construct fills a response list
+    # from the rows a view selects, so the rows are observable only through the view
+    # a2a.tasks.TaskPushNotificationConfigs.
+    outcomes:
+      - name: task-not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      - name: listed
+        preserves: a2a.tasks.Task
+        instance: task_id
         returns: true
 
   - name: a2a.tasks.DeleteTaskPushNotificationConfig
@@ -712,18 +941,25 @@ commands:
         naming: {wire: taskId}
       - name: id
         type: a2a.tasks.PushNotificationConfigId
+    # Section 3.1.10 answers TaskNotFoundError when "The task ID does not exist or is not
+    # accessible": `task-not-found` addresses the parent task through input.task_id. Under an
+    # existing task, `deleted` removes the configuration with that task_id and config_id, if
+    # any. A second delete, or an id the task does not carry (including one another task
+    # carries), removes nothing and answers the same: section 3.1.10 "This operation MUST be
+    # idempotent - multiple deletions of the same config have the same effect." That no-op
+    # delete still emits a2a.tasks.PushNotificationConfigDeleted, though no configuration went.
     outcomes:
       - name: task-not-found
-        when_related:
-          via: input.task_id
-          exists: false
-        error: a2a.tasks.TaskNotFound
-      - name: already-gone
         unknown_instance: true
-        refuses: false
+        error: a2a.tasks.TaskNotFound
+      # UNMAPPED: (ESS gap) a no-op delete emits PushNotificationConfigDeleted; a separate no-op branch (when_related exists: false) is refused, ESS-SYNTH-001 "a step of the scenario changes rows of the selector's entity in a way synthesis does not follow".
       - name: deleted
-        deletes: a2a.tasks.PushNotificationConfig
-        instance: id
+        updates: a2a.tasks.Task
+        instance: task_id
+        affects:
+          - entity: a2a.tasks.PushNotificationConfig
+            where: {all: [task_id == subject.id, config_id == input.id]}
+            deletes: a2a.tasks.PushNotificationConfig
         emits: [a2a.tasks.PushNotificationConfigDeleted]
         payload:
           a2a.tasks.PushNotificationConfigDeleted:
@@ -752,6 +988,10 @@ commands:
           a2a.tasks.TaskStatusUpdated:
             task_id: input.id
             context_id: {subject: context_id}
+            status:
+              state: TASK_STATE_WORKING
+              message: input.status_message
+              timestamp: {generated: true}
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -781,6 +1021,10 @@ commands:
           a2a.tasks.TaskStatusUpdated:
             task_id: input.id
             context_id: {subject: context_id}
+            status:
+              state: TASK_STATE_INPUT_REQUIRED
+              message: input.status_message
+              timestamp: {generated: true}
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -799,6 +1043,15 @@ commands:
       - name: status_message
         type: Optional<a2a.tasks.Message>
     outcomes:
+      # UNMAPPED (ESS gap): section 7.6.1, the agent "MUST include a TaskStatus message
+      # explaining the required authorization, unless the details of the authorization have
+      # been negotiated out-of-band or via an extension". ESS 0.67.0 validates a refusal
+      # `when: not defined(status_message)` beside `external:` (the negotiation), but this is a
+      # system command, awaited and not sent, and the interpreted target leaves the scenario
+      # unsupported: "ESS-CF-TARGET: cannot expose awaiting a2a.tasks.RequireAuth on an
+      # instance: the system may reach any of a2a.tasks.RequireAuth/message-required,
+      # a2a.tasks.RequireAuth/moved depending on the input it decides, and the interpreter does
+      # not choose". Missing construct: a system command's refusal decided by its own input.
       - name: moved
         moves: a2a.tasks.Task.require_auth
         instance: id
@@ -810,6 +1063,10 @@ commands:
           a2a.tasks.TaskStatusUpdated:
             task_id: input.id
             context_id: {subject: context_id}
+            status:
+              state: TASK_STATE_AUTH_REQUIRED
+              message: input.status_message
+              timestamp: {generated: true}
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -839,6 +1096,10 @@ commands:
           a2a.tasks.TaskStatusUpdated:
             task_id: input.id
             context_id: {subject: context_id}
+            status:
+              state: TASK_STATE_COMPLETED
+              message: input.status_message
+              timestamp: {generated: true}
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -868,6 +1129,10 @@ commands:
           a2a.tasks.TaskStatusUpdated:
             task_id: input.id
             context_id: {subject: context_id}
+            status:
+              state: TASK_STATE_FAILED
+              message: input.status_message
+              timestamp: {generated: true}
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
@@ -897,12 +1162,56 @@ commands:
           a2a.tasks.TaskStatusUpdated:
             task_id: input.id
             context_id: {subject: context_id}
+            status:
+              state: TASK_STATE_REJECTED
+              message: input.status_message
+              timestamp: {generated: true}
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
       - name: wrong-state
         wrong_state: true
         error: a2a.tasks.TaskStateConflict
+
+  # Section 3.7: "Results SHOULD BE returned using Artifacts associated with a Task", and
+  # a2a.proto names the delta TaskArtifactUpdateEvent: "A task delta where an artifact has been
+  # generated."
+  - name: a2a.tasks.UpdateArtifact
+    naming:
+      wire: tasks:update_artifact
+      display: Update artifact
+      summary: The agent generates an artifact of the task, or a chunk of one (TaskArtifactUpdateEvent).
+    input:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: artifact
+        type: a2a.tasks.Artifact
+      - name: append
+        type: Boolean
+      - name: last_chunk
+        type: Boolean
+    outcomes:
+      - name: not-found
+        unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      # UNMAPPED (ESS gap): the task's stored `artifacts` should gain `input.artifact`, or, with
+      # `append`, the parts of the artifact with the same artifact_id should grow (a2a.proto,
+      # TaskArtifactUpdateEvent.append: "the content of this artifact should be appended to a
+      # previously sent artifact with the same ID"). ESS 0.67.0 has no list-append source in
+      # `sets:`; `{expr: "coalesce(subject.artifacts, []) + [input.artifact]"}` is refused with
+      # ESS-SPEC-012 "`[` is no part of an expression". Missing construct: append to, or
+      # replace by key in, a stored list. The task's `history` has the same gap.
+      - name: updated
+        updates: a2a.tasks.Task
+        instance: id
+        emits: [a2a.tasks.TaskArtifactUpdated]
+        payload:
+          a2a.tasks.TaskArtifactUpdated:
+            task_id: input.id
+            context_id: {subject: context_id}
+            artifact: input.artifact
+            append: input.append
+            last_chunk: input.last_chunk
 
 events:
   - name: a2a.tasks.TaskCreated
@@ -912,15 +1221,45 @@ events:
 
   - name: a2a.tasks.TaskStatusUpdated
     naming:
-      summary: Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent.
+      summary: >-
+        Emitted on every lifecycle move; streamed and pushed as TaskStatusUpdateEvent, whose
+        task_id, context_id and status a2a.proto marks REQUIRED.
     fields:
       - name: task_id
         type: a2a.tasks.TaskId
       - name: context_id
         type: a2a.tasks.ContextId
+      - name: status
+        type: a2a.tasks.TaskStatus
+
+  - name: a2a.tasks.TaskArtifactUpdated
+    naming:
+      summary: >-
+        An artifact the agent generated; streamed and pushed as the a2a.proto message
+        TaskArtifactUpdateEvent, whose task_id, context_id and artifact it marks REQUIRED.
+    # a2a.proto TaskArtifactUpdateEvent declares `bool append = 4;` and `bool last_chunk = 5;`
+    # without REQUIRED, so both are Optional (section 5.7). Wire names are the ProtoJSON camelCase
+    # names (section 5.5): taskId, contextId, lastChunk.
+    fields:
+      - name: task_id
+        type: a2a.tasks.TaskId
+        naming: {wire: taskId}
+      - name: context_id
+        type: a2a.tasks.ContextId
+        naming: {wire: contextId}
+      - name: artifact
+        type: a2a.tasks.Artifact
+      - name: append
+        type: Optional<Boolean>
+      - name: last_chunk
+        type: Optional<Boolean>
+        naming: {wire: lastChunk}
 
   - name: a2a.tasks.PushNotificationConfigCreated
     fields:
+      # UNMAPPED (ESS gap): `row` has no A2A source; dropping it is refused, ESS-COMMAND-001 "acts on the instance named by `row`, which is no field of an emitted event of it".
+      - name: row
+        type: a2a.tasks.PushNotificationConfigRow
       - name: config_id
         type: a2a.tasks.PushNotificationConfigId
       - name: task_id
@@ -934,15 +1273,72 @@ events:
         type: a2a.tasks.TaskId
 
 views:
-  # UNMAPPED: ListTasks (A2A v1.0.1 section 3.1.4) filters by an optional contextId, an
-  # optional status and an optional statusTimestampAfter, pages by cursor and orders by status
-  # timestamp descending. Only the unfiltered read is declared.
+  # ListTasks (A2A v1.0.1 section 3.1.4, a2a.proto ListTasksRequest): the optional filters
+  # context_id ("Filter tasks by context ID …"), status ("Filter tasks by their current status
+  # state") and status_timestamp_after ("Only tasks with a status timestamp time greater than or
+  # equal to this value will be returned").
+  # UNMAPPED (ESS gap): "Implementations MUST return tasks sorted by their status timestamp
+  # time in descending order". `order_by: [status_timestamp desc]` validates, but synthesis
+  # then refuses every outcome that writes a task: "ESS-SYNTH-014: … a2a.tasks.Tasks declares
+  # an order and this scenario can put 1 row(s) in it: comparing two rows needs two
+  # a2a.tasks.Tasks, and no declared move reaches it from Submitted". Missing construct: an
+  # order synthesis checks over rows that several creating sends arrange.
+  # UNMAPPED (ESS gap): the cursor paging (page_size, page_token, next_page_token, "MUST use
+  # cursor-based pagination"). ESS 0.67.0 `paging:` is by offset (`page * size`) and answers
+  # no continuation token. Missing construct: cursor paging. Also unchecked: include_artifacts
+  # ("the artifacts field MUST be omitted entirely") and history_length, which shape each row;
+  # missing construct: a view field omitted by a parameter.
   - name: a2a.tasks.Tasks
     source: a2a.tasks.Task
     consistency: read_your_writes
+    params:
+      - name: context_id
+        type: Optional<a2a.tasks.ContextId>
+      # UNMAPPED (ESS gap): wire type is TaskState (TASK_STATE_*); ESS 0.67.0 has no map from it to the lifecycle states the filter compares.
+      - name: status
+        type: Optional<a2a.tasks.Task.State>
+      - name: status_timestamp_after
+        type: Optional<Timestamp>
+    filter:
+      all:
+        - any: ["not defined(param.context_id)", context_id == param.context_id]
+        - any: ["not defined(param.status)", state == param.status]
+        - any: ["not defined(param.status_timestamp_after)", status_timestamp >= param.status_timestamp_after]
     naming:
       wire: tasks
       display: List tasks
+    fields:
+      - name: id
+        type: a2a.tasks.TaskId
+      - name: context_id
+        type: a2a.tasks.ContextId
+      - name: state
+        type: a2a.tasks.Task.State
+      - name: status_message
+        type: Optional<a2a.tasks.Message>
+      - name: status_timestamp
+        type: Optional<Timestamp>
+      - name: artifacts
+        type: Optional<List<a2a.tasks.Artifact>>
+      - name: history
+        type: Optional<List<a2a.tasks.Message>>
+      - name: metadata
+        type: Optional<Json>
+
+  # Not an A2A operation and no A2A source: every task with its identity and state, so a
+  # conformance run can observe a task by identity (a parameterized view is no identity view to
+  # ESS). Kept because removing it makes synthesis refuse 35 outcomes of this unit's commands.
+  # Scoped per section 13.1 ("Implementations MUST scope results to the caller's authorized
+  # access boundaries") by a read grant: only the system actor a2a.tasks.Agent names it in
+  # `may:`, so a2a.tasks.Client and an anonymous caller are refused "not granted" before any row
+  # is read. UNMAPPED (ESS gap): the per-row boundary within the Agent's reads (which tasks one
+  # authenticated caller may see); ESS 0.67.0 grants a whole view to an actor, no subset of rows.
+  - name: a2a.tasks.AllTasks
+    source: a2a.tasks.Task
+    consistency: read_your_writes
+    naming:
+      wire: allTasks
+      display: All tasks
     fields:
       - name: id
         type: a2a.tasks.TaskId
@@ -972,7 +1368,7 @@ views:
       wire: pushNotificationConfigs
       display: List push notification configs
     fields:
-      - name: id
+      - name: config_id
         type: a2a.tasks.PushNotificationConfigId
       - name: task_id
         type: a2a.tasks.TaskId
@@ -994,7 +1390,10 @@ views:
       wire: allPushNotificationConfigs
       display: All push notification configs
     fields:
-      - name: id
+      # UNMAPPED (ESS gap): `row` has no A2A source; dropping it is refused, ESS-SYNTH-001 on DeleteTaskPushNotificationConfig/deleted "published by no immediate, unfiltered, unparameterised, unpaged view carrying its identity".
+      - name: row
+        type: a2a.tasks.PushNotificationConfigRow
+      - name: config_id
         type: a2a.tasks.PushNotificationConfigId
       - name: state
         type: a2a.tasks.PushNotificationConfig.State

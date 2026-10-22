@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/a2a.tasks.PushNotificationConfigRow",
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:455b6f7367cf6ce4a5bcf20ff7030fe4923d03fe81275b9ed8758d56e1543dcf",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.PushNotificationConfigRow": {
+      "title": "PushNotificationConfigRow",
+      "x-ess-name": "a2a.tasks.PushNotificationConfigRow",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    }
+  }
+}

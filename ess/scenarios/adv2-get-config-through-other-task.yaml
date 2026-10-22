@@ -1,0 +1,56 @@
+# Adversary case. a2a.proto GetTaskPushNotificationConfigRequest: `task_id` is "The parent task
+# resource ID". A configuration cfg-1 of one task is not readable through another task that
+# carries none, so the read answers TaskNotFound (`config-not-found`).
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: adv2-get-config-through-other-task
+summary: Reading another task's configuration id through a task that has none answers TaskNotFound.
+
+arrange:
+  - instance: owner
+    entity: a2a.tasks.Task
+  - instance: other
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-01-14T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: first
+    outcome: task-created
+    capture: {instance: owner, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-14T09:00:01Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-2
+        role: ROLE_USER
+        parts:
+          - text: second
+    outcome: task-created
+    capture: {instance: other, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-14T09:00:02Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: owner}
+      id: cfg-1
+      url: https://owner.example.test/webhook
+      token: owner-secret
+    outcome: created
+
+  - at: 2026-01-14T09:00:03Z
+    command: a2a.tasks.GetTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: other}
+      id: cfg-1
+    outcome: config-not-found

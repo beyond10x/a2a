@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest 340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859
-// contract digest f01a7ba8cee02bc352a5a026f681d10fa8fa5237c90807e3a38f323f46cb67ea
+// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
+// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Discovery — `a2a.discovery`.
@@ -218,19 +218,19 @@ pub struct OAuth2SecurityScheme {
     pub oauth2_metadata_url: Option<String>,
 }
 
-/// OAuthFlows — `a2a.discovery.OAuthFlows`: one of a fixed set of shapes, tagged on the wire by `flow`.
+/// OAuthFlows — `a2a.discovery.OAuthFlows`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum OAuthFlows {
-    /// Tagged `authorizationCode` — `a2a.discovery.AuthorizationCodeOAuthFlow`.
-    AuthorizationCode(AuthorizationCodeOAuthFlow),
-    /// Tagged `clientCredentials` — `a2a.discovery.ClientCredentialsOAuthFlow`.
-    ClientCredentials(ClientCredentialsOAuthFlow),
-    /// Tagged `deviceCode` — `a2a.discovery.DeviceCodeOAuthFlow`.
-    DeviceCode(DeviceCodeOAuthFlow),
-    /// Tagged `implicit` — `a2a.discovery.ImplicitOAuthFlow`.
-    Implicit(ImplicitOAuthFlow),
-    /// Tagged `password` — `a2a.discovery.PasswordOAuthFlow`.
-    Password(PasswordOAuthFlow),
+pub struct OAuthFlows {
+    /// `authorization_code` — `Optional<a2a.discovery.AuthorizationCodeOAuthFlow>`.
+    pub authorization_code: Option<AuthorizationCodeOAuthFlow>,
+    /// `client_credentials` — `Optional<a2a.discovery.ClientCredentialsOAuthFlow>`.
+    pub client_credentials: Option<ClientCredentialsOAuthFlow>,
+    /// `implicit` — `Optional<a2a.discovery.ImplicitOAuthFlow>`.
+    pub implicit: Option<ImplicitOAuthFlow>,
+    /// `password` — `Optional<a2a.discovery.PasswordOAuthFlow>`.
+    pub password: Option<PasswordOAuthFlow>,
+    /// `device_code` — `Optional<a2a.discovery.DeviceCodeOAuthFlow>`.
+    pub device_code: Option<DeviceCodeOAuthFlow>,
 }
 
 /// OpenIdConnectSecurityScheme — `a2a.discovery.OpenIdConnectSecurityScheme`.
@@ -262,19 +262,19 @@ pub struct SecurityRequirement {
     pub schemes: std::collections::BTreeMap<String, StringList>,
 }
 
-/// SecurityScheme — `a2a.discovery.SecurityScheme`: one of a fixed set of shapes, tagged on the wire by `scheme`.
+/// SecurityScheme — `a2a.discovery.SecurityScheme`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SecurityScheme {
-    /// Tagged `apiKeySecurityScheme` — `a2a.discovery.APIKeySecurityScheme`.
-    ApiKeySecurityScheme(APIKeySecurityScheme),
-    /// Tagged `httpAuthSecurityScheme` — `a2a.discovery.HTTPAuthSecurityScheme`.
-    HttpAuthSecurityScheme(HTTPAuthSecurityScheme),
-    /// Tagged `mtlsSecurityScheme` — `a2a.discovery.MutualTlsSecurityScheme`.
-    MtlsSecurityScheme(MutualTlsSecurityScheme),
-    /// Tagged `oauth2SecurityScheme` — `a2a.discovery.OAuth2SecurityScheme`.
-    Oauth2SecurityScheme(OAuth2SecurityScheme),
-    /// Tagged `openIdConnectSecurityScheme` — `a2a.discovery.OpenIdConnectSecurityScheme`.
-    OpenIdConnectSecurityScheme(OpenIdConnectSecurityScheme),
+pub struct SecurityScheme {
+    /// `api_key_security_scheme` — `Optional<a2a.discovery.APIKeySecurityScheme>`.
+    pub api_key_security_scheme: Option<APIKeySecurityScheme>,
+    /// `http_auth_security_scheme` — `Optional<a2a.discovery.HTTPAuthSecurityScheme>`.
+    pub http_auth_security_scheme: Option<HTTPAuthSecurityScheme>,
+    /// `oauth2_security_scheme` — `Optional<a2a.discovery.OAuth2SecurityScheme>`.
+    pub oauth2_security_scheme: Option<OAuth2SecurityScheme>,
+    /// `open_id_connect_security_scheme` — `Optional<a2a.discovery.OpenIdConnectSecurityScheme>`.
+    pub open_id_connect_security_scheme: Option<OpenIdConnectSecurityScheme>,
+    /// `mtls_security_scheme` — `Optional<a2a.discovery.MutualTlsSecurityScheme>`.
+    pub mtls_security_scheme: Option<MutualTlsSecurityScheme>,
 }
 
 /// StringList — `a2a.discovery.StringList`.
@@ -326,6 +326,16 @@ pub enum GetExtendedAgentCardOutcome {
         /// Actual response returned by this branch.
         response: GetExtendedAgentCardResponse,
     },
+    /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
+    VersionNotSupported {
+        /// Why it was refused: `a2a.discovery.VersionNotSupported`.
+        error: VersionNotSupported,
+    },
+    /// `extension-required` — externally decided (the agent card marks an extension required and the request does not declare it).
+    ExtensionRequired {
+        /// Why it was refused: `a2a.discovery.ExtensionSupportRequired`.
+        error: ExtensionSupportRequired,
+    },
 }
 
 /// The declared error `a2a.discovery.ExtendedAgentCardNotConfigured`.
@@ -334,11 +344,23 @@ pub enum GetExtendedAgentCardOutcome {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtendedAgentCardNotConfigured;
 
+/// The declared error `a2a.discovery.ExtensionSupportRequired`.
+///
+/// ExtensionSupportRequiredError (JSON-RPC -32008, gRPC FAILED_PRECONDITION, HTTP 400).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExtensionSupportRequired;
+
 /// The declared error `a2a.discovery.UnsupportedOperation`.
 ///
 /// UnsupportedOperationError (JSON-RPC -32004, HTTP 400): the agent card does not declare capabilities.extendedAgentCard.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnsupportedOperation;
+
+/// The declared error `a2a.discovery.VersionNotSupported`.
+///
+/// VersionNotSupportedError (JSON-RPC -32009, gRPC FAILED_PRECONDITION, HTTP 400).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VersionNotSupported;
 
 /// What this bounded context owes its implementor, as typed seams.
 ///
@@ -350,7 +372,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.discovery.GetExtendedAgentCard` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `not-supported` externally decided (the public agent card does not declare capabilities.extendedAgentCard), error `a2a.discovery.UnsupportedOperation`; `not-configured` externally decided (the agent declares the capability but has no extended card configured), error `a2a.discovery.ExtendedAgentCardNotConfigured`; `returned` otherwise.
+    /// Contract: given `a2a.discovery.GetExtendedAgentCard` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `not-supported` externally decided (the public agent card does not declare capabilities.extendedAgentCard), error `a2a.discovery.UnsupportedOperation`; `not-configured` externally decided (the agent declares the capability but has no extended card configured), error `a2a.discovery.ExtendedAgentCardNotConfigured`; `returned` otherwise; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.discovery.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.discovery.ExtensionSupportRequired`.
     pub trait GetExtendedAgentCardBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.discovery.GetExtendedAgentCard`.
         ///

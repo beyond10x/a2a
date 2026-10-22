@@ -17,8 +17,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
-    "contract_digest": "slice-sha256/2:c94c055afe04f19b27cc261315ae6be7bb0db9542cc3aa85d4b94199433b6efc",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:42fa64162e75669df61d5de66f44d7aba46a929ad86477dfb07ce55d3824e7fa",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -487,100 +487,29 @@
     "a2a.discovery.OAuthFlows": {
       "title": "OAuthFlows",
       "x-ess-name": "a2a.discovery.OAuthFlows",
-      "x-ess-kind": "union",
-      "oneOf": [
-        {
-          "title": "authorizationCode",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "authorizationCode"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.AuthorizationCodeOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "authorizationCode": {
+          "$ref": "#/$defs/a2a.discovery.AuthorizationCodeOAuthFlow",
+          "x-ess-field": "authorization_code"
         },
-        {
-          "title": "clientCredentials",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "clientCredentials"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.ClientCredentialsOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+        "clientCredentials": {
+          "$ref": "#/$defs/a2a.discovery.ClientCredentialsOAuthFlow",
+          "x-ess-field": "client_credentials"
         },
-        {
-          "title": "deviceCode",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "deviceCode"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.DeviceCodeOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+        "implicit": {
+          "$ref": "#/$defs/a2a.discovery.ImplicitOAuthFlow"
         },
-        {
-          "title": "implicit",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "implicit"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.ImplicitOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+        "password": {
+          "$ref": "#/$defs/a2a.discovery.PasswordOAuthFlow"
         },
-        {
-          "title": "password",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "password"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.PasswordOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+        "deviceCode": {
+          "$ref": "#/$defs/a2a.discovery.DeviceCodeOAuthFlow",
+          "x-ess-field": "device_code"
         }
-      ],
-      "x-ess-union-tag": "flow"
+      },
+      "additionalProperties": false
     },
     "a2a.discovery.OpenIdConnectSecurityScheme": {
       "title": "OpenIdConnectSecurityScheme",
@@ -648,100 +577,31 @@
     "a2a.discovery.SecurityScheme": {
       "title": "SecurityScheme",
       "x-ess-name": "a2a.discovery.SecurityScheme",
-      "x-ess-kind": "union",
-      "oneOf": [
-        {
-          "title": "apiKeySecurityScheme",
-          "type": "object",
-          "properties": {
-            "scheme": {
-              "type": "string",
-              "const": "apiKeySecurityScheme"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.APIKeySecurityScheme"
-            }
-          },
-          "required": [
-            "scheme",
-            "value"
-          ],
-          "additionalProperties": false
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "apiKeySecurityScheme": {
+          "$ref": "#/$defs/a2a.discovery.APIKeySecurityScheme",
+          "x-ess-field": "api_key_security_scheme"
         },
-        {
-          "title": "httpAuthSecurityScheme",
-          "type": "object",
-          "properties": {
-            "scheme": {
-              "type": "string",
-              "const": "httpAuthSecurityScheme"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.HTTPAuthSecurityScheme"
-            }
-          },
-          "required": [
-            "scheme",
-            "value"
-          ],
-          "additionalProperties": false
+        "httpAuthSecurityScheme": {
+          "$ref": "#/$defs/a2a.discovery.HTTPAuthSecurityScheme",
+          "x-ess-field": "http_auth_security_scheme"
         },
-        {
-          "title": "mtlsSecurityScheme",
-          "type": "object",
-          "properties": {
-            "scheme": {
-              "type": "string",
-              "const": "mtlsSecurityScheme"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.MutualTlsSecurityScheme"
-            }
-          },
-          "required": [
-            "scheme",
-            "value"
-          ],
-          "additionalProperties": false
+        "oauth2SecurityScheme": {
+          "$ref": "#/$defs/a2a.discovery.OAuth2SecurityScheme",
+          "x-ess-field": "oauth2_security_scheme"
         },
-        {
-          "title": "oauth2SecurityScheme",
-          "type": "object",
-          "properties": {
-            "scheme": {
-              "type": "string",
-              "const": "oauth2SecurityScheme"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.OAuth2SecurityScheme"
-            }
-          },
-          "required": [
-            "scheme",
-            "value"
-          ],
-          "additionalProperties": false
+        "openIdConnectSecurityScheme": {
+          "$ref": "#/$defs/a2a.discovery.OpenIdConnectSecurityScheme",
+          "x-ess-field": "open_id_connect_security_scheme"
         },
-        {
-          "title": "openIdConnectSecurityScheme",
-          "type": "object",
-          "properties": {
-            "scheme": {
-              "type": "string",
-              "const": "openIdConnectSecurityScheme"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.OpenIdConnectSecurityScheme"
-            }
-          },
-          "required": [
-            "scheme",
-            "value"
-          ],
-          "additionalProperties": false
+        "mtlsSecurityScheme": {
+          "$ref": "#/$defs/a2a.discovery.MutualTlsSecurityScheme",
+          "x-ess-field": "mtls_security_scheme"
         }
-      ],
-      "x-ess-union-tag": "scheme"
+      },
+      "additionalProperties": false
     },
     "a2a.discovery.StringList": {
       "title": "StringList",

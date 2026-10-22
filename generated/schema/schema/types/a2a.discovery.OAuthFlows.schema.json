@@ -4,8 +4,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
-    "contract_digest": "slice-sha256/2:cf5871a0bdec2a3972db0d5569f02d22c8e92159bdde1456b01ea8a68c61227d",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:272c05a460a60fb6860602830c139e2afb69d035b0e5f2929964e71e26d6cc62",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -135,100 +135,29 @@
     "a2a.discovery.OAuthFlows": {
       "title": "OAuthFlows",
       "x-ess-name": "a2a.discovery.OAuthFlows",
-      "x-ess-kind": "union",
-      "oneOf": [
-        {
-          "title": "authorizationCode",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "authorizationCode"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.AuthorizationCodeOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "authorizationCode": {
+          "$ref": "#/$defs/a2a.discovery.AuthorizationCodeOAuthFlow",
+          "x-ess-field": "authorization_code"
         },
-        {
-          "title": "clientCredentials",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "clientCredentials"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.ClientCredentialsOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+        "clientCredentials": {
+          "$ref": "#/$defs/a2a.discovery.ClientCredentialsOAuthFlow",
+          "x-ess-field": "client_credentials"
         },
-        {
-          "title": "deviceCode",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "deviceCode"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.DeviceCodeOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+        "implicit": {
+          "$ref": "#/$defs/a2a.discovery.ImplicitOAuthFlow"
         },
-        {
-          "title": "implicit",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "implicit"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.ImplicitOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+        "password": {
+          "$ref": "#/$defs/a2a.discovery.PasswordOAuthFlow"
         },
-        {
-          "title": "password",
-          "type": "object",
-          "properties": {
-            "flow": {
-              "type": "string",
-              "const": "password"
-            },
-            "value": {
-              "$ref": "#/$defs/a2a.discovery.PasswordOAuthFlow"
-            }
-          },
-          "required": [
-            "flow",
-            "value"
-          ],
-          "additionalProperties": false
+        "deviceCode": {
+          "$ref": "#/$defs/a2a.discovery.DeviceCodeOAuthFlow",
+          "x-ess-field": "device_code"
         }
-      ],
-      "x-ess-union-tag": "flow"
+      },
+      "additionalProperties": false
     },
     "a2a.discovery.PasswordOAuthFlow": {
       "title": "PasswordOAuthFlow",

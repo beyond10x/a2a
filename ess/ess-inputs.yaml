@@ -7,3 +7,13 @@ specification:
   - domains/discovery.yaml
 scenarios:
   - scenarios/delete-push-config-twice.yaml
+  - scenarios/require-auth-after-input.yaml
+  - scenarios/cancel-carries-status.yaml
+  - scenarios/delete-config-of-other-task.yaml
+  - scenarios/list-configs-of-task.yaml
+  - scenarios/update-artifact-emits-event.yaml
+  - scenarios/adv-delete-config-of-unknown-task.yaml
+  - scenarios/adv-config-id-of-other-task.yaml
+  - scenarios/adv-agent-moves-carry-status.yaml
+  - scenarios/adv2-get-config-through-other-task.yaml
+  - scenarios/adv2-delete-config-of-completed-task.yaml

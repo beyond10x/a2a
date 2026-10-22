@@ -1,0 +1,42 @@
+# A2A v1.0.1 a2a.proto, TaskState: TASK_STATE_INPUT_REQUIRED and TASK_STATE_AUTH_REQUIRED are both
+# "an interrupted state", and section 7.6.1 lets an agent ask for authorization while it works on
+# a task. So a task waiting for input can move on to waiting for authorization, and the move's
+# TaskStatusUpdated carries the new status (a2a.proto, TaskStatusUpdateEvent.status REQUIRED).
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: require-auth-after-input
+summary: A task in InputRequired moves to AuthRequired and the event carries the new state.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-01-07T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-01-07T09:00:01Z
+    command: a2a.tasks.RequireInput
+    input:
+      id: {$instance: task}
+    outcome: moved
+
+  - at: 2026-01-07T09:00:02Z
+    command: a2a.tasks.RequireAuth
+    input:
+      id: {$instance: task}
+    outcome: moved
+    events:
+      - event: a2a.tasks.TaskStatusUpdated
+        payload:
+          status:
+            state: TASK_STATE_AUTH_REQUIRED

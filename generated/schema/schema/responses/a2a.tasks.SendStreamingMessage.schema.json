@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Send streaming message response",
-  "description": "Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal or interrupted (A2A v1.0.1 section 3.1.2; POST /message:stream).",
+  "description": "Send a message and stream the answer: one message, or the task followed by its status and artifact updates until it is terminal (A2A v1.0.1 section 3.1.2; POST /message:stream).",
   "x-ess-name": "a2a.tasks.SendStreamingMessage",
   "x-ess-kind": "command-response",
   "type": "object",
@@ -18,8 +18,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "340c397069089debcfcb2cf241e311c06d40ac443ecea2a196508e49c5fb6859",
-    "contract_digest": "slice-sha256/2:ba071a009767cde2b1cefc34bae022221b7c03ea5d21ef3757d17a9494339430",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:24b6db5e9bef73c0f2de7cb5b8edd8903cb06a7f2e7908730e9588274260234e",
     "regenerate": "ess generate"
   },
   "$defs": {

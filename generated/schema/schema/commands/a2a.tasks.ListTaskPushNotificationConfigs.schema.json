@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "List push notification configs input",
+  "description": "Read every active push-notification configuration of a task (A2A v1.0.1 section 3.1.9; GET /tasks/{task_id}/pushNotificationConfigs).",
+  "x-ess-name": "a2a.tasks.ListTaskPushNotificationConfigs",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "tenant": {
+      "type": "string"
+    },
+    "taskId": {
+      "$ref": "#/$defs/a2a.tasks.TaskId",
+      "x-ess-field": "task_id"
+    },
+    "pageSize": {
+      "x-ess-field": "page_size",
+      "type": "integer"
+    },
+    "pageToken": {
+      "x-ess-field": "page_token",
+      "type": "string"
+    }
+  },
+  "required": [
+    "taskId"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d",
+    "contract_digest": "slice-sha256/2:aaabd1be813ad3b2b8829a6078557df605ec71e657404aee2d4f96019c21ac7c",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "a2a.tasks.TaskId": {
+      "title": "TaskId",
+      "description": "Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).",
+      "x-ess-name": "a2a.tasks.TaskId",
+      "x-ess-kind": "newtype",
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+# Adversary case. A2A v1.0.1 section 3.1.10, DeleteTaskPushNotificationConfig, Errors:
+# "TaskNotFoundError: The task ID does not exist." No task was ever created, so the task ID
+# does not exist and the delete must answer TaskNotFound (`task-not-found`), not succeed as
+# `deleted`.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: adv-delete-config-of-unknown-task
+summary: Deleting a configuration under a task ID that does not exist answers TaskNotFound.
+
+timeline:
+  - at: 2026-01-12T09:00:00Z
+    command: a2a.tasks.DeleteTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: no-such-task
+      id: cfg-1
+    outcome: task-not-found
