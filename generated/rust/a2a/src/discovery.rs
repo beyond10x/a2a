@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
-// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
+// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
+// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Discovery — `a2a.discovery`.

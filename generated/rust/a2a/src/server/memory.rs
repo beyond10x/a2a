@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
-// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
+// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
+// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Ephemeral stores for the generated network entry points; no durability.
@@ -25,9 +25,9 @@ fn list(&self) -> Vec<crate::tasks::PushNotificationConfigSnapshot> { crate::beh
 #[derive(Clone, Default)]
 pub struct MemoryTaskStorage(std::rc::Rc<std::cell::RefCell<Vec<crate::tasks::TaskEntitySnapshot>>>);
 impl crate::behaviour::TaskStorage for MemoryTaskStorage {
-fn get(&self, identity: &crate::tasks::TaskId) -> Option<crate::tasks::TaskEntitySnapshot> { let key = memory_key_32(identity); self.0.borrow().iter().find(|row| memory_key_32(&row.data.id) == key).cloned() }
-fn put(&mut self, snapshot: crate::tasks::TaskEntitySnapshot) { self.delete(&snapshot.data.id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_32(&row.data.id).cmp(&memory_key_32(&other.data.id))); }
-fn delete(&mut self, identity: &crate::tasks::TaskId) { let key = memory_key_32(identity); self.0.borrow_mut().retain(|row| memory_key_32(&row.data.id) != key); }
+fn get(&self, identity: &crate::tasks::TaskId) -> Option<crate::tasks::TaskEntitySnapshot> { let key = memory_key_33(identity); self.0.borrow().iter().find(|row| memory_key_33(&row.data.id) == key).cloned() }
+fn put(&mut self, snapshot: crate::tasks::TaskEntitySnapshot) { self.delete(&snapshot.data.id); let mut rows = self.0.borrow_mut(); rows.push(snapshot); rows.sort_by(|row, other| memory_key_33(&row.data.id).cmp(&memory_key_33(&other.data.id))); }
+fn delete(&mut self, identity: &crate::tasks::TaskId) { let key = memory_key_33(identity); self.0.borrow_mut().retain(|row| memory_key_33(&row.data.id) != key); }
 fn list(&self) -> Vec<crate::tasks::TaskEntitySnapshot> { self.0.borrow().clone() }
 }
 impl crate::behaviour::TaskStorage for MemoryPorts {
@@ -52,7 +52,7 @@ fn try_generate_optional_timestamp(&mut self) -> Result<Option<crate::primitives
 
 fn memory_key_28(value: &crate::tasks::PushNotificationConfigRow) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
 
-fn memory_key_32(value: &crate::tasks::TaskId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
+fn memory_key_33(value: &crate::tasks::TaskId) -> MemoryKey { let _ = value; MemoryKey::Text((&value.0).clone()) }
 
 // A common structural order; individual specifications use only a subset of the variants.
 #[allow(dead_code)]

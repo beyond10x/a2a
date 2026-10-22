@@ -1,0 +1,26 @@
+# A2A v1.0.1 section 3.1.2, task lifecycle stream: "If the agent returns a Task, the stream MUST
+# begin with the Task object, followed by zero or more TaskStatusUpdateEvent or
+# TaskArtifactUpdateEvent objects." The stream's elements are a2a.proto StreamResponse; its
+# `task` member is "A Task object containing the current state of the task", the task the
+# answer carries. The section fixes no state for it, and the task's id is generated, so this
+# scenario asserts the stream element only.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: stream-starts-with-task
+summary: A streamed message that creates a task opens its stream with a stream element.
+
+timeline:
+  - at: 2026-01-15T09:00:00Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        context_id: ctx-stream-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    events:
+      - event: a2a.tasks.TaskCreated
+      - event: a2a.tasks.MessageStreamResponse

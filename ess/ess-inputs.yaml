@@ -17,3 +17,5 @@ scenarios:
   - scenarios/adv-agent-moves-carry-status.yaml
   - scenarios/adv2-get-config-through-other-task.yaml
   - scenarios/adv2-delete-config-of-completed-task.yaml
+  - scenarios/stream-starts-with-task.yaml
+  - scenarios/stream-message-only.yaml

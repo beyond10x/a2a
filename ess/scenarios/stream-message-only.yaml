@@ -1,0 +1,22 @@
+# A2A v1.0.1 section 3.1.2, message-only stream: "If the agent returns a Message, the stream MUST
+# contain exactly one Message object and then close immediately. No task tracking or updates are
+# provided." The message is the agent's to write, so this scenario asserts the stream element
+# and that no task is created.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: stream-message-only
+summary: A streamed message the agent answers with a message streams that message and creates no task.
+
+timeline:
+  - at: 2026-01-15T10:00:00Z
+    command: a2a.tasks.SendStreamingMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: direct-message
+    events:
+      - event: a2a.tasks.MessageStreamResponse

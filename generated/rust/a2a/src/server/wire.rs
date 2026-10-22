@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
-// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
+// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
+// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
 // do not edit: regenerate with `ess synthesize --layout crate`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -1947,6 +1947,76 @@ pub fn decode_a2a_tasks_task_state(value: &json::Value, at: &str) -> Result<crat
     })
 }
 
+/// Writes `a2a.tasks.TaskArtifactUpdateEvent` as JSON.
+pub fn encode_a2a_tasks_task_artifact_update_event(value: &crate::tasks::TaskArtifactUpdateEvent, out: &mut String) {
+    out.push('{');
+    json::member(out, "taskId");
+    encode_a2a_tasks_task_id(&value.task_id, out);
+    json::member(out, "contextId");
+    encode_a2a_tasks_context_id(&value.context_id, out);
+    json::member(out, "artifact");
+    encode_a2a_tasks_artifact(&value.artifact, out);
+    if let Some(held0) = &value.append {
+        json::member(out, "append");
+        json::push_bool(out, *held0);
+    }
+    if let Some(held0) = &value.last_chunk {
+        json::member(out, "lastChunk");
+        json::push_bool(out, *held0);
+    }
+    if let Some(held0) = &value.metadata {
+        json::member(out, "metadata");
+        json::push_value(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `a2a.tasks.TaskArtifactUpdateEvent` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_a2a_tasks_task_artifact_update_event(value: &json::Value, at: &str) -> Result<crate::tasks::TaskArtifactUpdateEvent, json::DecodeError> {
+    Ok(crate::tasks::TaskArtifactUpdateEvent {
+        task_id: {
+            let at0 = json::nested(at, "taskId");
+            let member0 = json::member_at(value, at, "taskId")?;
+            decode_a2a_tasks_task_id(member0, &at0)?
+        },
+        context_id: {
+            let at1 = json::nested(at, "contextId");
+            let member1 = json::member_at(value, at, "contextId")?;
+            decode_a2a_tasks_context_id(member1, &at1)?
+        },
+        artifact: {
+            let at2 = json::nested(at, "artifact");
+            let member2 = json::member_at(value, at, "artifact")?;
+            decode_a2a_tasks_artifact(member2, &at2)?
+        },
+        append: match value.member("append") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "append");
+                Some(json::bool_at(member3, &at3, "a boolean")?)
+            }
+        },
+        last_chunk: match value.member("lastChunk") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "lastChunk");
+                Some(json::bool_at(member4, &at4, "a boolean")?)
+            }
+        },
+        metadata: match value.member("metadata") {
+            None | Some(json::Value::Null) => None,
+            Some(member5) => {
+                let at5 = json::nested(at, "metadata");
+                Some(json::value_at(member5, &at5))
+            }
+        },
+    })
+}
+
 /// Writes `a2a.tasks.TaskId` as JSON.
 pub fn encode_a2a_tasks_task_id(value: &crate::tasks::TaskId, out: &mut String) {
     json::push_text(out, &value.0);
@@ -2044,8 +2114,10 @@ pub fn encode_a2a_tasks_task_snapshot(value: &crate::tasks::TaskSnapshot, out: &
     out.push('{');
     json::member(out, "id");
     encode_a2a_tasks_task_id(&value.id, out);
-    json::member(out, "contextId");
-    encode_a2a_tasks_context_id(&value.context_id, out);
+    if let Some(held0) = &value.context_id {
+        json::member(out, "contextId");
+        encode_a2a_tasks_context_id(&*held0, out);
+    }
     json::member(out, "status");
     encode_a2a_tasks_task_status(&value.status, out);
     if let Some(held0) = &value.artifacts {
@@ -2089,10 +2161,12 @@ pub fn decode_a2a_tasks_task_snapshot(value: &json::Value, at: &str) -> Result<c
             let member0 = json::member_at(value, at, "id")?;
             decode_a2a_tasks_task_id(member0, &at0)?
         },
-        context_id: {
-            let at1 = json::nested(at, "contextId");
-            let member1 = json::member_at(value, at, "contextId")?;
-            decode_a2a_tasks_context_id(member1, &at1)?
+        context_id: match value.member("contextId") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "contextId");
+                Some(decode_a2a_tasks_context_id(member1, &at1)?)
+            }
         },
         status: {
             let at2 = json::nested(at, "status");
@@ -2215,6 +2289,76 @@ pub fn decode_a2a_tasks_task_status(value: &json::Value, at: &str) -> Result<cra
     })
 }
 
+/// Writes `a2a.tasks.TaskStatusUpdateEvent` as JSON.
+pub fn encode_a2a_tasks_task_status_update_event(value: &crate::tasks::TaskStatusUpdateEvent, out: &mut String) {
+    out.push('{');
+    json::member(out, "taskId");
+    encode_a2a_tasks_task_id(&value.task_id, out);
+    json::member(out, "contextId");
+    encode_a2a_tasks_context_id(&value.context_id, out);
+    json::member(out, "status");
+    encode_a2a_tasks_task_status(&value.status, out);
+    if let Some(held0) = &value.metadata {
+        json::member(out, "metadata");
+        json::push_value(out, &*held0);
+    }
+    out.push('}');
+}
+
+/// Reads `a2a.tasks.TaskStatusUpdateEvent` from JSON.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_a2a_tasks_task_status_update_event(value: &json::Value, at: &str) -> Result<crate::tasks::TaskStatusUpdateEvent, json::DecodeError> {
+    Ok(crate::tasks::TaskStatusUpdateEvent {
+        task_id: {
+            let at0 = json::nested(at, "taskId");
+            let member0 = json::member_at(value, at, "taskId")?;
+            decode_a2a_tasks_task_id(member0, &at0)?
+        },
+        context_id: {
+            let at1 = json::nested(at, "contextId");
+            let member1 = json::member_at(value, at, "contextId")?;
+            decode_a2a_tasks_context_id(member1, &at1)?
+        },
+        status: {
+            let at2 = json::nested(at, "status");
+            let member2 = json::member_at(value, at, "status")?;
+            decode_a2a_tasks_task_status(member2, &at2)?
+        },
+        metadata: match value.member("metadata") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "metadata");
+                Some(json::value_at(member3, &at3))
+            }
+        },
+    })
+}
+
+/// Writes the event `a2a.tasks.MessageStreamResponse` as JSON.
+pub fn encode_event_a2a_tasks_message_stream_response(value: &crate::tasks::MessageStreamResponse, out: &mut String) {
+    out.push('{');
+    if let Some(held0) = &value.task {
+        json::member(out, "task");
+        encode_a2a_tasks_task_snapshot(&*held0, out);
+    }
+    if let Some(held0) = &value.message {
+        json::member(out, "message");
+        encode_a2a_tasks_message(&*held0, out);
+    }
+    if let Some(held0) = &value.status_update {
+        json::member(out, "statusUpdate");
+        encode_a2a_tasks_task_status_update_event(&*held0, out);
+    }
+    if let Some(held0) = &value.artifact_update {
+        json::member(out, "artifactUpdate");
+        encode_a2a_tasks_task_artifact_update_event(&*held0, out);
+    }
+    out.push('}');
+}
+
 /// Writes the event `a2a.tasks.PushNotificationConfigCreated` as JSON.
 pub fn encode_event_a2a_tasks_push_notification_config_created(value: &crate::tasks::PushNotificationConfigCreated, out: &mut String) {
     out.push('{');
@@ -2274,6 +2418,28 @@ pub fn encode_event_a2a_tasks_task_status_updated(value: &crate::tasks::TaskStat
     encode_a2a_tasks_context_id(&value.context_id, out);
     json::member(out, "status");
     encode_a2a_tasks_task_status(&value.status, out);
+    out.push('}');
+}
+
+/// Writes the event `a2a.tasks.TaskSubscriptionResponse` as JSON.
+pub fn encode_event_a2a_tasks_task_subscription_response(value: &crate::tasks::TaskSubscriptionResponse, out: &mut String) {
+    out.push('{');
+    if let Some(held0) = &value.task {
+        json::member(out, "task");
+        encode_a2a_tasks_task_snapshot(&*held0, out);
+    }
+    if let Some(held0) = &value.message {
+        json::member(out, "message");
+        encode_a2a_tasks_message(&*held0, out);
+    }
+    if let Some(held0) = &value.status_update {
+        json::member(out, "statusUpdate");
+        encode_a2a_tasks_task_status_update_event(&*held0, out);
+    }
+    if let Some(held0) = &value.artifact_update {
+        json::member(out, "artifactUpdate");
+        encode_a2a_tasks_task_artifact_update_event(&*held0, out);
+    }
     out.push('}');
 }
 
@@ -4261,21 +4427,33 @@ pub fn encode_outcome_a2a_tasks_send_streaming_message(value: &crate::tasks::Sen
             encode_error_a2a_tasks_content_type_not_supported(error, out);
             out.push('}');
         }
-        crate::tasks::SendStreamingMessageOutcome::Continued { .. } => {
+        crate::tasks::SendStreamingMessageOutcome::Continued { message_stream_response, .. } => {
             json::member(out, "outcome");
             json::push_text(out, "continued");
             json::member(out, "published");
             out.push('[');
+            out.push('{');
+            json::member(out, "event");
+            json::push_text(out, "a2a.tasks.MessageStreamResponse");
+            json::member(out, "payload");
+            encode_event_a2a_tasks_message_stream_response(message_stream_response, out);
+            out.push('}');
             out.push(']');
         }
-        crate::tasks::SendStreamingMessageOutcome::DirectMessage { .. } => {
+        crate::tasks::SendStreamingMessageOutcome::DirectMessage { message_stream_response, .. } => {
             json::member(out, "outcome");
             json::push_text(out, "direct-message");
             json::member(out, "published");
             out.push('[');
+            out.push('{');
+            json::member(out, "event");
+            json::push_text(out, "a2a.tasks.MessageStreamResponse");
+            json::member(out, "payload");
+            encode_event_a2a_tasks_message_stream_response(message_stream_response, out);
+            out.push('}');
             out.push(']');
         }
-        crate::tasks::SendStreamingMessageOutcome::TaskCreated { task_created, .. } => {
+        crate::tasks::SendStreamingMessageOutcome::TaskCreated { task_created, message_stream_response, .. } => {
             json::member(out, "outcome");
             json::push_text(out, "task-created");
             json::member(out, "published");
@@ -4285,6 +4463,13 @@ pub fn encode_outcome_a2a_tasks_send_streaming_message(value: &crate::tasks::Sen
             json::push_text(out, "a2a.tasks.TaskCreated");
             json::member(out, "payload");
             encode_event_a2a_tasks_task_created(task_created, out);
+            out.push('}');
+            out.push(',');
+            out.push('{');
+            json::member(out, "event");
+            json::push_text(out, "a2a.tasks.MessageStreamResponse");
+            json::member(out, "payload");
+            encode_event_a2a_tasks_message_stream_response(message_stream_response, out);
             out.push('}');
             out.push(']');
         }
@@ -4634,11 +4819,13 @@ pub fn encode_system_event(value: &crate::system::SystemEvent) -> String {
     json::push_text(&mut out, value.name());
     json::member(&mut out, "payload");
     match value {
+        crate::system::SystemEvent::MessageStreamResponse(event) => encode_event_a2a_tasks_message_stream_response(event, &mut out),
         crate::system::SystemEvent::PushNotificationConfigCreated(event) => encode_event_a2a_tasks_push_notification_config_created(event, &mut out),
         crate::system::SystemEvent::PushNotificationConfigDeleted(event) => encode_event_a2a_tasks_push_notification_config_deleted(event, &mut out),
         crate::system::SystemEvent::TaskArtifactUpdated(event) => encode_event_a2a_tasks_task_artifact_updated(event, &mut out),
         crate::system::SystemEvent::TaskCreated(event) => encode_event_a2a_tasks_task_created(event, &mut out),
         crate::system::SystemEvent::TaskStatusUpdated(event) => encode_event_a2a_tasks_task_status_updated(event, &mut out),
+        crate::system::SystemEvent::TaskSubscriptionResponse(event) => encode_event_a2a_tasks_task_subscription_response(event, &mut out),
     }
     out.push('}');
     out

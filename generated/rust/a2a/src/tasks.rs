@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
-// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
+// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
+// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Tasks — `a2a.tasks`.
@@ -151,6 +151,25 @@ pub enum TaskState {
     Working,
 }
 
+/// TaskArtifactUpdateEvent — `a2a.tasks.TaskArtifactUpdateEvent`.
+///
+/// "A task delta where an artifact has been generated" (a2a.proto TaskArtifactUpdateEvent; A2A v1.0.1 section 4.2.2).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TaskArtifactUpdateEvent {
+    /// `task_id` — `a2a.tasks.TaskId`.
+    pub task_id: TaskId,
+    /// `context_id` — `a2a.tasks.ContextId`.
+    pub context_id: ContextId,
+    /// `artifact` — `a2a.tasks.Artifact`.
+    pub artifact: Artifact,
+    /// `append` — `Optional<Boolean>`.
+    pub append: Option<bool>,
+    /// `last_chunk` — `Optional<Boolean>`.
+    pub last_chunk: Option<bool>,
+    /// `metadata` — `Optional<Json>`.
+    pub metadata: Option<crate::json::Value>,
+}
+
 /// TaskId — `a2a.tasks.TaskId`: a distinct wrapper around `String`.
 ///
 /// Server-generated, opaque task identifier (A2A v1.0.1 section 3.4.2).
@@ -183,8 +202,8 @@ pub struct TaskPushNotificationConfig {
 pub struct TaskSnapshot {
     /// `id` — `a2a.tasks.TaskId`.
     pub id: TaskId,
-    /// `context_id` — `a2a.tasks.ContextId`.
-    pub context_id: ContextId,
+    /// `context_id` — `Optional<a2a.tasks.ContextId>`.
+    pub context_id: Option<ContextId>,
     /// `status` — `a2a.tasks.TaskStatus`.
     pub status: TaskStatus,
     /// `artifacts` — `Optional<List<a2a.tasks.Artifact>>`.
@@ -225,6 +244,21 @@ pub struct TaskStatus {
     pub message: Option<Message>,
     /// `timestamp` — `Optional<Timestamp>`.
     pub timestamp: Option<crate::primitives::Timestamp>,
+}
+
+/// TaskStatusUpdateEvent — `a2a.tasks.TaskStatusUpdateEvent`.
+///
+/// "An event sent by the agent to notify the client of a change in a task's status" (a2a.proto TaskStatusUpdateEvent; A2A v1.0.1 section 4.2.1).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TaskStatusUpdateEvent {
+    /// `task_id` — `a2a.tasks.TaskId`.
+    pub task_id: TaskId,
+    /// `context_id` — `a2a.tasks.ContextId`.
+    pub context_id: ContextId,
+    /// `status` — `a2a.tasks.TaskStatus`.
+    pub status: TaskStatus,
+    /// `metadata` — `Optional<Json>`.
+    pub metadata: Option<crate::json::Value>,
 }
 
 /// What PushNotificationConfig — `a2a.tasks.PushNotificationConfig` — holds, apart from where it is in its lifecycle.
@@ -1543,11 +1577,15 @@ pub enum SendStreamingMessageOutcome {
     Continued {
         /// Actual response returned by this branch.
         response: SendStreamingMessageResponse,
+        /// The `a2a.tasks.MessageStreamResponse` this outcome publishes.
+        message_stream_response: MessageStreamResponse,
     },
     /// `direct-message` — externally decided (the agent answers with a message and creates no task).
     DirectMessage {
         /// Actual response returned by this branch.
         response: SendStreamingMessageResponse,
+        /// The `a2a.tasks.MessageStreamResponse` this outcome publishes.
+        message_stream_response: MessageStreamResponse,
     },
     /// `task-created` — otherwise.
     ///
@@ -1557,6 +1595,8 @@ pub enum SendStreamingMessageOutcome {
         response: SendStreamingMessageResponse,
         /// The `a2a.tasks.TaskCreated` this outcome publishes.
         task_created: TaskCreated,
+        /// The `a2a.tasks.MessageStreamResponse` this outcome publishes.
+        message_stream_response: MessageStreamResponse,
     },
     /// `version-not-supported` — externally decided (the A2A-Version service parameter names a version the agent does not support).
     VersionNotSupported {
@@ -1573,6 +1613,25 @@ pub enum SendStreamingMessageOutcome {
         /// Why it was refused: `a2a.tasks.UnsupportedOperation`.
         error: UnsupportedOperation,
     },
+}
+
+impl SendStreamingMessageOutcome {
+    /// Compare the actual returned response with response-mapped emitted fields.
+    pub fn response_payload_matches(&self) -> bool {
+        match self {
+            Self::TaskNotFound { .. } => true,
+            Self::TaskTerminal { .. } => true,
+            Self::ContextMismatch { .. } => true,
+            Self::ContextNotAccepted { .. } => true,
+            Self::ContentTypeNotSupported { .. } => true,
+            Self::Continued { response, message_stream_response, .. } => message_stream_response.task == response.task.clone() && message_stream_response.message == response.reply.clone(),
+            Self::DirectMessage { response, message_stream_response, .. } => message_stream_response.task == response.task.clone() && message_stream_response.message == response.reply.clone(),
+            Self::TaskCreated { response, message_stream_response, .. } => message_stream_response.task == response.task.clone() && message_stream_response.message == response.reply.clone(),
+            Self::VersionNotSupported { .. } => true,
+            Self::ExtensionRequired { .. } => true,
+            Self::StreamingNotSupported { .. } => true,
+        }
+    }
 }
 
 /// Start working — the input of `a2a.tasks.StartWorking`.
@@ -1707,6 +1766,21 @@ pub enum UpdateArtifactOutcome {
     },
 }
 
+/// Message stream response — the event `a2a.tasks.MessageStreamResponse`.
+///
+/// One element of the stream SendStreamingMessage answers with (proto StreamResponse; A2A v1.0.1 sections 3.1.2 and 3.2.3).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MessageStreamResponse {
+    /// `task` — `Optional<a2a.tasks.TaskSnapshot>`.
+    pub task: Option<TaskSnapshot>,
+    /// `message` — `Optional<a2a.tasks.Message>`.
+    pub message: Option<Message>,
+    /// `status_update` — `Optional<a2a.tasks.TaskStatusUpdateEvent>`.
+    pub status_update: Option<TaskStatusUpdateEvent>,
+    /// `artifact_update` — `Optional<a2a.tasks.TaskArtifactUpdateEvent>`.
+    pub artifact_update: Option<TaskArtifactUpdateEvent>,
+}
+
 /// PushNotificationConfigCreated — the event `a2a.tasks.PushNotificationConfigCreated`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushNotificationConfigCreated {
@@ -1762,6 +1836,21 @@ pub struct TaskStatusUpdated {
     pub context_id: ContextId,
     /// `status` — `a2a.tasks.TaskStatus`.
     pub status: TaskStatus,
+}
+
+/// Task subscription response — the event `a2a.tasks.TaskSubscriptionResponse`.
+///
+/// One element of the stream SubscribeToTask answers with (proto StreamResponse; A2A v1.0.1 sections 3.1.6 and 3.2.3).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TaskSubscriptionResponse {
+    /// `task` — `Optional<a2a.tasks.TaskSnapshot>`.
+    pub task: Option<TaskSnapshot>,
+    /// `message` — `Optional<a2a.tasks.Message>`.
+    pub message: Option<Message>,
+    /// `status_update` — `Optional<a2a.tasks.TaskStatusUpdateEvent>`.
+    pub status_update: Option<TaskStatusUpdateEvent>,
+    /// `artifact_update` — `Optional<a2a.tasks.TaskArtifactUpdateEvent>`.
+    pub artifact_update: Option<TaskArtifactUpdateEvent>,
 }
 
 /// The declared error `a2a.tasks.ContentTypeNotSupported`.
@@ -2079,7 +2168,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.SendStreamingMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it); `direct-message` externally decided (the agent answers with a message and creates no task); `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`.
+    /// Contract: given `a2a.tasks.SendStreamingMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it), emits `a2a.tasks.MessageStreamResponse`; `direct-message` externally decided (the agent answers with a message and creates no task), emits `a2a.tasks.MessageStreamResponse`; `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`, emits `a2a.tasks.MessageStreamResponse`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`.
     pub trait SendStreamingMessageBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.SendStreamingMessage`.
         ///

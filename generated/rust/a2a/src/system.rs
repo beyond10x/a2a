@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d4cf404c98ec99676cdd8fe8e411c38768d3acb9560e07676018a3ce6a70e28d
-// contract digest f51f3ef221113fd930cbd423a63039558132d9f28674116bc714692bd0a5ad44
+// model digest 19f81099dbb59817313f63273ff10776f7d98070eb5de7dda53e5d67514ef5bf
+// contract digest b81ca6ca77a699d33385c2f8b48b31221205b1879fc0f96d44d1a695ab4bff58
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! The `a2a` system, v1: its components assembled, its bindings wired, and its one transport.
@@ -19,6 +19,8 @@
 /// escalates into.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SystemEvent {
+    /// `a2a.tasks.MessageStreamResponse`.
+    MessageStreamResponse(crate::tasks::MessageStreamResponse),
     /// `a2a.tasks.PushNotificationConfigCreated`.
     PushNotificationConfigCreated(crate::tasks::PushNotificationConfigCreated),
     /// `a2a.tasks.PushNotificationConfigDeleted`.
@@ -29,17 +31,21 @@ pub enum SystemEvent {
     TaskCreated(crate::tasks::TaskCreated),
     /// `a2a.tasks.TaskStatusUpdated`.
     TaskStatusUpdated(crate::tasks::TaskStatusUpdated),
+    /// `a2a.tasks.TaskSubscriptionResponse`.
+    TaskSubscriptionResponse(crate::tasks::TaskSubscriptionResponse),
 }
 
 impl SystemEvent {
     /// The qualified name the specification declares this event under.
     pub fn name(&self) -> &'static str {
         match self {
+            Self::MessageStreamResponse(_) => "a2a.tasks.MessageStreamResponse",
             Self::PushNotificationConfigCreated(_) => "a2a.tasks.PushNotificationConfigCreated",
             Self::PushNotificationConfigDeleted(_) => "a2a.tasks.PushNotificationConfigDeleted",
             Self::TaskArtifactUpdated(_) => "a2a.tasks.TaskArtifactUpdated",
             Self::TaskCreated(_) => "a2a.tasks.TaskCreated",
             Self::TaskStatusUpdated(_) => "a2a.tasks.TaskStatusUpdated",
+            Self::TaskSubscriptionResponse(_) => "a2a.tasks.TaskSubscriptionResponse",
         }
     }
 }
@@ -47,11 +53,13 @@ impl SystemEvent {
 impl From<crate::ports::a2a_agent::PublishedEvent> for SystemEvent {
     fn from(event: crate::ports::a2a_agent::PublishedEvent) -> Self {
         match event {
+            crate::ports::a2a_agent::PublishedEvent::MessageStreamResponse(event) => Self::MessageStreamResponse(event),
             crate::ports::a2a_agent::PublishedEvent::PushNotificationConfigCreated(event) => Self::PushNotificationConfigCreated(event),
             crate::ports::a2a_agent::PublishedEvent::PushNotificationConfigDeleted(event) => Self::PushNotificationConfigDeleted(event),
             crate::ports::a2a_agent::PublishedEvent::TaskArtifactUpdated(event) => Self::TaskArtifactUpdated(event),
             crate::ports::a2a_agent::PublishedEvent::TaskCreated(event) => Self::TaskCreated(event),
             crate::ports::a2a_agent::PublishedEvent::TaskStatusUpdated(event) => Self::TaskStatusUpdated(event),
+            crate::ports::a2a_agent::PublishedEvent::TaskSubscriptionResponse(event) => Self::TaskSubscriptionResponse(event),
         }
     }
 }
