@@ -12,6 +12,10 @@ under `[Unreleased]` until the next release.
 
 - The documentation site uses `@beyond10x/docs-system` 0.12.0 with `product: 'a2a'`: the A2A
   mark and signature hue, a generated favicon, and `.nojekyll` in the build.
+- ESS pinned to 0.69.2 (`ess/ess-inputs.yaml`, the `check` and `pages` workflows), and
+  `generated/rust/a2a` resynthesized: its public types are unchanged; `json` gains `parse_written`
+  and `admitted`, the `server` feature reads its own answers back at any depth instead of panicking,
+  and the crate's dependency requirements are caret ranges instead of exact versions.
 
 ## [0.3.0] - 2026-10-22
 

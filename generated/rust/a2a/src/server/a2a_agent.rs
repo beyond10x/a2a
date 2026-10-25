@@ -395,13 +395,24 @@ where
 /// as — is none, or is an actor the specification does not grant the command; checked before
 /// the command runs (the route's `403`).
 /// A view some actor's grant names answers the same refusal, checked before it is read.
+///
+/// `input` is held to what the route's reader admits: nested no deeper, every number spelled
+/// as JSON spells one, or [`entry::Refused::Input`]. The answer is read back at any depth; one holding a
+/// `Json` value the realization built with a number JSON does not spell is not JSON, and is
+/// [`entry::Refused::Undelivered`] for a command, whose effect stands, and [`entry::Refused::Unmet`]
+/// for a view.
 pub fn handle<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, caller: Option<&crate::actor::Caller>, name: &str, input: json::Value) -> Result<json::Value, entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    let checked = |input: &json::Value| {
+        json::admitted(input).map_err(|expected| {
+            entry::Refused::Input(format!("the input is not JSON: expected {expected}"))
+        })
+    };
     let answered = match name {
         "a2a.discovery.GetExtendedAgentCard" => match admit(caller, "a2a.discovery.GetExtendedAgentCard") {
-            Ok(()) => run_a2a_discovery_get_extended_agent_card(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_discovery_get_extended_agent_card(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.AllTasks" => match admit_read(caller, "a2a.tasks.AllTasks") {
@@ -409,35 +420,35 @@ where
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.CancelTask" => match admit(caller, "a2a.tasks.CancelTask") {
-            Ok(()) => run_a2a_tasks_cancel_task(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_cancel_task(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.CompleteTask" => match admit(caller, "a2a.tasks.CompleteTask") {
-            Ok(()) => run_a2a_tasks_complete_task(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_complete_task(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.CreateTaskPushNotificationConfig" => match admit(caller, "a2a.tasks.CreateTaskPushNotificationConfig") {
-            Ok(()) => run_a2a_tasks_create_task_push_notification_config(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_create_task_push_notification_config(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.DeleteTaskPushNotificationConfig" => match admit(caller, "a2a.tasks.DeleteTaskPushNotificationConfig") {
-            Ok(()) => run_a2a_tasks_delete_task_push_notification_config(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_delete_task_push_notification_config(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.FailTask" => match admit(caller, "a2a.tasks.FailTask") {
-            Ok(()) => run_a2a_tasks_fail_task(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_fail_task(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.GetTask" => match admit(caller, "a2a.tasks.GetTask") {
-            Ok(()) => run_a2a_tasks_get_task(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_get_task(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.GetTaskPushNotificationConfig" => match admit(caller, "a2a.tasks.GetTaskPushNotificationConfig") {
-            Ok(()) => run_a2a_tasks_get_task_push_notification_config(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_get_task_push_notification_config(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.ListTaskPushNotificationConfigs" => match admit(caller, "a2a.tasks.ListTaskPushNotificationConfigs") {
-            Ok(()) => run_a2a_tasks_list_task_push_notification_configs(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_list_task_push_notification_configs(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.PushNotificationConfigs" => match admit_read(caller, "a2a.tasks.PushNotificationConfigs") {
@@ -445,49 +456,59 @@ where
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.RejectTask" => match admit(caller, "a2a.tasks.RejectTask") {
-            Ok(()) => run_a2a_tasks_reject_task(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_reject_task(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.RequireAuth" => match admit(caller, "a2a.tasks.RequireAuth") {
-            Ok(()) => run_a2a_tasks_require_auth(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_require_auth(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.RequireInput" => match admit(caller, "a2a.tasks.RequireInput") {
-            Ok(()) => run_a2a_tasks_require_input(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_require_input(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.SendMessage" => match admit(caller, "a2a.tasks.SendMessage") {
-            Ok(()) => run_a2a_tasks_send_message(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_send_message(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.SendStreamingMessage" => match admit(caller, "a2a.tasks.SendStreamingMessage") {
-            Ok(()) => run_a2a_tasks_send_streaming_message(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_send_streaming_message(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.StartWorking" => match admit(caller, "a2a.tasks.StartWorking") {
-            Ok(()) => run_a2a_tasks_start_working(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_start_working(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.SubscribeToTask" => match admit(caller, "a2a.tasks.SubscribeToTask") {
-            Ok(()) => run_a2a_tasks_subscribe_to_task(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_subscribe_to_task(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.TaskPushNotificationConfigs" => match admit_read(caller, "a2a.tasks.TaskPushNotificationConfigs") {
-            Ok(()) => run_a2a_tasks_task_push_notification_configs(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_task_push_notification_configs(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.Tasks" => match admit_read(caller, "a2a.tasks.Tasks") {
-            Ok(()) => run_a2a_tasks_tasks(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_tasks(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.UpdateArtifact" => match admit(caller, "a2a.tasks.UpdateArtifact") {
-            Ok(()) => run_a2a_tasks_update_artifact(system, &input),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_update_artifact(system, &input)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         other => return Err(entry::Refused::Unknown(other.to_owned())),
     };
     let (_, body) = answered?;
-    Ok(entry::read(&body))
+    entry::read(&body).map_err(|error| {
+        if matches!(name, "a2a.discovery.GetExtendedAgentCard" | "a2a.tasks.CancelTask" | "a2a.tasks.CompleteTask" | "a2a.tasks.CreateTaskPushNotificationConfig" | "a2a.tasks.DeleteTaskPushNotificationConfig" | "a2a.tasks.FailTask" | "a2a.tasks.GetTask" | "a2a.tasks.GetTaskPushNotificationConfig" | "a2a.tasks.ListTaskPushNotificationConfigs" | "a2a.tasks.RejectTask" | "a2a.tasks.RequireAuth" | "a2a.tasks.RequireInput" | "a2a.tasks.SendMessage" | "a2a.tasks.SendStreamingMessage" | "a2a.tasks.StartWorking" | "a2a.tasks.SubscribeToTask" | "a2a.tasks.UpdateArtifact") {
+            entry::Refused::Undelivered(format!(
+                "delivering what the command published: its answer is not JSON this surface reads back: {error}"
+            ))
+        } else {
+            entry::Refused::Unmet(format!(
+                "unmet obligation: view_query `{name}` answered rows this surface cannot read back: {error}"
+            ))
+        }
+    })
 }
 
 /// Nothing, where `caller` may invoke `command`; otherwise the actor the standard refusal names,

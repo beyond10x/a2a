@@ -13,9 +13,9 @@ edition = "2021"
 server = ["dep:clap", "dep:uuid", "dep:time"]
 
 [dependencies]
-clap = { version = "=4.6.7", features = ["derive"], optional = true }
-uuid = { version = "=1.26.1", features = ["v4"], optional = true }
-time = { version = "=0.3.45", features = ["formatting"], optional = true }
+clap = { version = "^4.6.7", features = ["derive"], optional = true }
+uuid = { version = "^1.26.1", features = ["v4"], optional = true }
+time = { version = "^0.3.45", features = ["formatting"], optional = true }
 
 [[bin]]
 name = "a2a-agent-server"
