@@ -86,6 +86,12 @@ pub fn encode_a2a_discovery_agent_capabilities(value: &crate::discovery::AgentCa
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_agent_capabilities(value: &json::Value, at: &str) -> Result<crate::discovery::AgentCapabilities, json::DecodeError> {
+    if let Some(found) = value.member("push_notifications") {
+        return Err(json::DecodeError::of(&json::nested(at, "push_notifications"), "no member: `push_notifications` is sent as `pushNotifications`", found));
+    }
+    if let Some(found) = value.member("extended_agent_card") {
+        return Err(json::DecodeError::of(&json::nested(at, "extended_agent_card"), "no member: `extended_agent_card` is sent as `extendedAgentCard`", found));
+    }
     Ok(crate::discovery::AgentCapabilities {
         streaming: match value.member("streaming") {
             None | Some(json::Value::Null) => None,
@@ -228,6 +234,27 @@ pub fn encode_a2a_discovery_agent_card(value: &crate::discovery::AgentCard, out:
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_agent_card(value: &json::Value, at: &str) -> Result<crate::discovery::AgentCard, json::DecodeError> {
+    if let Some(found) = value.member("supported_interfaces") {
+        return Err(json::DecodeError::of(&json::nested(at, "supported_interfaces"), "no member: `supported_interfaces` is sent as `supportedInterfaces`", found));
+    }
+    if let Some(found) = value.member("documentation_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "documentation_url"), "no member: `documentation_url` is sent as `documentationUrl`", found));
+    }
+    if let Some(found) = value.member("security_schemes") {
+        return Err(json::DecodeError::of(&json::nested(at, "security_schemes"), "no member: `security_schemes` is sent as `securitySchemes`", found));
+    }
+    if let Some(found) = value.member("security_requirements") {
+        return Err(json::DecodeError::of(&json::nested(at, "security_requirements"), "no member: `security_requirements` is sent as `securityRequirements`", found));
+    }
+    if let Some(found) = value.member("default_input_modes") {
+        return Err(json::DecodeError::of(&json::nested(at, "default_input_modes"), "no member: `default_input_modes` is sent as `defaultInputModes`", found));
+    }
+    if let Some(found) = value.member("default_output_modes") {
+        return Err(json::DecodeError::of(&json::nested(at, "default_output_modes"), "no member: `default_output_modes` is sent as `defaultOutputModes`", found));
+    }
+    if let Some(found) = value.member("icon_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "icon_url"), "no member: `icon_url` is sent as `iconUrl`", found));
+    }
     Ok(crate::discovery::AgentCard {
         name: {
             let at0 = json::nested(at, "name");
@@ -486,6 +513,12 @@ pub fn encode_a2a_discovery_agent_interface(value: &crate::discovery::AgentInter
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_agent_interface(value: &json::Value, at: &str) -> Result<crate::discovery::AgentInterface, json::DecodeError> {
+    if let Some(found) = value.member("protocol_binding") {
+        return Err(json::DecodeError::of(&json::nested(at, "protocol_binding"), "no member: `protocol_binding` is sent as `protocolBinding`", found));
+    }
+    if let Some(found) = value.member("protocol_version") {
+        return Err(json::DecodeError::of(&json::nested(at, "protocol_version"), "no member: `protocol_version` is sent as `protocolVersion`", found));
+    }
     Ok(crate::discovery::AgentInterface {
         url: {
             let at0 = json::nested(at, "url");
@@ -613,6 +646,15 @@ pub fn encode_a2a_discovery_agent_skill(value: &crate::discovery::AgentSkill, ou
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_agent_skill(value: &json::Value, at: &str) -> Result<crate::discovery::AgentSkill, json::DecodeError> {
+    if let Some(found) = value.member("input_modes") {
+        return Err(json::DecodeError::of(&json::nested(at, "input_modes"), "no member: `input_modes` is sent as `inputModes`", found));
+    }
+    if let Some(found) = value.member("output_modes") {
+        return Err(json::DecodeError::of(&json::nested(at, "output_modes"), "no member: `output_modes` is sent as `outputModes`", found));
+    }
+    if let Some(found) = value.member("security_requirements") {
+        return Err(json::DecodeError::of(&json::nested(at, "security_requirements"), "no member: `security_requirements` is sent as `securityRequirements`", found));
+    }
     Ok(crate::discovery::AgentSkill {
         id: {
             let at0 = json::nested(at, "id");
@@ -735,6 +777,18 @@ pub fn encode_a2a_discovery_authorization_code_o_auth_flow(value: &crate::discov
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_authorization_code_o_auth_flow(value: &json::Value, at: &str) -> Result<crate::discovery::AuthorizationCodeOAuthFlow, json::DecodeError> {
+    if let Some(found) = value.member("authorization_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "authorization_url"), "no member: `authorization_url` is sent as `authorizationUrl`", found));
+    }
+    if let Some(found) = value.member("token_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "token_url"), "no member: `token_url` is sent as `tokenUrl`", found));
+    }
+    if let Some(found) = value.member("refresh_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "refresh_url"), "no member: `refresh_url` is sent as `refreshUrl`", found));
+    }
+    if let Some(found) = value.member("pkce_required") {
+        return Err(json::DecodeError::of(&json::nested(at, "pkce_required"), "no member: `pkce_required` is sent as `pkceRequired`", found));
+    }
     Ok(crate::discovery::AuthorizationCodeOAuthFlow {
         authorization_url: {
             let at0 = json::nested(at, "authorizationUrl");
@@ -804,6 +858,12 @@ pub fn encode_a2a_discovery_client_credentials_o_auth_flow(value: &crate::discov
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_client_credentials_o_auth_flow(value: &json::Value, at: &str) -> Result<crate::discovery::ClientCredentialsOAuthFlow, json::DecodeError> {
+    if let Some(found) = value.member("token_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "token_url"), "no member: `token_url` is sent as `tokenUrl`", found));
+    }
+    if let Some(found) = value.member("refresh_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "refresh_url"), "no member: `refresh_url` is sent as `refreshUrl`", found));
+    }
     Ok(crate::discovery::ClientCredentialsOAuthFlow {
         token_url: {
             let at0 = json::nested(at, "tokenUrl");
@@ -863,6 +923,15 @@ pub fn encode_a2a_discovery_device_code_o_auth_flow(value: &crate::discovery::De
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_device_code_o_auth_flow(value: &json::Value, at: &str) -> Result<crate::discovery::DeviceCodeOAuthFlow, json::DecodeError> {
+    if let Some(found) = value.member("device_authorization_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "device_authorization_url"), "no member: `device_authorization_url` is sent as `deviceAuthorizationUrl`", found));
+    }
+    if let Some(found) = value.member("token_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "token_url"), "no member: `token_url` is sent as `tokenUrl`", found));
+    }
+    if let Some(found) = value.member("refresh_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "refresh_url"), "no member: `refresh_url` is sent as `refreshUrl`", found));
+    }
     Ok(crate::discovery::DeviceCodeOAuthFlow {
         device_authorization_url: {
             let at0 = json::nested(at, "deviceAuthorizationUrl");
@@ -918,6 +987,9 @@ pub fn encode_a2a_discovery_h_t_t_p_auth_security_scheme(value: &crate::discover
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_h_t_t_p_auth_security_scheme(value: &json::Value, at: &str) -> Result<crate::discovery::HTTPAuthSecurityScheme, json::DecodeError> {
+    if let Some(found) = value.member("bearer_format") {
+        return Err(json::DecodeError::of(&json::nested(at, "bearer_format"), "no member: `bearer_format` is sent as `bearerFormat`", found));
+    }
     Ok(crate::discovery::HTTPAuthSecurityScheme {
         description: match value.member("description") {
             None | Some(json::Value::Null) => None,
@@ -974,6 +1046,12 @@ pub fn encode_a2a_discovery_implicit_o_auth_flow(value: &crate::discovery::Impli
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_implicit_o_auth_flow(value: &json::Value, at: &str) -> Result<crate::discovery::ImplicitOAuthFlow, json::DecodeError> {
+    if let Some(found) = value.member("authorization_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "authorization_url"), "no member: `authorization_url` is sent as `authorizationUrl`", found));
+    }
+    if let Some(found) = value.member("refresh_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "refresh_url"), "no member: `refresh_url` is sent as `refreshUrl`", found));
+    }
     Ok(crate::discovery::ImplicitOAuthFlow {
         authorization_url: match value.member("authorizationUrl") {
             None | Some(json::Value::Null) => None,
@@ -1055,6 +1133,9 @@ pub fn encode_a2a_discovery_o_auth2_security_scheme(value: &crate::discovery::OA
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_o_auth2_security_scheme(value: &json::Value, at: &str) -> Result<crate::discovery::OAuth2SecurityScheme, json::DecodeError> {
+    if let Some(found) = value.member("oauth2_metadata_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "oauth2_metadata_url"), "no member: `oauth2_metadata_url` is sent as `oauth2MetadataUrl`", found));
+    }
     Ok(crate::discovery::OAuth2SecurityScheme {
         description: match value.member("description") {
             None | Some(json::Value::Null) => None,
@@ -1110,6 +1191,15 @@ pub fn encode_a2a_discovery_o_auth_flows(value: &crate::discovery::OAuthFlows, o
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_o_auth_flows(value: &json::Value, at: &str) -> Result<crate::discovery::OAuthFlows, json::DecodeError> {
+    if let Some(found) = value.member("authorization_code") {
+        return Err(json::DecodeError::of(&json::nested(at, "authorization_code"), "no member: `authorization_code` is sent as `authorizationCode`", found));
+    }
+    if let Some(found) = value.member("client_credentials") {
+        return Err(json::DecodeError::of(&json::nested(at, "client_credentials"), "no member: `client_credentials` is sent as `clientCredentials`", found));
+    }
+    if let Some(found) = value.member("device_code") {
+        return Err(json::DecodeError::of(&json::nested(at, "device_code"), "no member: `device_code` is sent as `deviceCode`", found));
+    }
     Ok(crate::discovery::OAuthFlows {
         authorization_code: match value.member("authorizationCode") {
             None | Some(json::Value::Null) => None,
@@ -1167,6 +1257,9 @@ pub fn encode_a2a_discovery_open_id_connect_security_scheme(value: &crate::disco
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_open_id_connect_security_scheme(value: &json::Value, at: &str) -> Result<crate::discovery::OpenIdConnectSecurityScheme, json::DecodeError> {
+    if let Some(found) = value.member("open_id_connect_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "open_id_connect_url"), "no member: `open_id_connect_url` is sent as `openIdConnectUrl`", found));
+    }
     Ok(crate::discovery::OpenIdConnectSecurityScheme {
         description: match value.member("description") {
             None | Some(json::Value::Null) => None,
@@ -1216,6 +1309,12 @@ pub fn encode_a2a_discovery_password_o_auth_flow(value: &crate::discovery::Passw
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_password_o_auth_flow(value: &json::Value, at: &str) -> Result<crate::discovery::PasswordOAuthFlow, json::DecodeError> {
+    if let Some(found) = value.member("token_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "token_url"), "no member: `token_url` is sent as `tokenUrl`", found));
+    }
+    if let Some(found) = value.member("refresh_url") {
+        return Err(json::DecodeError::of(&json::nested(at, "refresh_url"), "no member: `refresh_url` is sent as `refreshUrl`", found));
+    }
     Ok(crate::discovery::PasswordOAuthFlow {
         token_url: match value.member("tokenUrl") {
             None | Some(json::Value::Null) => None,
@@ -1319,6 +1418,21 @@ pub fn encode_a2a_discovery_security_scheme(value: &crate::discovery::SecuritySc
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_discovery_security_scheme(value: &json::Value, at: &str) -> Result<crate::discovery::SecurityScheme, json::DecodeError> {
+    if let Some(found) = value.member("api_key_security_scheme") {
+        return Err(json::DecodeError::of(&json::nested(at, "api_key_security_scheme"), "no member: `api_key_security_scheme` is sent as `apiKeySecurityScheme`", found));
+    }
+    if let Some(found) = value.member("http_auth_security_scheme") {
+        return Err(json::DecodeError::of(&json::nested(at, "http_auth_security_scheme"), "no member: `http_auth_security_scheme` is sent as `httpAuthSecurityScheme`", found));
+    }
+    if let Some(found) = value.member("oauth2_security_scheme") {
+        return Err(json::DecodeError::of(&json::nested(at, "oauth2_security_scheme"), "no member: `oauth2_security_scheme` is sent as `oauth2SecurityScheme`", found));
+    }
+    if let Some(found) = value.member("open_id_connect_security_scheme") {
+        return Err(json::DecodeError::of(&json::nested(at, "open_id_connect_security_scheme"), "no member: `open_id_connect_security_scheme` is sent as `openIdConnectSecurityScheme`", found));
+    }
+    if let Some(found) = value.member("mtls_security_scheme") {
+        return Err(json::DecodeError::of(&json::nested(at, "mtls_security_scheme"), "no member: `mtls_security_scheme` is sent as `mtlsSecurityScheme`", found));
+    }
     Ok(crate::discovery::SecurityScheme {
         api_key_security_scheme: match value.member("apiKeySecurityScheme") {
             None | Some(json::Value::Null) => None,
@@ -1441,6 +1555,9 @@ pub fn encode_a2a_tasks_artifact(value: &crate::tasks::Artifact, out: &mut Strin
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_tasks_artifact(value: &json::Value, at: &str) -> Result<crate::tasks::Artifact, json::DecodeError> {
+    if let Some(found) = value.member("artifact_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "artifact_id"), "no member: `artifact_id` is sent as `artifactId`", found));
+    }
     Ok(crate::tasks::Artifact {
         artifact_id: {
             let at0 = json::nested(at, "artifactId");
@@ -1604,6 +1721,18 @@ pub fn encode_a2a_tasks_message(value: &crate::tasks::Message, out: &mut String)
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_tasks_message(value: &json::Value, at: &str) -> Result<crate::tasks::Message, json::DecodeError> {
+    if let Some(found) = value.member("message_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "message_id"), "no member: `message_id` is sent as `messageId`", found));
+    }
+    if let Some(found) = value.member("context_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "context_id"), "no member: `context_id` is sent as `contextId`", found));
+    }
+    if let Some(found) = value.member("task_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_id"), "no member: `task_id` is sent as `taskId`", found));
+    }
+    if let Some(found) = value.member("reference_task_ids") {
+        return Err(json::DecodeError::of(&json::nested(at, "reference_task_ids"), "no member: `reference_task_ids` is sent as `referenceTaskIds`", found));
+    }
     Ok(crate::tasks::Message {
         message_id: {
             let at0 = json::nested(at, "messageId");
@@ -1719,6 +1848,9 @@ pub fn encode_a2a_tasks_part(value: &crate::tasks::Part, out: &mut String) {
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_tasks_part(value: &json::Value, at: &str) -> Result<crate::tasks::Part, json::DecodeError> {
+    if let Some(found) = value.member("media_type") {
+        return Err(json::DecodeError::of(&json::nested(at, "media_type"), "no member: `media_type` is sent as `mediaType`", found));
+    }
     Ok(crate::tasks::Part {
         text: match value.member("text") {
             None | Some(json::Value::Null) => None,
@@ -1875,6 +2007,18 @@ pub fn encode_a2a_tasks_send_message_configuration(value: &crate::tasks::SendMes
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_tasks_send_message_configuration(value: &json::Value, at: &str) -> Result<crate::tasks::SendMessageConfiguration, json::DecodeError> {
+    if let Some(found) = value.member("accepted_output_modes") {
+        return Err(json::DecodeError::of(&json::nested(at, "accepted_output_modes"), "no member: `accepted_output_modes` is sent as `acceptedOutputModes`", found));
+    }
+    if let Some(found) = value.member("task_push_notification_config") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_push_notification_config"), "no member: `task_push_notification_config` is sent as `taskPushNotificationConfig`", found));
+    }
+    if let Some(found) = value.member("history_length") {
+        return Err(json::DecodeError::of(&json::nested(at, "history_length"), "no member: `history_length` is sent as `historyLength`", found));
+    }
+    if let Some(found) = value.member("return_immediately") {
+        return Err(json::DecodeError::of(&json::nested(at, "return_immediately"), "no member: `return_immediately` is sent as `returnImmediately`", found));
+    }
     Ok(crate::tasks::SendMessageConfiguration {
         accepted_output_modes: match value.member("acceptedOutputModes") {
             None | Some(json::Value::Null) => None,
@@ -1977,6 +2121,15 @@ pub fn encode_a2a_tasks_task_artifact_update_event(value: &crate::tasks::TaskArt
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_tasks_task_artifact_update_event(value: &json::Value, at: &str) -> Result<crate::tasks::TaskArtifactUpdateEvent, json::DecodeError> {
+    if let Some(found) = value.member("task_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_id"), "no member: `task_id` is sent as `taskId`", found));
+    }
+    if let Some(found) = value.member("context_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "context_id"), "no member: `context_id` is sent as `contextId`", found));
+    }
+    if let Some(found) = value.member("last_chunk") {
+        return Err(json::DecodeError::of(&json::nested(at, "last_chunk"), "no member: `last_chunk` is sent as `lastChunk`", found));
+    }
     Ok(crate::tasks::TaskArtifactUpdateEvent {
         task_id: {
             let at0 = json::nested(at, "taskId");
@@ -2065,6 +2218,9 @@ pub fn encode_a2a_tasks_task_push_notification_config(value: &crate::tasks::Task
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_tasks_task_push_notification_config(value: &json::Value, at: &str) -> Result<crate::tasks::TaskPushNotificationConfig, json::DecodeError> {
+    if let Some(found) = value.member("task_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_id"), "no member: `task_id` is sent as `taskId`", found));
+    }
     Ok(crate::tasks::TaskPushNotificationConfig {
         tenant: match value.member("tenant") {
             None | Some(json::Value::Null) => None,
@@ -2155,6 +2311,9 @@ pub fn encode_a2a_tasks_task_snapshot(value: &crate::tasks::TaskSnapshot, out: &
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_tasks_task_snapshot(value: &json::Value, at: &str) -> Result<crate::tasks::TaskSnapshot, json::DecodeError> {
+    if let Some(found) = value.member("context_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "context_id"), "no member: `context_id` is sent as `contextId`", found));
+    }
     Ok(crate::tasks::TaskSnapshot {
         id: {
             let at0 = json::nested(at, "id");
@@ -2311,6 +2470,12 @@ pub fn encode_a2a_tasks_task_status_update_event(value: &crate::tasks::TaskStatu
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_a2a_tasks_task_status_update_event(value: &json::Value, at: &str) -> Result<crate::tasks::TaskStatusUpdateEvent, json::DecodeError> {
+    if let Some(found) = value.member("task_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_id"), "no member: `task_id` is sent as `taskId`", found));
+    }
+    if let Some(found) = value.member("context_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "context_id"), "no member: `context_id` is sent as `contextId`", found));
+    }
     Ok(crate::tasks::TaskStatusUpdateEvent {
         task_id: {
             let at0 = json::nested(at, "taskId");
@@ -2359,6 +2524,50 @@ pub fn encode_event_a2a_tasks_message_stream_response(value: &crate::tasks::Mess
     out.push('}');
 }
 
+/// Reads the event `a2a.tasks.MessageStreamResponse` from JSON, the payload [`encode_event_a2a_tasks_message_stream_response`] writes.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_event_a2a_tasks_message_stream_response(value: &json::Value, at: &str) -> Result<crate::tasks::MessageStreamResponse, json::DecodeError> {
+    if let Some(found) = value.member("status_update") {
+        return Err(json::DecodeError::of(&json::nested(at, "status_update"), "no member: `status_update` is sent as `statusUpdate`", found));
+    }
+    if let Some(found) = value.member("artifact_update") {
+        return Err(json::DecodeError::of(&json::nested(at, "artifact_update"), "no member: `artifact_update` is sent as `artifactUpdate`", found));
+    }
+    Ok(crate::tasks::MessageStreamResponse {
+        task: match value.member("task") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "task");
+                Some(decode_a2a_tasks_task_snapshot(member0, &at0)?)
+            }
+        },
+        message: match value.member("message") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "message");
+                Some(decode_a2a_tasks_message(member1, &at1)?)
+            }
+        },
+        status_update: match value.member("statusUpdate") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "statusUpdate");
+                Some(decode_a2a_tasks_task_status_update_event(member2, &at2)?)
+            }
+        },
+        artifact_update: match value.member("artifactUpdate") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "artifactUpdate");
+                Some(decode_a2a_tasks_task_artifact_update_event(member3, &at3)?)
+            }
+        },
+    })
+}
+
 /// Writes the event `a2a.tasks.PushNotificationConfigCreated` as JSON.
 pub fn encode_event_a2a_tasks_push_notification_config_created(value: &crate::tasks::PushNotificationConfigCreated, out: &mut String) {
     out.push('{');
@@ -2371,6 +2580,31 @@ pub fn encode_event_a2a_tasks_push_notification_config_created(value: &crate::ta
     out.push('}');
 }
 
+/// Reads the event `a2a.tasks.PushNotificationConfigCreated` from JSON, the payload [`encode_event_a2a_tasks_push_notification_config_created`] writes.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_event_a2a_tasks_push_notification_config_created(value: &json::Value, at: &str) -> Result<crate::tasks::PushNotificationConfigCreated, json::DecodeError> {
+    Ok(crate::tasks::PushNotificationConfigCreated {
+        row: {
+            let at0 = json::nested(at, "row");
+            let member0 = json::member_at(value, at, "row")?;
+            decode_a2a_tasks_push_notification_config_row(member0, &at0)?
+        },
+        config_id: {
+            let at1 = json::nested(at, "config_id");
+            let member1 = json::member_at(value, at, "config_id")?;
+            decode_a2a_tasks_push_notification_config_id(member1, &at1)?
+        },
+        task_id: {
+            let at2 = json::nested(at, "task_id");
+            let member2 = json::member_at(value, at, "task_id")?;
+            decode_a2a_tasks_task_id(member2, &at2)?
+        },
+    })
+}
+
 /// Writes the event `a2a.tasks.PushNotificationConfigDeleted` as JSON.
 pub fn encode_event_a2a_tasks_push_notification_config_deleted(value: &crate::tasks::PushNotificationConfigDeleted, out: &mut String) {
     out.push('{');
@@ -2379,6 +2613,26 @@ pub fn encode_event_a2a_tasks_push_notification_config_deleted(value: &crate::ta
     json::member(out, "task_id");
     encode_a2a_tasks_task_id(&value.task_id, out);
     out.push('}');
+}
+
+/// Reads the event `a2a.tasks.PushNotificationConfigDeleted` from JSON, the payload [`encode_event_a2a_tasks_push_notification_config_deleted`] writes.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_event_a2a_tasks_push_notification_config_deleted(value: &json::Value, at: &str) -> Result<crate::tasks::PushNotificationConfigDeleted, json::DecodeError> {
+    Ok(crate::tasks::PushNotificationConfigDeleted {
+        config_id: {
+            let at0 = json::nested(at, "config_id");
+            let member0 = json::member_at(value, at, "config_id")?;
+            decode_a2a_tasks_push_notification_config_id(member0, &at0)?
+        },
+        task_id: {
+            let at1 = json::nested(at, "task_id");
+            let member1 = json::member_at(value, at, "task_id")?;
+            decode_a2a_tasks_task_id(member1, &at1)?
+        },
+    })
 }
 
 /// Writes the event `a2a.tasks.TaskArtifactUpdated` as JSON.
@@ -2401,12 +2655,75 @@ pub fn encode_event_a2a_tasks_task_artifact_updated(value: &crate::tasks::TaskAr
     out.push('}');
 }
 
+/// Reads the event `a2a.tasks.TaskArtifactUpdated` from JSON, the payload [`encode_event_a2a_tasks_task_artifact_updated`] writes.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_event_a2a_tasks_task_artifact_updated(value: &json::Value, at: &str) -> Result<crate::tasks::TaskArtifactUpdated, json::DecodeError> {
+    if let Some(found) = value.member("task_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_id"), "no member: `task_id` is sent as `taskId`", found));
+    }
+    if let Some(found) = value.member("context_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "context_id"), "no member: `context_id` is sent as `contextId`", found));
+    }
+    if let Some(found) = value.member("last_chunk") {
+        return Err(json::DecodeError::of(&json::nested(at, "last_chunk"), "no member: `last_chunk` is sent as `lastChunk`", found));
+    }
+    Ok(crate::tasks::TaskArtifactUpdated {
+        task_id: {
+            let at0 = json::nested(at, "taskId");
+            let member0 = json::member_at(value, at, "taskId")?;
+            decode_a2a_tasks_task_id(member0, &at0)?
+        },
+        context_id: {
+            let at1 = json::nested(at, "contextId");
+            let member1 = json::member_at(value, at, "contextId")?;
+            decode_a2a_tasks_context_id(member1, &at1)?
+        },
+        artifact: {
+            let at2 = json::nested(at, "artifact");
+            let member2 = json::member_at(value, at, "artifact")?;
+            decode_a2a_tasks_artifact(member2, &at2)?
+        },
+        append: match value.member("append") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "append");
+                Some(json::bool_at(member3, &at3, "a boolean")?)
+            }
+        },
+        last_chunk: match value.member("lastChunk") {
+            None | Some(json::Value::Null) => None,
+            Some(member4) => {
+                let at4 = json::nested(at, "lastChunk");
+                Some(json::bool_at(member4, &at4, "a boolean")?)
+            }
+        },
+    })
+}
+
 /// Writes the event `a2a.tasks.TaskCreated` as JSON.
 pub fn encode_event_a2a_tasks_task_created(value: &crate::tasks::TaskCreated, out: &mut String) {
     out.push('{');
     json::member(out, "task_id");
     encode_a2a_tasks_task_id(&value.task_id, out);
     out.push('}');
+}
+
+/// Reads the event `a2a.tasks.TaskCreated` from JSON, the payload [`encode_event_a2a_tasks_task_created`] writes.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_event_a2a_tasks_task_created(value: &json::Value, at: &str) -> Result<crate::tasks::TaskCreated, json::DecodeError> {
+    Ok(crate::tasks::TaskCreated {
+        task_id: {
+            let at0 = json::nested(at, "task_id");
+            let member0 = json::member_at(value, at, "task_id")?;
+            decode_a2a_tasks_task_id(member0, &at0)?
+        },
+    })
 }
 
 /// Writes the event `a2a.tasks.TaskStatusUpdated` as JSON.
@@ -2419,6 +2736,31 @@ pub fn encode_event_a2a_tasks_task_status_updated(value: &crate::tasks::TaskStat
     json::member(out, "status");
     encode_a2a_tasks_task_status(&value.status, out);
     out.push('}');
+}
+
+/// Reads the event `a2a.tasks.TaskStatusUpdated` from JSON, the payload [`encode_event_a2a_tasks_task_status_updated`] writes.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_event_a2a_tasks_task_status_updated(value: &json::Value, at: &str) -> Result<crate::tasks::TaskStatusUpdated, json::DecodeError> {
+    Ok(crate::tasks::TaskStatusUpdated {
+        task_id: {
+            let at0 = json::nested(at, "task_id");
+            let member0 = json::member_at(value, at, "task_id")?;
+            decode_a2a_tasks_task_id(member0, &at0)?
+        },
+        context_id: {
+            let at1 = json::nested(at, "context_id");
+            let member1 = json::member_at(value, at, "context_id")?;
+            decode_a2a_tasks_context_id(member1, &at1)?
+        },
+        status: {
+            let at2 = json::nested(at, "status");
+            let member2 = json::member_at(value, at, "status")?;
+            decode_a2a_tasks_task_status(member2, &at2)?
+        },
+    })
 }
 
 /// Writes the event `a2a.tasks.TaskSubscriptionResponse` as JSON.
@@ -2441,6 +2783,50 @@ pub fn encode_event_a2a_tasks_task_subscription_response(value: &crate::tasks::T
         encode_a2a_tasks_task_artifact_update_event(&*held0, out);
     }
     out.push('}');
+}
+
+/// Reads the event `a2a.tasks.TaskSubscriptionResponse` from JSON, the payload [`encode_event_a2a_tasks_task_subscription_response`] writes.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] naming the path and what the declaration says belongs there.
+pub fn decode_event_a2a_tasks_task_subscription_response(value: &json::Value, at: &str) -> Result<crate::tasks::TaskSubscriptionResponse, json::DecodeError> {
+    if let Some(found) = value.member("status_update") {
+        return Err(json::DecodeError::of(&json::nested(at, "status_update"), "no member: `status_update` is sent as `statusUpdate`", found));
+    }
+    if let Some(found) = value.member("artifact_update") {
+        return Err(json::DecodeError::of(&json::nested(at, "artifact_update"), "no member: `artifact_update` is sent as `artifactUpdate`", found));
+    }
+    Ok(crate::tasks::TaskSubscriptionResponse {
+        task: match value.member("task") {
+            None | Some(json::Value::Null) => None,
+            Some(member0) => {
+                let at0 = json::nested(at, "task");
+                Some(decode_a2a_tasks_task_snapshot(member0, &at0)?)
+            }
+        },
+        message: match value.member("message") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "message");
+                Some(decode_a2a_tasks_message(member1, &at1)?)
+            }
+        },
+        status_update: match value.member("statusUpdate") {
+            None | Some(json::Value::Null) => None,
+            Some(member2) => {
+                let at2 = json::nested(at, "statusUpdate");
+                Some(decode_a2a_tasks_task_status_update_event(member2, &at2)?)
+            }
+        },
+        artifact_update: match value.member("artifactUpdate") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "artifactUpdate");
+                Some(decode_a2a_tasks_task_artifact_update_event(member3, &at3)?)
+            }
+        },
+    })
 }
 
 /// Writes the declared error `a2a.discovery.ExtendedAgentCardNotConfigured` as JSON.
@@ -3093,6 +3479,9 @@ pub fn encode_command_a2a_tasks_create_task_push_notification_config(value: &cra
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_command_a2a_tasks_create_task_push_notification_config(value: &json::Value, at: &str) -> Result<crate::tasks::CreateTaskPushNotificationConfig, json::DecodeError> {
+    if let Some(found) = value.member("task_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_id"), "no member: `task_id` is sent as `taskId`", found));
+    }
     Ok(crate::tasks::CreateTaskPushNotificationConfig {
         tenant: match value.member("tenant") {
             None | Some(json::Value::Null) => None,
@@ -3254,6 +3643,9 @@ pub fn encode_command_a2a_tasks_delete_task_push_notification_config(value: &cra
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_command_a2a_tasks_delete_task_push_notification_config(value: &json::Value, at: &str) -> Result<crate::tasks::DeleteTaskPushNotificationConfig, json::DecodeError> {
+    if let Some(found) = value.member("task_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_id"), "no member: `task_id` is sent as `taskId`", found));
+    }
     Ok(crate::tasks::DeleteTaskPushNotificationConfig {
         tenant: match value.member("tenant") {
             None | Some(json::Value::Null) => None,
@@ -3459,6 +3851,9 @@ pub fn encode_command_a2a_tasks_get_task(value: &crate::tasks::GetTask, out: &mu
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_command_a2a_tasks_get_task(value: &json::Value, at: &str) -> Result<crate::tasks::GetTask, json::DecodeError> {
+    if let Some(found) = value.member("history_length") {
+        return Err(json::DecodeError::of(&json::nested(at, "history_length"), "no member: `history_length` is sent as `historyLength`", found));
+    }
     Ok(crate::tasks::GetTask {
         tenant: match value.member("tenant") {
             None | Some(json::Value::Null) => None,
@@ -3568,6 +3963,9 @@ pub fn encode_command_a2a_tasks_get_task_push_notification_config(value: &crate:
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_command_a2a_tasks_get_task_push_notification_config(value: &json::Value, at: &str) -> Result<crate::tasks::GetTaskPushNotificationConfig, json::DecodeError> {
+    if let Some(found) = value.member("task_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_id"), "no member: `task_id` is sent as `taskId`", found));
+    }
     Ok(crate::tasks::GetTaskPushNotificationConfig {
         tenant: match value.member("tenant") {
             None | Some(json::Value::Null) => None,
@@ -3709,6 +4107,15 @@ pub fn encode_command_a2a_tasks_list_task_push_notification_configs(value: &crat
 ///
 /// [`json::DecodeError`] naming the path and what the declaration says belongs there.
 pub fn decode_command_a2a_tasks_list_task_push_notification_configs(value: &json::Value, at: &str) -> Result<crate::tasks::ListTaskPushNotificationConfigs, json::DecodeError> {
+    if let Some(found) = value.member("task_id") {
+        return Err(json::DecodeError::of(&json::nested(at, "task_id"), "no member: `task_id` is sent as `taskId`", found));
+    }
+    if let Some(found) = value.member("page_size") {
+        return Err(json::DecodeError::of(&json::nested(at, "page_size"), "no member: `page_size` is sent as `pageSize`", found));
+    }
+    if let Some(found) = value.member("page_token") {
+        return Err(json::DecodeError::of(&json::nested(at, "page_token"), "no member: `page_token` is sent as `pageToken`", found));
+    }
     Ok(crate::tasks::ListTaskPushNotificationConfigs {
         tenant: match value.member("tenant") {
             None | Some(json::Value::Null) => None,
@@ -4835,4 +5242,29 @@ pub fn encode_system_event(value: &crate::system::SystemEvent) -> String {
     }
     out.push('}');
     out
+}
+
+/// Reads any event on the system's log back from the envelope [`encode_system_event`] writes,
+/// `{"event": …, "payload": {…}}`: its qualified name selects the event, and its payload is read
+/// under the wire names that event declares.
+///
+/// # Errors
+///
+/// [`json::DecodeError`] at `event` when the envelope names no event this system publishes,
+/// naming the one it carried, and at the payload's own path when the payload is not that
+/// event's.
+pub fn decode_system_event(value: &json::Value) -> Result<crate::system::SystemEvent, json::DecodeError> {
+    let event = json::text_at(json::member_at(value, "", "event")?, "event", "a qualified event name")?;
+    Ok(match event {
+        "a2a.tasks.MessageStreamResponse" => crate::system::SystemEvent::MessageStreamResponse(decode_event_a2a_tasks_message_stream_response(json::member_at(value, "", "payload")?, "payload")?),
+        "a2a.tasks.PushNotificationConfigCreated" => crate::system::SystemEvent::PushNotificationConfigCreated(decode_event_a2a_tasks_push_notification_config_created(json::member_at(value, "", "payload")?, "payload")?),
+        "a2a.tasks.PushNotificationConfigDeleted" => crate::system::SystemEvent::PushNotificationConfigDeleted(decode_event_a2a_tasks_push_notification_config_deleted(json::member_at(value, "", "payload")?, "payload")?),
+        "a2a.tasks.TaskArtifactUpdated" => crate::system::SystemEvent::TaskArtifactUpdated(decode_event_a2a_tasks_task_artifact_updated(json::member_at(value, "", "payload")?, "payload")?),
+        "a2a.tasks.TaskCreated" => crate::system::SystemEvent::TaskCreated(decode_event_a2a_tasks_task_created(json::member_at(value, "", "payload")?, "payload")?),
+        "a2a.tasks.TaskStatusUpdated" => crate::system::SystemEvent::TaskStatusUpdated(decode_event_a2a_tasks_task_status_updated(json::member_at(value, "", "payload")?, "payload")?),
+        "a2a.tasks.TaskSubscriptionResponse" => crate::system::SystemEvent::TaskSubscriptionResponse(decode_event_a2a_tasks_task_subscription_response(json::member_at(value, "", "payload")?, "payload")?),
+        other => {
+            return Err(json::DecodeError { at: "event".to_owned(), expected: "one of `a2a.tasks.MessageStreamResponse`, `a2a.tasks.PushNotificationConfigCreated`, `a2a.tasks.PushNotificationConfigDeleted`, `a2a.tasks.TaskArtifactUpdated`, `a2a.tasks.TaskCreated`, `a2a.tasks.TaskStatusUpdated`, `a2a.tasks.TaskSubscriptionResponse`".to_owned(), found: format!("`{other}`") })
+        }
+    })
 }
