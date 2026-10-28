@@ -16,7 +16,7 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 
 | Path | What it is | Who writes it |
 |---|---|---|
-| `ess/` | ESS source (`ess/29`), listed in `ess/ess-inputs.yaml`, pinned to `ess 0.72.0` | authored |
+| `ess/` | ESS source (`ess/29`), listed in `ess/ess-inputs.yaml`, pinned to `ess 0.74.0` | authored |
 | `ess/http.yaml`, `ess/http-unmapped.tsv` | `ess-http/1` binding of A2A's HTTP+JSON paths, pinned to the specification's digest; the (method, path) differences from `upstream/openapi/` it cannot close, each with its reason | authored |
 | `upstream/a2a.proto` | Normative A2A source, verbatim from tag v1.0.1 | `task upstream` |
 | `upstream/openapi/a2a.openapi.yaml` | OpenAPI 3.0 of A2A's HTTP+JSON binding, derived from the proto. Upstream publishes none | `task upstream` |
