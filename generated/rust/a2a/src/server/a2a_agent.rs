@@ -166,6 +166,33 @@ pub fn dispatch<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBe
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    dispatch_with_events(system, caller, request).0
+}
+
+/// Answers one request as [`dispatch`] does, and hands back every event published while it
+/// ran, in log order: what the command published, what the bindings that reacted to it
+/// published in turn, and what a held-back delivery retried during the call published. An
+/// event already on the system's log when the call started is not the call's and is never
+/// in the list. The list is empty where no command ran — a refusal before the port, a view,
+/// a document or a path no route matches — and holds what was published where delivering
+/// it failed after the command took effect. An event a component's port published through a
+/// direct call is in that component's outbox until a pump collects it, so one no pump has
+/// collected yet is listed as this call's: call `pump` after calling a port directly.
+pub fn dispatch_with_events<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, caller: Option<&crate::actor::Caller>, request: &http::Request) -> (http::Response, Vec<crate::system::SystemEvent>)
+where
+    A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
+{
+    let mut taken = Vec::new();
+    let answer = route_request(system, caller, request, &mut taken);
+    (answer, taken)
+}
+
+/// The route match behind [`dispatch_with_events`]: each command pushes what it took off the
+/// log onto `taken`.
+fn route_request<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, caller: Option<&crate::actor::Caller>, request: &http::Request, taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
+where
+    A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
+{
     match request.path.as_str() {
         "/discovery/commands/extendedAgentCard" => {
             if request.method != "POST" {
@@ -174,7 +201,7 @@ where
             if let Err(actor) = admit(caller, "a2a.discovery.GetExtendedAgentCard") {
                 return not_granted(actor);
             }
-            serve_a2a_discovery_get_extended_agent_card(system, &request.body)
+            serve_a2a_discovery_get_extended_agent_card(system, &request.body, taken)
         }
         "/docs" => {
             if request.method != "GET" {
@@ -195,7 +222,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.SendMessage") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_send_message(system, &request.body)
+            serve_a2a_tasks_send_message(system, &request.body, taken)
         }
         "/tasks/commands/message:stream" => {
             if request.method != "POST" {
@@ -204,7 +231,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.SendStreamingMessage") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_send_streaming_message(system, &request.body)
+            serve_a2a_tasks_send_streaming_message(system, &request.body, taken)
         }
         "/tasks/commands/pushNotificationConfigs:create" => {
             if request.method != "POST" {
@@ -213,7 +240,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.CreateTaskPushNotificationConfig") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_create_task_push_notification_config(system, &request.body)
+            serve_a2a_tasks_create_task_push_notification_config(system, &request.body, taken)
         }
         "/tasks/commands/pushNotificationConfigs:delete" => {
             if request.method != "POST" {
@@ -222,7 +249,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.DeleteTaskPushNotificationConfig") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_delete_task_push_notification_config(system, &request.body)
+            serve_a2a_tasks_delete_task_push_notification_config(system, &request.body, taken)
         }
         "/tasks/commands/pushNotificationConfigs:get" => {
             if request.method != "POST" {
@@ -231,7 +258,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.GetTaskPushNotificationConfig") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_get_task_push_notification_config(system, &request.body)
+            serve_a2a_tasks_get_task_push_notification_config(system, &request.body, taken)
         }
         "/tasks/commands/pushNotificationConfigs:list" => {
             if request.method != "POST" {
@@ -240,7 +267,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.ListTaskPushNotificationConfigs") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_list_task_push_notification_configs(system, &request.body)
+            serve_a2a_tasks_list_task_push_notification_configs(system, &request.body, taken)
         }
         "/tasks/commands/tasks:cancel" => {
             if request.method != "POST" {
@@ -249,7 +276,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.CancelTask") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_cancel_task(system, &request.body)
+            serve_a2a_tasks_cancel_task(system, &request.body, taken)
         }
         "/tasks/commands/tasks:complete" => {
             if request.method != "POST" {
@@ -258,7 +285,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.CompleteTask") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_complete_task(system, &request.body)
+            serve_a2a_tasks_complete_task(system, &request.body, taken)
         }
         "/tasks/commands/tasks:fail" => {
             if request.method != "POST" {
@@ -267,7 +294,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.FailTask") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_fail_task(system, &request.body)
+            serve_a2a_tasks_fail_task(system, &request.body, taken)
         }
         "/tasks/commands/tasks:get" => {
             if request.method != "POST" {
@@ -276,7 +303,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.GetTask") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_get_task(system, &request.body)
+            serve_a2a_tasks_get_task(system, &request.body, taken)
         }
         "/tasks/commands/tasks:reject" => {
             if request.method != "POST" {
@@ -285,7 +312,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.RejectTask") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_reject_task(system, &request.body)
+            serve_a2a_tasks_reject_task(system, &request.body, taken)
         }
         "/tasks/commands/tasks:require_auth" => {
             if request.method != "POST" {
@@ -294,7 +321,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.RequireAuth") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_require_auth(system, &request.body)
+            serve_a2a_tasks_require_auth(system, &request.body, taken)
         }
         "/tasks/commands/tasks:require_input" => {
             if request.method != "POST" {
@@ -303,7 +330,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.RequireInput") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_require_input(system, &request.body)
+            serve_a2a_tasks_require_input(system, &request.body, taken)
         }
         "/tasks/commands/tasks:subscribe" => {
             if request.method != "POST" {
@@ -312,7 +339,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.SubscribeToTask") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_subscribe_to_task(system, &request.body)
+            serve_a2a_tasks_subscribe_to_task(system, &request.body, taken)
         }
         "/tasks/commands/tasks:update_artifact" => {
             if request.method != "POST" {
@@ -321,7 +348,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.UpdateArtifact") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_update_artifact(system, &request.body)
+            serve_a2a_tasks_update_artifact(system, &request.body, taken)
         }
         "/tasks/commands/tasks:work" => {
             if request.method != "POST" {
@@ -330,7 +357,7 @@ where
             if let Err(actor) = admit(caller, "a2a.tasks.StartWorking") {
                 return not_granted(actor);
             }
-            serve_a2a_tasks_start_working(system, &request.body)
+            serve_a2a_tasks_start_working(system, &request.body, taken)
         }
         "/tasks/views/allPushNotificationConfigs" => {
             if request.method != "GET" {
@@ -405,6 +432,23 @@ pub fn handle<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBeha
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    handle_with_events(system, caller, name, input).0
+}
+
+/// Runs one command or view as [`handle`] does, and hands back every event published while it
+/// ran, in log order: what the command published, what the bindings that reacted to it
+/// published in turn, and what a held-back delivery retried during the call published. An
+/// event already on the system's log when the call started is not the call's and is never
+/// in the list. The list is empty where no command ran — an unknown name, a refusal before
+/// the port, a view — and holds what was published where delivering it failed after the
+/// command took effect. An event a component's port published through a direct call is in
+/// that component's outbox until a pump collects it, so one no pump has collected yet is
+/// listed as this call's: call `pump` after calling a port directly.
+pub fn handle_with_events<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, caller: Option<&crate::actor::Caller>, name: &str, input: json::Value) -> (Result<json::Value, entry::Refused>, Vec<crate::system::SystemEvent>)
+where
+    A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
+{
+    let mut taken = Vec::new();
     let checked = |input: &json::Value| {
         json::admitted(input).map_err(|expected| {
             entry::Refused::Input(format!("the input is not JSON: expected {expected}"))
@@ -412,7 +456,7 @@ where
     };
     let answered = match name {
         "a2a.discovery.GetExtendedAgentCard" => match admit(caller, "a2a.discovery.GetExtendedAgentCard") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_discovery_get_extended_agent_card(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_discovery_get_extended_agent_card(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.AllTasks" => match admit_read(caller, "a2a.tasks.AllTasks") {
@@ -420,35 +464,35 @@ where
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.CancelTask" => match admit(caller, "a2a.tasks.CancelTask") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_cancel_task(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_cancel_task(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.CompleteTask" => match admit(caller, "a2a.tasks.CompleteTask") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_complete_task(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_complete_task(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.CreateTaskPushNotificationConfig" => match admit(caller, "a2a.tasks.CreateTaskPushNotificationConfig") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_create_task_push_notification_config(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_create_task_push_notification_config(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.DeleteTaskPushNotificationConfig" => match admit(caller, "a2a.tasks.DeleteTaskPushNotificationConfig") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_delete_task_push_notification_config(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_delete_task_push_notification_config(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.FailTask" => match admit(caller, "a2a.tasks.FailTask") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_fail_task(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_fail_task(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.GetTask" => match admit(caller, "a2a.tasks.GetTask") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_get_task(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_get_task(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.GetTaskPushNotificationConfig" => match admit(caller, "a2a.tasks.GetTaskPushNotificationConfig") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_get_task_push_notification_config(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_get_task_push_notification_config(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.ListTaskPushNotificationConfigs" => match admit(caller, "a2a.tasks.ListTaskPushNotificationConfigs") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_list_task_push_notification_configs(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_list_task_push_notification_configs(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.PushNotificationConfigs" => match admit_read(caller, "a2a.tasks.PushNotificationConfigs") {
@@ -456,31 +500,31 @@ where
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.RejectTask" => match admit(caller, "a2a.tasks.RejectTask") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_reject_task(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_reject_task(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.RequireAuth" => match admit(caller, "a2a.tasks.RequireAuth") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_require_auth(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_require_auth(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.RequireInput" => match admit(caller, "a2a.tasks.RequireInput") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_require_input(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_require_input(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.SendMessage" => match admit(caller, "a2a.tasks.SendMessage") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_send_message(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_send_message(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.SendStreamingMessage" => match admit(caller, "a2a.tasks.SendStreamingMessage") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_send_streaming_message(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_send_streaming_message(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.StartWorking" => match admit(caller, "a2a.tasks.StartWorking") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_start_working(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_start_working(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.SubscribeToTask" => match admit(caller, "a2a.tasks.SubscribeToTask") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_subscribe_to_task(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_subscribe_to_task(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.TaskPushNotificationConfigs" => match admit_read(caller, "a2a.tasks.TaskPushNotificationConfigs") {
@@ -492,13 +536,16 @@ where
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
         "a2a.tasks.UpdateArtifact" => match admit(caller, "a2a.tasks.UpdateArtifact") {
-            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_update_artifact(system, &input)),
+            Ok(()) => checked(&input).and_then(|()| run_a2a_tasks_update_artifact(system, &input, &mut taken)),
             Err(actor) => Err(entry::Refused::NotGranted(actor.map(str::to_owned))),
         },
-        other => return Err(entry::Refused::Unknown(other.to_owned())),
+        other => return (Err(entry::Refused::Unknown(other.to_owned())), taken),
     };
-    let (_, body) = answered?;
-    entry::read(&body).map_err(|error| {
+    let body = match answered {
+        Ok((_, body)) => body,
+        Err(refused) => return (Err(refused), taken),
+    };
+    let read = entry::read(&body).map_err(|error| {
         if matches!(name, "a2a.discovery.GetExtendedAgentCard" | "a2a.tasks.CancelTask" | "a2a.tasks.CompleteTask" | "a2a.tasks.CreateTaskPushNotificationConfig" | "a2a.tasks.DeleteTaskPushNotificationConfig" | "a2a.tasks.FailTask" | "a2a.tasks.GetTask" | "a2a.tasks.GetTaskPushNotificationConfig" | "a2a.tasks.ListTaskPushNotificationConfigs" | "a2a.tasks.RejectTask" | "a2a.tasks.RequireAuth" | "a2a.tasks.RequireInput" | "a2a.tasks.SendMessage" | "a2a.tasks.SendStreamingMessage" | "a2a.tasks.StartWorking" | "a2a.tasks.SubscribeToTask" | "a2a.tasks.UpdateArtifact") {
             entry::Refused::Undelivered(format!(
                 "delivering what the command published: its answer is not JSON this surface reads back: {error}"
@@ -508,7 +555,8 @@ where
                 "unmet obligation: view_query `{name}` answered rows this surface cannot read back: {error}"
             ))
         }
-    })
+    });
+    (read, taken)
 }
 
 /// Nothing, where `caller` may invoke `command`; otherwise the actor the standard refusal names,
@@ -554,7 +602,7 @@ pub fn admit_read(caller: Option<&crate::actor::Caller>, view: &str) -> Result<(
 }
 
 /// `POST` `a2a.discovery.GetExtendedAgentCard`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_discovery_get_extended_agent_card<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_discovery_get_extended_agent_card<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -576,17 +624,22 @@ where
             }
         }
     };
-    http::answer(run_a2a_discovery_get_extended_agent_card(system, &value))
+    http::answer(run_a2a_discovery_get_extended_agent_card(system, &value, taken))
 }
 
 /// `a2a.discovery.GetExtendedAgentCard` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_discovery_get_extended_agent_card<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_discovery_get_extended_agent_card<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_discovery_get_extended_agent_card(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -602,7 +655,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -671,7 +724,7 @@ fn answer_a2a_discovery_get_extended_agent_card(outcome: &crate::discovery::GetE
 }
 
 /// `POST` `a2a.tasks.SendMessage`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_send_message<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_send_message<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -687,17 +740,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_send_message(system, &value))
+    http::answer(run_a2a_tasks_send_message(system, &value, taken))
 }
 
 /// `a2a.tasks.SendMessage` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_send_message<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_send_message<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_send_message(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -713,7 +771,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -838,7 +896,7 @@ fn answer_a2a_tasks_send_message(outcome: &crate::tasks::SendMessageOutcome) -> 
 }
 
 /// `POST` `a2a.tasks.SendStreamingMessage`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_send_streaming_message<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_send_streaming_message<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -854,17 +912,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_send_streaming_message(system, &value))
+    http::answer(run_a2a_tasks_send_streaming_message(system, &value, taken))
 }
 
 /// `a2a.tasks.SendStreamingMessage` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_send_streaming_message<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_send_streaming_message<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_send_streaming_message(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -880,7 +943,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -1034,7 +1097,7 @@ fn answer_a2a_tasks_send_streaming_message(outcome: &crate::tasks::SendStreaming
 }
 
 /// `POST` `a2a.tasks.CreateTaskPushNotificationConfig`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_create_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_create_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -1050,17 +1113,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_create_task_push_notification_config(system, &value))
+    http::answer(run_a2a_tasks_create_task_push_notification_config(system, &value, taken))
 }
 
 /// `a2a.tasks.CreateTaskPushNotificationConfig` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_create_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_create_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_create_task_push_notification_config(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -1076,7 +1144,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -1167,7 +1235,7 @@ fn answer_a2a_tasks_create_task_push_notification_config(outcome: &crate::tasks:
 }
 
 /// `POST` `a2a.tasks.DeleteTaskPushNotificationConfig`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_delete_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_delete_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -1183,17 +1251,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_delete_task_push_notification_config(system, &value))
+    http::answer(run_a2a_tasks_delete_task_push_notification_config(system, &value, taken))
 }
 
 /// `a2a.tasks.DeleteTaskPushNotificationConfig` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_delete_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_delete_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_delete_task_push_notification_config(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -1209,7 +1282,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -1282,7 +1355,7 @@ fn answer_a2a_tasks_delete_task_push_notification_config(outcome: &crate::tasks:
 }
 
 /// `POST` `a2a.tasks.GetTaskPushNotificationConfig`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_get_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_get_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -1298,17 +1371,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_get_task_push_notification_config(system, &value))
+    http::answer(run_a2a_tasks_get_task_push_notification_config(system, &value, taken))
 }
 
 /// `a2a.tasks.GetTaskPushNotificationConfig` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_get_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_get_task_push_notification_config<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_get_task_push_notification_config(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -1324,7 +1402,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -1403,7 +1481,7 @@ fn answer_a2a_tasks_get_task_push_notification_config(outcome: &crate::tasks::Ge
 }
 
 /// `POST` `a2a.tasks.ListTaskPushNotificationConfigs`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_list_task_push_notification_configs<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_list_task_push_notification_configs<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -1419,17 +1497,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_list_task_push_notification_configs(system, &value))
+    http::answer(run_a2a_tasks_list_task_push_notification_configs(system, &value, taken))
 }
 
 /// `a2a.tasks.ListTaskPushNotificationConfigs` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_list_task_push_notification_configs<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_list_task_push_notification_configs<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_list_task_push_notification_configs(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -1445,7 +1528,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -1514,7 +1597,7 @@ fn answer_a2a_tasks_list_task_push_notification_configs(outcome: &crate::tasks::
 }
 
 /// `POST` `a2a.tasks.CancelTask`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_cancel_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_cancel_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -1530,17 +1613,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_cancel_task(system, &value))
+    http::answer(run_a2a_tasks_cancel_task(system, &value, taken))
 }
 
 /// `a2a.tasks.CancelTask` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_cancel_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_cancel_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_cancel_task(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -1556,7 +1644,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -1641,7 +1729,7 @@ fn answer_a2a_tasks_cancel_task(outcome: &crate::tasks::CancelTaskOutcome) -> (u
 }
 
 /// `POST` `a2a.tasks.CompleteTask`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_complete_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_complete_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -1657,17 +1745,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_complete_task(system, &value))
+    http::answer(run_a2a_tasks_complete_task(system, &value, taken))
 }
 
 /// `a2a.tasks.CompleteTask` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_complete_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_complete_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_complete_task(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -1683,7 +1776,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -1738,7 +1831,7 @@ fn answer_a2a_tasks_complete_task(outcome: &crate::tasks::CompleteTaskOutcome) -
 }
 
 /// `POST` `a2a.tasks.FailTask`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_fail_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_fail_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -1754,17 +1847,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_fail_task(system, &value))
+    http::answer(run_a2a_tasks_fail_task(system, &value, taken))
 }
 
 /// `a2a.tasks.FailTask` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_fail_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_fail_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_fail_task(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -1780,7 +1878,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -1835,7 +1933,7 @@ fn answer_a2a_tasks_fail_task(outcome: &crate::tasks::FailTaskOutcome) -> (u16, 
 }
 
 /// `POST` `a2a.tasks.GetTask`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_get_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_get_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -1851,17 +1949,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_get_task(system, &value))
+    http::answer(run_a2a_tasks_get_task(system, &value, taken))
 }
 
 /// `a2a.tasks.GetTask` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_get_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_get_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_get_task(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -1877,7 +1980,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -1936,7 +2039,7 @@ fn answer_a2a_tasks_get_task(outcome: &crate::tasks::GetTaskOutcome) -> (u16, St
 }
 
 /// `POST` `a2a.tasks.RejectTask`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_reject_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_reject_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -1952,17 +2055,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_reject_task(system, &value))
+    http::answer(run_a2a_tasks_reject_task(system, &value, taken))
 }
 
 /// `a2a.tasks.RejectTask` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_reject_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_reject_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_reject_task(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -1978,7 +2086,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -2033,7 +2141,7 @@ fn answer_a2a_tasks_reject_task(outcome: &crate::tasks::RejectTaskOutcome) -> (u
 }
 
 /// `POST` `a2a.tasks.RequireAuth`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_require_auth<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_require_auth<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -2049,17 +2157,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_require_auth(system, &value))
+    http::answer(run_a2a_tasks_require_auth(system, &value, taken))
 }
 
 /// `a2a.tasks.RequireAuth` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_require_auth<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_require_auth<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_require_auth(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -2075,7 +2188,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -2130,7 +2243,7 @@ fn answer_a2a_tasks_require_auth(outcome: &crate::tasks::RequireAuthOutcome) -> 
 }
 
 /// `POST` `a2a.tasks.RequireInput`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_require_input<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_require_input<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -2146,17 +2259,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_require_input(system, &value))
+    http::answer(run_a2a_tasks_require_input(system, &value, taken))
 }
 
 /// `a2a.tasks.RequireInput` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_require_input<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_require_input<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_require_input(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -2172,7 +2290,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -2227,7 +2345,7 @@ fn answer_a2a_tasks_require_input(outcome: &crate::tasks::RequireInputOutcome) -
 }
 
 /// `POST` `a2a.tasks.SubscribeToTask`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_subscribe_to_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_subscribe_to_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -2243,17 +2361,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_subscribe_to_task(system, &value))
+    http::answer(run_a2a_tasks_subscribe_to_task(system, &value, taken))
 }
 
 /// `a2a.tasks.SubscribeToTask` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_subscribe_to_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_subscribe_to_task<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_subscribe_to_task(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -2269,7 +2392,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -2348,7 +2471,7 @@ fn answer_a2a_tasks_subscribe_to_task(outcome: &crate::tasks::SubscribeToTaskOut
 }
 
 /// `POST` `a2a.tasks.UpdateArtifact`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_update_artifact<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_update_artifact<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -2364,17 +2487,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_update_artifact(system, &value))
+    http::answer(run_a2a_tasks_update_artifact(system, &value, taken))
 }
 
 /// `a2a.tasks.UpdateArtifact` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_update_artifact<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_update_artifact<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_update_artifact(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -2390,7 +2518,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
@@ -2433,7 +2561,7 @@ fn answer_a2a_tasks_update_artifact(outcome: &crate::tasks::UpdateArtifactOutcom
 }
 
 /// `POST` `a2a.tasks.StartWorking`: reads the declared input, runs the port, answers the declared outcome.
-fn serve_a2a_tasks_start_working<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8]) -> http::Response
+fn serve_a2a_tasks_start_working<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, body: &[u8], taken: &mut Vec<crate::system::SystemEvent>) -> http::Response
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
@@ -2449,17 +2577,22 @@ where
             return http::Response::refusal(400, &format!("the body is not JSON: {error}"));
         }
     };
-    http::answer(run_a2a_tasks_start_working(system, &value))
+    http::answer(run_a2a_tasks_start_working(system, &value, taken))
 }
 
 /// `a2a.tasks.StartWorking` from its input as a JSON value: decode, run the port, render the declared outcome.
 ///
 /// The one path the `POST` route and [`handle`] share. A decoding failure is located under
-/// `body`, as the route reports it.
-fn run_a2a_tasks_start_working<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value) -> Result<(u16, String), entry::Refused>
+/// `body`, as the route reports it. Every event published while the call runs is pushed onto
+/// `taken`, in log order, whatever it answers; what was on the log before it is taken off
+/// the log but not pushed.
+fn run_a2a_tasks_start_working<A2aAgentBehaviors>(system: &mut crate::system::System<A2aAgentBehaviors>, value: &json::Value, taken: &mut Vec<crate::system::SystemEvent>) -> Result<(u16, String), entry::Refused>
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
+    // What is on the log before this call is not what this call published: it is delivered
+    // and taken with the rest, and never pushed onto `taken`.
+    let before = system.published().len();
     let input = match wire::decode_command_a2a_tasks_start_working(value, "body") {
         Ok(input) => input,
         Err(error) => {
@@ -2475,7 +2608,7 @@ where
     // Deliver what this command published to every binding that reacts to it, then take it
     // off the log: a long-running server keeps nothing from one request to the next.
     let delivered = system.pump();
-    let _ = system.take_published();
+    taken.extend(system.take_published().into_iter().skip(before));
     if let Err(failure) = delivered {
         return Err(entry::Refused::Undelivered(format!("delivering what the command published: {failure}")));
     }
