@@ -16,7 +16,7 @@ under `[Unreleased]` until the next release.
   `generated/rust/a2a` resynthesized: its public types are unchanged; `json` gains `parse_written`
   and `admitted`, the `server` feature reads its own answers back at any depth instead of panicking,
   and the crate's dependency requirements are caret ranges instead of exact versions.
-- ESS pinned to 0.74.0, and `generated/rust/a2a` resynthesized: its public types are unchanged; the
+- ESS pinned to 0.75.0, and `generated/rust/a2a` resynthesized: its public types are unchanged; the
   `server` feature gains `dispatch_with_events`, `handle_with_events` and per-event wire decoders.
 
 ## [0.3.0] - 2026-10-22
