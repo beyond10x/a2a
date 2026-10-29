@@ -9,10 +9,12 @@ use a2a::server::wire;
 use a2a::tasks::{
     CreateTaskPushNotificationConfig, DeleteTaskPushNotificationConfig, GetTask,
     GetTaskPushNotificationConfig, ListTaskPushNotificationConfigs, MessageStreamResponse,
-    PushNotificationConfigId, SendStreamingMessage, TaskPushNotificationConfig, TaskSnapshot,
-    WireTaskState,
+    PushNotificationConfigId, SendStreamingMessage, TaskId, TaskPushNotificationConfig,
+    TaskSnapshot, WireTaskState,
 };
 use a2a_client::{Client, Error, Reason};
+
+use crate::contract::{Answered, Contract, error_of};
 
 /// The protocol binding `a2a-client` speaks (A2A v1.0.1 section 5.3).
 const HTTP_JSON: &str = "HTTP+JSON";
@@ -126,6 +128,13 @@ pub fn expect_task_state(
     let task = client
         .get_task(request)
         .map_err(|error| mismatch(&check, state_name(state), error.to_string()))?;
+    if task.id != request.id {
+        return Err(mismatch(
+            format!("the task GetTask answered for `{}`", request.id.0),
+            format!("task `{}`", request.id.0),
+            format!("task `{}`", task.id.0),
+        ));
+    }
     if task.status.state != state {
         return Err(mismatch(
             check,
@@ -136,40 +145,92 @@ pub fn expect_task_state(
     Ok(task)
 }
 
-/// That `call` fails with an A2A error of `reason` (A2A v1.0.1 section 11.6).
+/// That `call` fails with the A2A error of `reason` (A2A v1.0.1 section 11.6), at the HTTP status
+/// and `google.rpc.Status` status section 5.4 maps it to.
 ///
 /// # Errors
 ///
-/// A [`Mismatch`] naming the reason it expected and what the call answered: the type of the value
-/// it returned, or the error with its reason.
+/// A [`Mismatch`] naming the error it expected and what the call answered: the type of the value
+/// it returned, or the error with its status and reason.
 pub fn expect_error_reason<T>(
     client: &Client,
     reason: &Reason,
     call: impl FnOnce(&Client) -> Result<T, Error>,
 ) -> Result<(), Mismatch> {
     let check = "the error the call answers";
-    let expected = format!("an error of reason {}", reason.as_str());
     match call(client) {
-        Err(Error::Status {
-            reason: Some(answered),
-            ..
-        }) if answered == *reason => Ok(()),
-        Err(error) => Err(mismatch(check, expected, error.to_string())),
+        Err(error) if declares(&error, reason) => Ok(()),
+        Err(error) => Err(mismatch(check, the_error(reason), error.to_string())),
         Ok(_) => Err(mismatch(
             check,
-            expected,
+            the_error(reason),
             format!("a {} and no error", std::any::type_name::<T>()),
         )),
     }
 }
 
-/// The stream responses of `request`, whose tasks and status updates move through `states` in
-/// order (A2A v1.0.1 section 3.1.2).
+/// Whether `error` is the A2A error of `reason`, at the status A2A v1.0.1 section 5.4 maps it to.
+fn declares(error: &Error, reason: &Reason) -> bool {
+    let Error::Status {
+        http,
+        status,
+        reason: Some(answered),
+        ..
+    } = error
+    else {
+        return false;
+    };
+    answered == reason
+        && mapped(reason).is_none_or(|mapped| mapped.http == *http && mapped.status == *status)
+}
+
+/// The HTTP status and `google.rpc.Status` status the error of `reason` is answered with, where
+/// the contract declares it.
+fn mapped(reason: &Reason) -> Option<&'static Answered> {
+    error_of(reason).and_then(|short| Contract::get().answered_as(short))
+}
+
+/// The error of `reason` as an expectation names it.
+fn the_error(reason: &Reason) -> String {
+    match mapped(reason) {
+        Some(mapped) => format!("an error of reason {} on {mapped}", reason.as_str()),
+        None => format!("an error of reason {}", reason.as_str()),
+    }
+}
+
+/// One stream response, for a message about it.
+fn described(event: &MessageStreamResponse) -> String {
+    if let Some(task) = &event.task {
+        format!("task `{}`", task.id.0)
+    } else if let Some(update) = &event.status_update {
+        format!("a status update of task `{}`", update.task_id.0)
+    } else if let Some(update) = &event.artifact_update {
+        format!("an artifact update of task `{}`", update.task_id.0)
+    } else if event.message.is_some() {
+        "a message".to_owned()
+    } else {
+        "an empty stream response".to_owned()
+    }
+}
+
+/// The task a stream response is about, where it names one.
+fn about(event: &MessageStreamResponse) -> Option<&TaskId> {
+    event
+        .task
+        .as_ref()
+        .map(|task| &task.id)
+        .or_else(|| event.status_update.as_ref().map(|update| &update.task_id))
+        .or_else(|| event.artifact_update.as_ref().map(|update| &update.task_id))
+}
+
+/// The stream responses of `request`: the task first (A2A v1.0.1 section 3.1.2), then updates of
+/// that task only, its states moving through `states` in order.
 ///
 /// # Errors
 ///
-/// A [`Mismatch`] naming the states it expected and the ones the stream carried, or the error the
-/// stream answered with its reason.
+/// A [`Mismatch`] naming the states it expected and the ones the stream carried, an event that is
+/// not the task first or that is about another task, or the error the stream answered with its
+/// reason.
 pub fn expect_stream_states(
     client: &Client,
     request: &SendStreamingMessage,
@@ -183,7 +244,7 @@ pub fn expect_stream_states(
     let events = client
         .send_streaming_message(request)
         .map_err(|error| mismatch(&check, &expected, error.to_string()))?;
-    let mut read = Vec::new();
+    let mut read: Vec<MessageStreamResponse> = Vec::new();
     let mut streamed = Vec::new();
     for event in events {
         let event = event.map_err(|error| {
@@ -194,6 +255,26 @@ pub fn expect_stream_states(
             };
             mismatch(&check, &expected, observed)
         })?;
+        match read.first().and_then(|first| first.task.as_ref()) {
+            None if event.task.is_none() => {
+                return Err(mismatch(
+                    format!(
+                        "the first event streamed for message `{}`",
+                        request.message.message_id
+                    ),
+                    "the task the message created",
+                    described(&event),
+                ));
+            }
+            Some(task) if about(&event) != Some(&task.id) => {
+                return Err(mismatch(
+                    format!("the events streamed for task `{}`", task.id.0),
+                    format!("events of task `{}`", task.id.0),
+                    described(&event),
+                ));
+            }
+            _ => {}
+        }
         if let Some(task) = &event.task {
             streamed.push(task.status.state);
         }
@@ -217,10 +298,13 @@ pub fn expect_stream_states(
 /// by its id, listed for its task, and deleted (A2A v1.0.1 sections 9.6 to 9.9), after which
 /// reading it answers `TASK_NOT_FOUND`. Answers the config as it was created.
 ///
+/// A config that was created is deleted whatever a step before the delete found, so the helper
+/// leaves no config behind; the first difference is the one reported.
+///
 /// # Errors
 ///
 /// A [`Mismatch`] naming the step, the config's url, and the value or error the endpoint
-/// answered at that step. A token is never shown.
+/// answered at that step. Neither a token nor credentials are shown.
 pub fn expect_push_config_roundtrip(
     client: &Client,
     request: &CreateTaskPushNotificationConfig,
@@ -237,13 +321,15 @@ pub fn expect_push_config_roundtrip(
                 error.to_string(),
             )
         })?;
-    served(&created, request, &check("creating"))?;
+    let mut first = served(&created, request, &check("creating")).err();
     let Some(id) = created.id.clone() else {
-        return Err(mismatch(
-            check("creating"),
-            format!("the config for {url} with an id"),
-            "a config with no id",
-        ));
+        return Err(first.unwrap_or_else(|| {
+            mismatch(
+                check("creating"),
+                format!("the config for {url} with an id"),
+                "a config with no id",
+            )
+        }));
     };
     let read = |client: &Client| {
         client.get_task_push_notification_config(&GetTaskPushNotificationConfig {
@@ -252,38 +338,42 @@ pub fn expect_push_config_roundtrip(
             id: id.clone(),
         })
     };
-    let got = read(client).map_err(|error| {
-        mismatch(
-            check(&format!("reading `{}` of", id.0)),
+    let reading = check(&format!("reading `{}` of", id.0));
+    let got = match read(client) {
+        Ok(got) => served(&got, request, &reading),
+        Err(error) => Err(mismatch(
+            &reading,
             format!("the config for {url}"),
             error.to_string(),
-        )
-    })?;
-    served(&got, request, &check(&format!("reading `{}` of", id.0)))?;
-    listed(client, request, &id, &check("listing"))?;
-    client
-        .delete_task_push_notification_config(&DeleteTaskPushNotificationConfig {
+        )),
+    };
+    first = first.or(got.err());
+    first = first.or(listed(client, request, &id, &check("listing")).err());
+    if let Err(error) =
+        client.delete_task_push_notification_config(&DeleteTaskPushNotificationConfig {
             tenant: request.tenant.clone(),
             task_id: task.clone(),
             id: id.clone(),
         })
-        .map_err(|error| {
+    {
+        return Err(first.unwrap_or_else(|| {
             mismatch(
                 check(&format!("deleting `{}` of", id.0)),
                 format!("the config for {url} deleted"),
                 error.to_string(),
             )
-        })?;
+        }));
+    }
+    if let Some(first) = first {
+        return Err(first);
+    }
     let gone = check(&format!("reading the deleted `{}` of", id.0));
     let expected = format!(
-        "an error of reason {} for the deleted config for {url}",
-        Reason::TaskNotFound.as_str()
+        "{} for the deleted config for {url}",
+        the_error(&Reason::TaskNotFound)
     );
     match read(client) {
-        Err(Error::Status {
-            reason: Some(Reason::TaskNotFound),
-            ..
-        }) => Ok(created),
+        Err(error) if declares(&error, &Reason::TaskNotFound) => Ok(created),
         Err(error) => Err(mismatch(gone, expected, error.to_string())),
         Ok(still) => Err(mismatch(
             gone,
@@ -293,7 +383,8 @@ pub fn expect_push_config_roundtrip(
     }
 }
 
-/// That `config` is the one `request` created: its url, its token, its task and the id asked for.
+/// That `config` is the one `request` created: its url, its token, its authentication, its task
+/// and the id asked for. Neither a token nor credentials are shown.
 fn served(
     config: &TaskPushNotificationConfig,
     request: &CreateTaskPushNotificationConfig,
@@ -312,6 +403,25 @@ fn served(
         return Err(mismatch(
             check,
             format!("the config for {url} with the token it was created with"),
+            observed,
+        ));
+    }
+    if let Some(sent) = &request.authentication
+        && config.authentication.as_ref() != Some(sent)
+    {
+        let observed = match &config.authentication {
+            None => "no authentication".to_owned(),
+            Some(held) if held.scheme != sent.scheme => {
+                format!("authentication of scheme `{}`", held.scheme)
+            }
+            Some(_) => format!("scheme `{}` with other credentials", sent.scheme),
+        };
+        return Err(mismatch(
+            check,
+            format!(
+                "the config for {url} with the `{}` authentication it was created with",
+                sent.scheme
+            ),
             observed,
         ));
     }

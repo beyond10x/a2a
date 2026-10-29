@@ -36,14 +36,22 @@ under `[Unreleased]` until the next release.
   `a2a-conformance` over `a2a-client`, each command sent as the operation `OPERATIONS` binds it to
   (the routes of `ess/http.yaml` plus the two `ess/http-unmapped.tsv` names), the tenant taken from
   the scenario's input, and each answer read as the outcome the generated contract declares for
-  it. A published event, a forced or taken external outcome, an actor other than the client, a
-  view with no A2A operation and a read of `a2a.tasks.Tasks`, whose state a live endpoint cannot
-  reset, are `unsupported` with that reason. `a2a-testkit run --url <base> --suite <suite.json>
-  [--results <out>]` prints one line per scenario and the counts, writes `ess-conformance-results/1`
-  with `--results`, and exits 0 only when no scenario is failed or error; against `a2a-server` 7 of
-  177 pass and 170 are unsupported. The helpers `expect_card`, `expect_task_state`,
-  `expect_error_reason`, `expect_stream_states` and `expect_push_config_roundtrip` answer a
-  `Mismatch` naming the expected and the observed value instead of panicking.
+  it. An error counts only at the HTTP status and `google.rpc.Status` status A2A maps its reason
+  to, and the external outcomes the scenario rules out (`VERSION_NOT_SUPPORTED` to the client's own
+  version, a refusal of a capability the card declares, a task that cannot be canceled when there
+  is no task) are set aside first. An outcome other than the one the scenario expects is `failed`.
+  A published event, a forced or taken external outcome, an actor other than the client, a view
+  with no A2A operation and a read of `a2a.tasks.Tasks`, whose state a live endpoint cannot reset,
+  are `unsupported` with that reason. `a2a-testkit run --url <base> --suite <suite.json>
+  [--results <out>] [--bearer-file <path>]` prints one line per scenario and the counts, then
+  writes `ess-conformance-results/1` with `--results`, and exits 0 only when at least one scenario
+  passed and none is failed or error. `--bearer-file` sends the token the file holds and never
+  prints it; without it, an extended card served only to authenticated clients is `unsupported`.
+  Against `a2a-server` 7 of 177 pass and 170 are unsupported. The helpers `expect_card`,
+  `expect_task_state`, `expect_error_reason`, `expect_stream_states` and
+  `expect_push_config_roundtrip` answer a `Mismatch` naming the expected and the observed value
+  instead of panicking. They check the task's id, the mapped status of an error, that a stream
+  starts with its task and carries updates of that task only, and a push config's authentication.
 
 ## [0.4.0] - 2026-10-29
 

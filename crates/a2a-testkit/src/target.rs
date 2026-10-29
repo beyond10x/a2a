@@ -6,27 +6,50 @@
 //! as the generated contract names the wire and decoded as the generated server decodes it; the
 //! input's `tenant` becomes the request's `/{tenant}` prefix. The answer reads as the outcome the
 //! generated contract (`a2a-agent.openapi.json`) declares for it: a success as the command's
-//! accepting outcome, an error by the declared error its `google.rpc.ErrorInfo` reason carries.
-//! Every step the wire cannot observe is `TargetError::Unsupported` with the reason, never
-//! `passed`.
+//! accepting outcome, an error by the declared error its `google.rpc.ErrorInfo` reason carries,
+//! at the HTTP status and `google.rpc.Status` status A2A v1.0.1 section 5.4 maps that error to.
+//! Of the outcomes that carry the error, those the circumstances rule out are dropped: an outcome
+//! decided outside the request whose circumstance the request or the agent card excludes. Every
+//! step the wire cannot observe is `TargetError::Unsupported` with the reason, never `passed`.
+//!
+//! Given the suite ([`WireTarget::with_suite`]), the target knows the outcome each step expects:
+//! an answer that is not that outcome is reported as the outcome it is, or as the answer no
+//! outcome declares, so the scenario fails on it rather than coming out `unsupported` on the
+//! events the outcome would publish.
 
+use a2a::discovery::AgentCard;
 use a2a::json::{self, Value};
 use a2a::server::wire;
 use a2a::{discovery, tasks};
-use a2a_client::{Client, Error, Reason};
+use a2a_client::{Client, Error};
 use a2a_conformance::naming::Naming;
 use a2a_conformance::{Answer, Awaited, Event, Reader, Target, TargetError};
 
 use crate::binding::carried;
-use crate::contract::{Contract, Outcome};
+use crate::contract::{Contract, Outcome, error_of};
+use crate::expected::Expectations;
 
 /// The one view A2A has an operation for: `GET /tasks`, ListTasks (A2A v1.0.1 section 9.4).
 const TASKS: &str = "a2a.tasks.Tasks";
+
+/// The command whose answer A2A v1.0.1 section 3.1.11 gives to authenticated clients only.
+const EXTENDED_CARD: &str = "a2a.discovery.GetExtendedAgentCard";
 
 /// An A2A endpoint as a [`Target`]: the client it calls as, and what the scenario open on it has
 /// done.
 pub struct WireTarget {
     client: Client,
+    /// Whether the client sends a bearer token the run was given.
+    bearer: bool,
+    /// The endpoint's public agent card, read the first time a circumstance it declares decides
+    /// between outcomes.
+    card: Option<Result<AgentCard, String>>,
+    /// What the scenarios of the suite expect, where the target was given the suite.
+    expectations: Expectations,
+    /// The outcome the open scenario expects of each command it runs, in order.
+    expected: Vec<Option<String>>,
+    /// How many commands the open scenario has run.
+    executed: usize,
     /// Why the events of the last command are not observable, where it took an outcome that
     /// publishes.
     unobserved: Option<String>,
@@ -37,45 +60,262 @@ pub struct WireTarget {
 
 impl WireTarget {
     /// The target over `client`, the endpoint's base URL and the headers every call sends.
+    ///
+    /// The client is taken to send `A2A-Version: 1.0`, its default: an endpoint refusing that
+    /// version with `VERSION_NOT_SUPPORTED` is not an A2A v1.0.1 endpoint for this run.
     #[must_use]
     pub fn new(client: Client) -> Self {
         Self {
             client,
+            bearer: false,
+            card: None,
+            expectations: Expectations::default(),
+            expected: Vec::new(),
+            executed: 0,
             unobserved: None,
             recorded: false,
         }
     }
 
-    /// What `command` answered, read as the outcome its contract declares for that answer.
-    fn read(&mut self, command: &str, called: Called) -> Result<Answer, TargetError> {
-        let outcomes = Contract::get().outcomes(command);
-        let (outcome, response) = match called {
-            Ok(Accepted { response, outcome }) => {
-                let accepting: Vec<&Outcome> = outcomes
+    /// The target sending `Authorization: Bearer <token>` with every operation, as `a2a-client`
+    /// sends it. Without a token, an extended card the endpoint serves only to authenticated
+    /// clients is `unsupported`.
+    #[must_use]
+    pub fn with_bearer(self, token: &str) -> Self {
+        Self {
+            client: self.client.with_bearer(token),
+            bearer: true,
+            ..self
+        }
+    }
+
+    /// The target knowing the outcome each scenario of the `ess-conformance/52` suite `suite`
+    /// expects of each command it runs.
+    ///
+    /// # Errors
+    ///
+    /// A message where `suite` is not JSON or holds no `scenarios` object.
+    pub fn with_suite(self, suite: &str) -> Result<Self, String> {
+        Ok(Self {
+            expectations: Expectations::read(suite)?,
+            ..self
+        })
+    }
+
+    /// The public agent card, read once; `None` where the endpoint serves none.
+    fn card(&mut self) -> Option<&AgentCard> {
+        let client = &self.client;
+        self.card
+            .get_or_insert_with(|| client.agent_card().map_err(|error| error.to_string()))
+            .as_ref()
+            .ok()
+    }
+
+    /// Why the circumstances of this request rule `outcome` out, where they do: an outcome
+    /// decided outside the request whose circumstance the request itself, the agent card or the
+    /// scenario so far excludes.
+    fn excluded(&mut self, command: &str, outcome: &Outcome, input: &Value) -> Option<String> {
+        if !outcome.external {
+            return None;
+        }
+        let message = input.member("message");
+        let names = |field: &str| {
+            message
+                .and_then(|message| message.member(field))
+                .is_some_and(|value| *value != Value::Null)
+        };
+        let why = match outcome.name.as_str() {
+            "version-not-supported" => {
+                "the request names A2A-Version 1.0, the version A2A v1.0.1 defines"
+            }
+            "not-cancelable-now" if !self.recorded => "the scenario holds no task",
+            "task-not-found" | "task-terminal" | "context-mismatch" | "history-limit"
+                if message.is_some() && !names("taskId") =>
+            {
+                "the message names no task"
+            }
+            "task-limit" if names("taskId") => "the message names a task",
+            "context-not-accepted" if message.is_some() && !names("contextId") => {
+                "the message names no context"
+            }
+            "extension-required" => {
+                let required = self
+                    .card()?
+                    .capabilities
+                    .extensions
                     .iter()
-                    .filter(|outcome| outcome.error.is_none())
+                    .flatten()
+                    .any(|extension| extension.required == Some(true));
+                if required {
+                    return None;
+                }
+                "the agent card marks no extension required"
+            }
+            "not-supported" if command == EXTENDED_CARD => {
+                if self.card()?.capabilities.extended_agent_card != Some(true) {
+                    return None;
+                }
+                "the agent card declares capabilities.extendedAgentCard"
+            }
+            "not-configured" => {
+                if self.card()?.capabilities.extended_agent_card == Some(true) {
+                    return None;
+                }
+                "the agent card does not declare capabilities.extendedAgentCard"
+            }
+            "push-not-supported" => {
+                if self.card()?.capabilities.push_notifications != Some(true) {
+                    return None;
+                }
+                "the agent card declares capabilities.pushNotifications"
+            }
+            "streaming-not-supported" => {
+                if self.card()?.capabilities.streaming != Some(true) {
+                    return None;
+                }
+                "the agent card declares capabilities.streaming"
+            }
+            _ => return None,
+        };
+        Some(why.to_owned())
+    }
+
+    /// The outcomes an error answer of `command` may be, and what it answered, for a message.
+    fn refusals(
+        &self,
+        command: &str,
+        outcomes: &'static [Outcome],
+        error: &Error,
+    ) -> Result<(Vec<&'static Outcome>, String), TargetError> {
+        let Error::Status {
+            http,
+            status,
+            reason,
+            ..
+        } = error
+        else {
+            return Err(match error {
+                Error::InvalidRequest(detail) => TargetError::Unsupported(format!(
+                    "a2a-client cannot send {command} with this input: {detail}"
+                )),
+                other => TargetError::Failed(format!("{command}: {other}")),
+            });
+        };
+        if *http == 401 && command == EXTENDED_CARD && !self.bearer {
+            return Err(TargetError::Unsupported(format!(
+                "{command} answered {error}: the endpoint serves its extended card to \
+                 authenticated clients (A2A v1.0.1 section 3.1.11), and the run was given no \
+                 --bearer-file"
+            )));
+        }
+        let short = match reason {
+            Some(reason) => error_of(reason),
+            None if status == "RESOURCE_EXHAUSTED" => Some("ResourceExhausted"),
+            None => None,
+        };
+        let Some(short) = short else {
+            return Ok((Vec::new(), format!("{error}, no error A2A v1.0.1 declares")));
+        };
+        let domain = command
+            .rsplit_once('.')
+            .map_or(command, |(domain, _)| domain);
+        let named = format!("{domain}.{short}");
+        if let Some(mapped) = Contract::get().answered_as(&named)
+            && (mapped.http != *http || mapped.status != *status)
+        {
+            return Ok((
+                Vec::new(),
+                format!("{error}, where A2A v1.0.1 answers {short} with {mapped}"),
+            ));
+        }
+        let carrying = outcomes
+            .iter()
+            .filter(|outcome| outcome.error.as_deref() == Some(named.as_str()))
+            .collect();
+        Ok((carrying, error.to_string()))
+    }
+
+    /// What `command` answered, read as the outcome its contract declares for that answer.
+    fn read(
+        &mut self,
+        command: &str,
+        input: &Value,
+        expected: Option<&str>,
+        called: Called,
+    ) -> Result<Answer, TargetError> {
+        let outcomes = Contract::get().outcomes(command);
+        let (candidates, response, answered) = match called {
+            Ok(Accepted { response, outcome }) => (
+                outcomes
+                    .iter()
+                    .filter(|declared| {
+                        declared.error.is_none()
+                            && outcome.is_none_or(|named| declared.name == named)
+                    })
+                    .collect(),
+                response,
+                "a success answer".to_owned(),
+            ),
+            Err(error) => {
+                let (candidates, answered) = self.refusals(command, outcomes, &error)?;
+                (candidates, None, answered)
+            }
+        };
+        let mut ruled_out = Vec::new();
+        let mut left: Vec<&'static Outcome> = Vec::new();
+        for candidate in candidates {
+            match self.excluded(command, candidate, input) {
+                Some(why) => ruled_out.push(format!("`{}`, as {why}", candidate.name)),
+                None => left.push(candidate),
+            }
+        }
+        let taken = match left.as_slice() {
+            [] if ruled_out.is_empty() => Err(format!("no declared outcome: {answered}")),
+            [] => Err(format!(
+                "no declared outcome: {answered}, whose outcome {} the circumstances rule out",
+                ruled_out.join(" and ")
+            )),
+            [only] => Ok(*only),
+            several => {
+                let unknown: Vec<&&Outcome> = several
+                    .iter()
+                    .filter(|outcome| outcome.unknown_identity)
                     .collect();
-                let taken = match (outcome, accepting.as_slice()) {
-                    (_, [only]) => *only,
-                    (Some(named), _) => accepting
-                        .iter()
-                        .find(|outcome| outcome.name == named)
-                        .copied()
-                        .ok_or_else(|| {
-                            TargetError::Failed(format!(
-                                "{command} declares no accepting outcome `{named}`"
-                            ))
-                        })?,
-                    (None, _) => {
-                        return Err(TargetError::Failed(format!(
-                            "{command} declares {} accepting outcomes and the answer names none",
-                            accepting.len()
+                let names = several
+                    .iter()
+                    .map(|outcome| format!("`{}`", outcome.name))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                match unknown.as_slice() {
+                    [only] if !self.recorded => Ok(**only),
+                    _ if expected.is_none_or(|expected| {
+                        several.iter().any(|outcome| outcome.name == expected)
+                    }) || several.iter().any(|outcome| outcome.external) =>
+                    {
+                        return Err(TargetError::Unsupported(format!(
+                            "{command} answered {answered}, which its outcomes {names} all carry; \
+                             the wire does not tell them apart"
                         )));
                     }
-                };
-                (taken, response)
+                    _ => Err(format!("one of {names}: {answered}")),
+                }
             }
-            Err(error) => (self.refused(command, outcomes, &error)?, None),
+        };
+        let outcome = match taken {
+            Ok(outcome) => outcome,
+            Err(observed) => {
+                self.unobserved = None;
+                return match expected {
+                    Some(_) => Ok(Answer {
+                        outcome: observed,
+                        error: None,
+                        response: None,
+                    }),
+                    None => Err(TargetError::Failed(format!(
+                        "{command} answered {observed}"
+                    ))),
+                };
+            }
         };
         if outcome.external {
             return Err(TargetError::Unsupported(format!(
@@ -88,7 +328,8 @@ impl WireTarget {
         if outcome.error.is_none() {
             self.recorded = true;
         }
-        self.unobserved = outcome.publishes.then(|| {
+        let differs = expected.is_some_and(|expected| expected != outcome.name);
+        self.unobserved = (outcome.publishes && !differs).then(|| {
             format!(
                 "{command} took `{}`, which publishes events the A2A HTTP+JSON binding does not \
                  carry",
@@ -111,57 +352,6 @@ impl WireTarget {
             error: outcome.error.clone(),
             response,
         })
-    }
-
-    /// The declared outcome an error answer of `command` is.
-    fn refused<'a>(
-        &self,
-        command: &str,
-        outcomes: &'a [Outcome],
-        error: &Error,
-    ) -> Result<&'a Outcome, TargetError> {
-        if let Error::InvalidRequest(detail) = error {
-            return Err(TargetError::Unsupported(format!(
-                "a2a-client cannot send {command} with this input: {detail}"
-            )));
-        }
-        let Some(short) = declared(error) else {
-            return Err(TargetError::Failed(format!(
-                "{command} answered {error}, which is no declared error of A2A v1.0.1"
-            )));
-        };
-        let domain = command
-            .rsplit_once('.')
-            .map_or(command, |(domain, _)| domain);
-        let named = format!("{domain}.{short}");
-        let candidates: Vec<&Outcome> = outcomes
-            .iter()
-            .filter(|outcome| outcome.error.as_deref() == Some(named.as_str()))
-            .collect();
-        match candidates.as_slice() {
-            [] => Err(TargetError::Failed(format!(
-                "{command} answered {error}: {named}, which no outcome of {command} carries"
-            ))),
-            [only] => Ok(only),
-            several => {
-                let unknown: Vec<&&Outcome> = several
-                    .iter()
-                    .filter(|outcome| outcome.unknown_identity)
-                    .collect();
-                match unknown.as_slice() {
-                    [only] if !self.recorded => Ok(only),
-                    _ => Err(TargetError::Unsupported(format!(
-                        "{command} answered {named}, which its outcomes {} all carry; the wire \
-                         does not tell them apart",
-                        several
-                            .iter()
-                            .map(|outcome| format!("`{}`", outcome.name))
-                            .collect::<Vec<_>>()
-                            .join(", ")
-                    ))),
-                }
-            }
-        }
     }
 
     /// Runs `command` through the client, its `input` wire-named.
@@ -393,29 +583,6 @@ fn decoded<T>(command: &str, decoded: Result<T, json::DecodeError>) -> Result<T,
     })
 }
 
-/// The short name of the declared error an error answer is: its `google.rpc.ErrorInfo` reason
-/// as A2A v1.0.1 section 5.4 maps it, or `RESOURCE_EXHAUSTED`, which carries no reason
-/// (`crates/a2a-server/src/router.rs`, `declared_error`).
-fn declared(error: &Error) -> Option<&'static str> {
-    let Error::Status { status, reason, .. } = error else {
-        return None;
-    };
-    Some(match reason {
-        Some(Reason::TaskNotFound) => "TaskNotFound",
-        Some(Reason::TaskNotCancelable) => "TaskNotCancelable",
-        Some(Reason::PushNotificationNotSupported) => "PushNotificationNotSupported",
-        Some(Reason::UnsupportedOperation) => "UnsupportedOperation",
-        Some(Reason::ContentTypeNotSupported) => "ContentTypeNotSupported",
-        Some(Reason::ExtendedAgentCardNotConfigured) => "ExtendedAgentCardNotConfigured",
-        Some(Reason::ExtensionSupportRequired) => "ExtensionSupportRequired",
-        Some(Reason::VersionNotSupported) => "VersionNotSupported",
-        Some(Reason::ContextMismatch) => "ContextMismatch",
-        Some(Reason::ContextNotAccepted) => "ContextNotAccepted",
-        None if status == "RESOURCE_EXHAUSTED" => "ResourceExhausted",
-        Some(Reason::InvalidAgentResponse | Reason::Other(_)) | None => return None,
-    })
-}
-
 /// Why `actor` cannot be the caller of `name` over the wire, where it cannot: the client calls as
 /// the actor the contract grants `name` to its callers.
 fn not_the_client(name: &str, doing: &str, actor: Option<&str>) -> Option<String> {
@@ -443,9 +610,11 @@ fn not_the_client(name: &str, doing: &str, actor: Option<&str>) -> Option<String
 }
 
 impl Target for WireTarget {
-    fn begin(&mut self, _scenario: &str) -> Result<(), TargetError> {
+    fn begin(&mut self, scenario: &str) -> Result<(), TargetError> {
         self.unobserved = None;
         self.recorded = false;
+        self.expected = self.expectations.of(scenario);
+        self.executed = 0;
         Ok(())
     }
 
@@ -456,6 +625,8 @@ impl Target for WireTarget {
         input: &Value,
     ) -> Result<Answer, TargetError> {
         self.unobserved = None;
+        let expected = self.expected.get(self.executed).cloned().flatten();
+        self.executed += 1;
         if !carried(command) {
             return Err(TargetError::Unsupported(format!(
                 "{command} has no A2A operation: the agent issues it inside the server, so the \
@@ -467,7 +638,7 @@ impl Target for WireTarget {
         }
         let input = Naming::contract().input_to_wire(command, input);
         let called = self.call(command, &input)?;
-        self.read(command, called)
+        self.read(command, &input, expected.as_deref(), called)
     }
 
     fn query(

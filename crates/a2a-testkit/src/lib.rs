@@ -12,6 +12,7 @@
 mod binding;
 mod contract;
 mod expect;
+mod expected;
 mod target;
 
 pub use binding::OPERATIONS;
