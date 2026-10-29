@@ -38,12 +38,65 @@ pub(crate) struct Outcome {
     pub(crate) unknown_identity: bool,
 }
 
+/// The HTTP status and the `google.rpc.Status` status an error answer of the binding carries
+/// (A2A v1.0.1 section 5.4).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Answered {
+    /// The HTTP status, `404`.
+    pub(crate) http: u16,
+    /// The `google.rpc.Code` name, `NOT_FOUND`.
+    pub(crate) status: String,
+}
+
+impl std::fmt::Display for Answered {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(formatter, "{} {}", self.http, self.status)
+    }
+}
+
 /// The outcomes and grants of the contract.
 #[derive(Debug)]
 pub(crate) struct Contract {
     outcomes: BTreeMap<String, Vec<Outcome>>,
     /// The actors that may run a command, or read a view, by its qualified name.
     grants: BTreeMap<String, Vec<String>>,
+    /// How each declared error is answered, by its qualified name.
+    errors: BTreeMap<String, Answered>,
+}
+
+/// How the description of a declared error names its answer: `(JSON-RPC -32001, gRPC NOT_FOUND,
+/// HTTP 404)`, or `(gRPC RESOURCE_EXHAUSTED, HTTP 429)` for one that is not an A2A error.
+///
+/// ESS 0.75.0: the mapping is prose `ess/domains/` writes into the error's description; no
+/// `x-ess-*` member carries it.
+fn answered(description: &str) -> Option<Answered> {
+    let (_, after) = description.split_once("gRPC ")?;
+    let status: String = after
+        .chars()
+        .take_while(|character| character.is_ascii_uppercase() || *character == '_')
+        .collect();
+    let (_, after) = after.split_once("HTTP ")?;
+    let digits: String = after.chars().take_while(char::is_ascii_digit).collect();
+    let http = digits.parse().ok()?;
+    (!status.is_empty()).then_some(Answered { http, status })
+}
+
+/// The short name of the declared error an A2A error reason is (A2A v1.0.1 section 5.4).
+pub(crate) fn error_of(reason: &a2a_client::Reason) -> Option<&'static str> {
+    use a2a_client::Reason;
+    Some(match reason {
+        Reason::TaskNotFound => "TaskNotFound",
+        Reason::TaskNotCancelable => "TaskNotCancelable",
+        Reason::PushNotificationNotSupported => "PushNotificationNotSupported",
+        Reason::UnsupportedOperation => "UnsupportedOperation",
+        Reason::ContentTypeNotSupported => "ContentTypeNotSupported",
+        Reason::ExtendedAgentCardNotConfigured => "ExtendedAgentCardNotConfigured",
+        Reason::ExtensionSupportRequired => "ExtensionSupportRequired",
+        Reason::VersionNotSupported => "VersionNotSupported",
+        Reason::ContextMismatch => "ContextMismatch",
+        Reason::ContextNotAccepted => "ContextNotAccepted",
+        Reason::InvalidAgentResponse | Reason::Other(_) => return None,
+    })
 }
 
 impl Contract {
@@ -68,6 +121,7 @@ impl Contract {
             return Err("the contract declares no components.schemas".to_owned());
         };
         let mut outcomes: BTreeMap<String, Vec<Outcome>> = BTreeMap::new();
+        let mut errors = BTreeMap::new();
         for (key, schema) in schemas {
             let Some(properties) = schema.member("properties") else {
                 continue;
@@ -92,6 +146,15 @@ impl Contract {
                 Some(Value::Text(error)) => Some(error.clone()),
                 _ => None,
             };
+            if let (Some(error), Some(Value::Text(description))) = (
+                &error,
+                properties
+                    .member("error")
+                    .and_then(|error| error.member("description")),
+            ) && let Some(answer) = answered(description)
+            {
+                errors.insert(error.clone(), answer);
+            }
             let publishes = !matches!(
                 properties
                     .member("published")
@@ -142,7 +205,11 @@ impl Contract {
         if outcomes.is_empty() {
             return Err("the contract declares no outcome".to_owned());
         }
-        Ok(Self { outcomes, grants })
+        Ok(Self {
+            outcomes,
+            grants,
+            errors,
+        })
     }
 
     /// The declared outcomes of `command`.
@@ -153,6 +220,21 @@ impl Contract {
     /// The actors that may run the command, or read the view, `name`.
     pub(crate) fn granted(&self, name: &str) -> &[String] {
         self.grants.get(name).map_or(&[], Vec::as_slice)
+    }
+
+    /// How the declared error `name` is answered: by its qualified name, `a2a.tasks.TaskNotFound`,
+    /// or by its short name, `TaskNotFound`, which every domain declaring it answers alike.
+    pub(crate) fn answered_as(&self, name: &str) -> Option<&Answered> {
+        self.errors.get(name).or_else(|| {
+            self.errors
+                .iter()
+                .find(|(qualified, _)| {
+                    qualified
+                        .rsplit_once('.')
+                        .is_some_and(|(_, short)| short == name)
+                })
+                .map(|(_, answered)| answered)
+        })
     }
 }
 
@@ -226,6 +308,27 @@ mod tests {
                 "{command}"
             );
         }
+    }
+
+    #[test]
+    fn each_declared_error_is_answered_as_a2a_maps_it() {
+        let contract = Contract::get();
+        let answered = |name: &str| {
+            contract
+                .answered_as(name)
+                .map(ToString::to_string)
+                .unwrap_or_default()
+        };
+        assert_eq!(answered("a2a.tasks.TaskNotFound"), "404 NOT_FOUND");
+        assert_eq!(answered("TaskNotFound"), "404 NOT_FOUND");
+        assert_eq!(answered("TaskNotCancelable"), "400 FAILED_PRECONDITION");
+        assert_eq!(answered("ContextMismatch"), "400 INVALID_ARGUMENT");
+        assert_eq!(answered("ResourceExhausted"), "429 RESOURCE_EXHAUSTED");
+        assert_eq!(
+            answered("a2a.discovery.UnsupportedOperation"),
+            "400 FAILED_PRECONDITION"
+        );
+        assert_eq!(contract.answered_as("TaskStateConflict"), None);
     }
 
     #[test]
