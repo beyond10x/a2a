@@ -1,0 +1,13 @@
+[package]
+name = "a2a-conformance"
+description = "Runs the conformance suite ESS synthesizes from ess/ against a Target, and holds a2a-server's own obligations to it in process."
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+a2a = { path = "../../generated/rust/a2a", features = ["server"] }
+a2a-server = { path = "../a2a-server" }
+clap = { workspace = true }

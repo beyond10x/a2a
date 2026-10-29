@@ -55,16 +55,21 @@ use crate::{Limits, Settings};
 const DEFAULT_VERSION: &str = "0.3";
 
 /// The server's state behind the generated behaviours: one handle, cloned wherever a port is
-/// needed, all clones sharing it.
+/// needed, all clones sharing it. It implements every obligation the generated `a2a` crate
+/// leaves open ([`crate::Obligations`]); [`crate::InProcess`] runs the generated system over it,
+/// or over a wrapper of it.
 #[derive(Clone)]
-pub(crate) struct ServerPorts(Rc<Shared>);
+pub struct ServerPorts(Rc<Shared>);
 
 struct Shared {
     tasks: RefCell<TaskStore>,
     configs: RefCell<BTreeMap<String, PushNotificationConfigSnapshot>>,
-    limits: Limits,
+    limits: Cell<Limits>,
+    /// The card the server started with, served as the public agent card.
     card: AgentCard,
-    extended_card: Option<AgentCard>,
+    /// What versions, extensions and capabilities are decided by: the settings the server
+    /// started with, or those [`ServerPorts::reconfigure`] set since.
+    settings: RefCell<Settings>,
     agent: RefCell<Box<dyn Agent>>,
     version: RefCell<Option<String>>,
     extensions: RefCell<Vec<String>>,
@@ -170,9 +175,9 @@ impl ServerPorts {
         Self(Rc::new(Shared {
             tasks: RefCell::new(TaskStore::default()),
             configs: RefCell::new(BTreeMap::new()),
-            limits,
-            card: settings.card,
-            extended_card: settings.extended_card,
+            limits: Cell::new(limits),
+            card: settings.card.clone(),
+            settings: RefCell::new(settings),
             agent: RefCell::new(agent),
             version: RefCell::new(None),
             extensions: RefCell::new(Vec::new()),
@@ -182,9 +187,18 @@ impl ServerPorts {
         }))
     }
 
-    /// The public agent card.
+    /// The public agent card, as the server started with it.
     pub(crate) fn card(&self) -> &AgentCard {
         &self.0.card
+    }
+
+    /// Decides every later command by `settings` and within `limits`: the card's interfaces,
+    /// required extensions and capabilities, the extended card, and every limit a command
+    /// checks. What is stored stays; the public agent card served stays the one the server
+    /// started with.
+    pub(crate) fn reconfigure(&self, settings: Settings, limits: Limits) {
+        *self.0.settings.borrow_mut() = settings;
+        self.0.limits.set(limits);
     }
 
     /// Takes the service parameters of the request about to run: its `A2A-Version`, `None`
@@ -204,8 +218,8 @@ impl ServerPorts {
             .filter(|version| !version.trim().is_empty())
             .unwrap_or_else(|| DEFAULT_VERSION.to_owned());
         let asked = major_minor(&asked);
-        let spoken = self
-            .0
+        let settings = self.0.settings.borrow();
+        let spoken = settings
             .card
             .supported_interfaces
             .iter()
@@ -214,8 +228,7 @@ impl ServerPorts {
             return Some(Mismatch::Version);
         }
         let declared = self.0.extensions.borrow();
-        let missing = self
-            .0
+        let missing = settings
             .card
             .capabilities
             .extensions
@@ -228,17 +241,25 @@ impl ServerPorts {
     }
 
     fn streams(&self) -> bool {
-        self.0.card.capabilities.streaming == Some(true)
+        self.0.settings.borrow().card.capabilities.streaming == Some(true)
     }
 
     fn pushes(&self) -> bool {
-        self.0.card.capabilities.push_notifications == Some(true)
+        self.0
+            .settings
+            .borrow()
+            .card
+            .capabilities
+            .push_notifications
+            == Some(true)
     }
 
     /// Whether `GetExtendedAgentCard` answers an extended card: the card declares one and one is
     /// configured.
     pub(crate) fn serves_extended_card(&self) -> bool {
-        self.0.card.capabilities.extended_agent_card == Some(true) && self.0.extended_card.is_some()
+        let settings = self.0.settings.borrow();
+        settings.card.capabilities.extended_agent_card == Some(true)
+            && settings.extended_card.is_some()
     }
 
     /// A copy of the stored task with this id, whole.
@@ -416,7 +437,7 @@ impl ServerPorts {
                 Taken::Direct(reply)
             }
             Turn::Steps(steps) => {
-                let limits = self.0.limits;
+                let limits = self.0.limits.get();
                 match history {
                     Some(length) if length >= limits.max_history => return Taken::HistoryLimit,
                     Some(_) => {
@@ -494,7 +515,7 @@ impl ServerPorts {
     // ESS gap (ess 0.67.0): as for `keep_artifact`, `sets:` cannot append to the stored
     // `history`, so the message is stored here by hand.
     pub(crate) fn record(&self, task: &TaskId, message: Message) {
-        let cap = self.0.limits.max_history;
+        let cap = self.0.limits.get().max_history;
         self.update(task, |held| {
             if held.data.history.as_ref().map_or(0, Vec::len) < cap {
                 push_history(&mut held.data, message);
@@ -1062,7 +1083,7 @@ impl CreateTaskPushNotificationConfigBehavior for ServerPorts {
             .unwrap_or_else(|| PushNotificationConfigId(uuid::Uuid::new_v4().to_string()));
         let row = row_of(&input.task_id, &config_id);
         let replaces = self.0.configs.borrow().contains_key(&row.0);
-        if !replaces && self.configs_held(&input.task_id) >= self.0.limits.max_push_configs {
+        if !replaces && self.configs_held(&input.task_id) >= self.0.limits.get().max_push_configs {
             return Ok(Outcome::ConfigLimit {
                 error: ResourceExhausted,
             });
@@ -1255,19 +1276,21 @@ impl GetExtendedAgentCardBehavior for ServerPorts {
         input: GetExtendedAgentCard,
     ) -> Result<GetExtendedAgentCardOutcome, UnmetObligation> {
         let _ = input;
-        Ok(match self.mismatch() {
+        let mismatch = self.mismatch();
+        let settings = self.0.settings.borrow();
+        Ok(match mismatch {
             Some(Mismatch::Version) => GetExtendedAgentCardOutcome::VersionNotSupported {
                 error: a2a::discovery::VersionNotSupported,
             },
             Some(Mismatch::Extension) => GetExtendedAgentCardOutcome::ExtensionRequired {
                 error: a2a::discovery::ExtensionSupportRequired,
             },
-            None if self.0.card.capabilities.extended_agent_card != Some(true) => {
+            None if settings.card.capabilities.extended_agent_card != Some(true) => {
                 GetExtendedAgentCardOutcome::NotSupported {
                     error: a2a::discovery::UnsupportedOperation,
                 }
             }
-            None => match &self.0.extended_card {
+            None => match &settings.extended_card {
                 None => GetExtendedAgentCardOutcome::NotConfigured {
                     error: ExtendedAgentCardNotConfigured,
                 },

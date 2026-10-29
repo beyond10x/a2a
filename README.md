@@ -15,7 +15,10 @@ specification in [ESS](https://github.com/beyond10x/ess), and the Rust that is g
 task check
 ```
 
-validates the specification and fails when anything generated from it has drifted.
+validates the specification and fails when anything generated from it has drifted. It also runs
+`task conform`: the conformance suite ESS synthesizes from `ess/`, run against the server's own
+implementation in process (`crates/a2a-conformance`), fails on any failed or error scenario and on
+any `unsupported` one not listed with its reason in `crates/a2a-conformance/unsupported.tsv`.
 
 `cargo run -p a2a-server -- --listen 127.0.0.1:8080` serves an echo agent over A2A's HTTP+JSON
 binding. An extended Agent Card given with `--extended-card` is served only to requests carrying

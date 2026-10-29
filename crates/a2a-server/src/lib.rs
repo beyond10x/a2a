@@ -14,12 +14,29 @@ mod router;
 mod steps;
 
 pub use agent::{Agent, EchoAgent, Refusal, Step, Turn};
+pub use ports::ServerPorts;
 
 use std::net::TcpListener;
 use std::sync::mpsc::{self, RecvTimeoutError};
 use std::time::Duration;
 
+use a2a::actor::{Actor, Caller};
+use a2a::behaviour::{Context, Generated, PushNotificationConfigStorage, TaskStorage};
 use a2a::discovery::AgentCard;
+use a2a::discovery::obligations::GetExtendedAgentCardBehavior;
+use a2a::json::{self, Value};
+use a2a::ports::a2a_agent::A2aAgent;
+use a2a::server::entry::Refused;
+use a2a::server::{a2a_agent, wire};
+use a2a::system::{System, SystemEvent};
+use a2a::tasks::obligations::{
+    CancelTaskBehavior, CreateTaskPushNotificationConfigBehavior,
+    DeleteTaskPushNotificationConfigBehavior, GetTaskBehavior,
+    GetTaskPushNotificationConfigBehavior, ListTaskPushNotificationConfigsBehavior,
+    SendMessageBehavior, SendStreamingMessageBehavior, SubscribeToTaskBehavior,
+    TaskPushNotificationConfigsQuery, TasksQuery,
+};
+use a2a::tasks::{Artifact, Message, TaskId, TaskState};
 
 /// How long the server waits for a request before it looks for streams whose client hung up.
 const TICK: Duration = Duration::from_millis(250);
@@ -199,4 +216,202 @@ pub fn serve_with(
         }
         router.prune();
     }
+}
+
+/// Every obligation the generated system leaves to the ports it runs over: the clock, the two
+/// stores, and the behaviours and view queries the generated crate does not implement itself
+/// (`generated/rust/a2a/PLAN.md`). [`ServerPorts`] keeps them all; a wrapper of it that keeps them
+/// too can stand in for it in [`InProcess`].
+pub trait Obligations:
+    Context
+    + TaskStorage
+    + PushNotificationConfigStorage
+    + GetExtendedAgentCardBehavior
+    + CancelTaskBehavior
+    + CreateTaskPushNotificationConfigBehavior
+    + DeleteTaskPushNotificationConfigBehavior
+    + GetTaskBehavior
+    + GetTaskPushNotificationConfigBehavior
+    + ListTaskPushNotificationConfigsBehavior
+    + SendMessageBehavior
+    + SendStreamingMessageBehavior
+    + SubscribeToTaskBehavior
+    + TasksQuery
+    + TaskPushNotificationConfigsQuery
+{
+}
+
+impl<P> Obligations for P where
+    P: Context
+        + TaskStorage
+        + PushNotificationConfigStorage
+        + GetExtendedAgentCardBehavior
+        + CancelTaskBehavior
+        + CreateTaskPushNotificationConfigBehavior
+        + DeleteTaskPushNotificationConfigBehavior
+        + GetTaskBehavior
+        + GetTaskPushNotificationConfigBehavior
+        + ListTaskPushNotificationConfigsBehavior
+        + SendMessageBehavior
+        + SendStreamingMessageBehavior
+        + SubscribeToTaskBehavior
+        + TasksQuery
+        + TaskPushNotificationConfigsQuery
+{
+}
+
+/// The server without its HTTP binding: the generated system over [`ServerPorts`], driven call by
+/// call in this process. It decides every command as [`serve_with`] does, and issues the steps an
+/// agent asks for after the call that asked, as the server loop does; what it publishes is read
+/// off the system's log.
+///
+/// The generated system runs over `P`: [`ServerPorts`] itself, or a wrapper of them
+/// ([`InProcess::wrapped`]).
+pub struct InProcess<P = ServerPorts> {
+    system: System<Generated<P>>,
+    ports: ServerPorts,
+}
+
+/// What one call or issued step came to.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Called {
+    /// The generated layer's answer (`a2a::server::a2a_agent::handle`): for a command the
+    /// outcome it took, under `outcome`, with what it published under `published`, its declared
+    /// error under `error` or its response under `response`, wire-named; for a view its rows,
+    /// under `rows`. Or why it answered no declared outcome.
+    pub answer: Result<Value, Refused>,
+    /// Every event the system published while the call ran, in log order: the command's own,
+    /// then those of the steps it left the agent to ask for.
+    pub events: Vec<SystemEvent>,
+}
+
+impl InProcess<ServerPorts> {
+    /// A server with no task and no configuration, deciding by `settings` and within `limits`,
+    /// whose messages `agent` answers.
+    pub fn new(settings: Settings, agent: Box<dyn Agent>, limits: Limits) -> Self {
+        Self::wrapped(settings, agent, limits, |ports| ports)
+    }
+}
+
+impl<P: Obligations> InProcess<P> {
+    /// As [`InProcess::new`], with the generated system run over `wrap` of the server's ports.
+    pub fn wrapped(
+        settings: Settings,
+        agent: Box<dyn Agent>,
+        limits: Limits,
+        wrap: impl FnOnce(ServerPorts) -> P,
+    ) -> Self {
+        let ports = ServerPorts::new(settings, agent, limits);
+        let system = System::new(A2aAgent::new(Generated::new(wrap(ports.clone()))));
+        Self { system, ports }
+    }
+
+    /// Decides every later call by `settings` and within `limits`; what is stored stays.
+    pub fn reconfigure(&self, settings: Settings, limits: Limits) {
+        self.ports.reconfigure(settings, limits);
+    }
+
+    /// Runs the command or view `name` as `caller` with `input`, wire-named as its route reads
+    /// it, under the `A2A-Version` `version` and the `A2A-Extensions` `extensions`; then issues
+    /// every step the agent asked for, in order.
+    pub fn call(
+        &mut self,
+        caller: Option<&Caller>,
+        version: Option<String>,
+        extensions: Vec<String>,
+        name: &str,
+        input: Value,
+    ) -> Called {
+        self.ports.negotiate(version, extensions);
+        self.ports.next_command();
+        let (answer, mut events) =
+            a2a_agent::handle_with_events(&mut self.system, caller, name, input);
+        for work in self.ports.take_work() {
+            for step in work.steps {
+                if let Some((_, issued)) = self.issue(&work.task, step) {
+                    events.extend(issued.events);
+                }
+            }
+        }
+        Called { answer, events }
+    }
+
+    /// Issues `step` on `task` as the server loop issues an agent's step: as its
+    /// `a2a.tasks.Agent` command through the generated system, keeping what the generated
+    /// behaviour leaves to the server (a status message it moved the task with, in the history;
+    /// an artifact it updated, on the task). `None`, issuing nothing, where the task is gone or
+    /// in a terminal state, or the step is `Work` and the task is working. Answers the input the
+    /// command was issued with, wire-named, and what it came to.
+    pub fn issue(&mut self, task: &TaskId, step: Step) -> Option<(Value, Called)> {
+        let (state, context) = self.ports.state_of(task)?;
+        if ports::terminal(state) || (matches!(step, Step::Work(_)) && state == TaskState::Working)
+        {
+            return None;
+        }
+        let mut input = String::from("{");
+        json::member(&mut input, "id");
+        json::push_text(&mut input, &task.0);
+        let (command, kept) = match step {
+            Step::Emit {
+                artifact,
+                append,
+                last_chunk,
+            } => {
+                json::member(&mut input, "artifact");
+                wire::encode_a2a_tasks_artifact(&artifact, &mut input);
+                json::member(&mut input, "append");
+                json::push_bool(&mut input, append);
+                json::member(&mut input, "last_chunk");
+                json::push_bool(&mut input, last_chunk);
+                ("a2a.tasks.UpdateArtifact", Kept::Artifact(artifact, append))
+            }
+            Step::Work(message) => ("a2a.tasks.StartWorking", Kept::Status(message)),
+            Step::Complete(message) => ("a2a.tasks.CompleteTask", Kept::Status(message)),
+            Step::Fail(message) => ("a2a.tasks.FailTask", Kept::Status(message)),
+            Step::Reject(message) => ("a2a.tasks.RejectTask", Kept::Status(message)),
+            Step::RequireInput(message) => ("a2a.tasks.RequireInput", Kept::Status(message)),
+            Step::RequireAuth(message) => ("a2a.tasks.RequireAuth", Kept::Status(message)),
+        };
+        let kept = match kept {
+            Kept::Status(message) => {
+                let message = ports::attached(message, task, &context);
+                if let Some(message) = &message {
+                    json::member(&mut input, "status_message");
+                    wire::encode_a2a_tasks_message(message, &mut input);
+                }
+                Kept::Status(message)
+            }
+            artifact @ Kept::Artifact(..) => artifact,
+        };
+        input.push('}');
+        let input = json::parse_written(&input).ok()?;
+        self.ports.next_command();
+        let agent = Caller {
+            actor: Actor::TasksAgent,
+        };
+        let (answer, events) =
+            a2a_agent::handle_with_events(&mut self.system, Some(&agent), command, input.clone());
+        let outcome = match answer
+            .as_ref()
+            .ok()
+            .and_then(|answer| answer.member("outcome"))
+        {
+            Some(Value::Text(outcome)) => outcome.as_str(),
+            _ => "",
+        };
+        match (kept, outcome) {
+            (Kept::Artifact(artifact, append), "updated") => {
+                self.ports.keep_artifact(task, artifact, append);
+            }
+            (Kept::Status(Some(message)), "moved") => self.ports.record(task, message),
+            _ => {}
+        }
+        Some((input, Called { answer, events }))
+    }
+}
+
+/// What the server keeps of a step once its command took effect.
+enum Kept {
+    Artifact(Artifact, bool),
+    Status(Option<Message>),
 }
