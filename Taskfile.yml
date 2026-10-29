@@ -19,6 +19,7 @@ tasks:
       - task: drift
       - task: http-paths
       - task: docs-check
+      - task: conform
       - cargo fmt --check
       - cargo clippy --workspace --all-targets --locked -- -D warnings
       - cargo test --workspace --locked
@@ -58,6 +59,20 @@ tasks:
     desc: Fail when generated/rust/a2a differs from a fresh synthesis of ess/.
     cmds:
       - cargo run -q --locked -p a2a-xtask -- drift
+
+  conform:
+    desc: Run the synthesized suite against a2a-server's own obligations in process; fail unless 0 failed, 0 error and every unsupported scenario is named, with its reason, in crates/a2a-conformance/unsupported.tsv.
+    vars:
+      CONFORM: '{{.SCRATCH}}/conform'
+      VERSION:
+        sh: sed -n '/^\[workspace\.package\]/,/^\[/s/^version = "\(.*\)"$/\1/p' Cargo.toml
+    cmds:
+      - rm -rf {{.CONFORM}}
+      - mkdir -p {{.CONFORM}}
+      - ess verify conform synthesize --path ess --scenarios ess --out {{.CONFORM}}/suite.json
+      - cargo run -q --locked -p a2a-conformance -- run --suite {{.CONFORM}}/suite.json --results {{.CONFORM}}/results.json
+      - ess verify conform report --suite {{.CONFORM}}/suite.json --results {{.CONFORM}}/results.json --implementation a2a-server --runner a2a-conformance@{{.VERSION}} --report-out {{.CONFORM}}/report.json
+      - cargo run -q --locked -p a2a-conformance -- gate --report {{.CONFORM}}/report.json --results {{.CONFORM}}/results.json --unsupported crates/a2a-conformance/unsupported.tsv
 
   conform-interpreted:
     desc: Run the synthesized suite against the ESS interpreted reference target (not a gate yet).

@@ -26,8 +26,10 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 | `generated/rust/a2a/` | Rust crate synthesized from `ess/` (model, contracts, `server` feature) | `task generate` |
 | `crates/a2a-xtask/` | Repository checks (generated-crate drift, HTTP path parity) | authored |
 | `crates/a2a-docs/` | Generator of the site's reference pages and downloads, and the build's provenance | authored |
-| `crates/a2a-server/` | A2A's HTTP+JSON binding over `generated/rust/a2a` (`server` feature): the 12 obligations in memory, every upstream route, SSE streams, and the `a2a-server` echo agent. Declares no type under a name the generated crate exports, at any visibility or qualifier; `tests/defines_none.rs` fails if it does | authored |
+| `crates/a2a-server/` | A2A's HTTP+JSON binding over `generated/rust/a2a` (`server` feature): the 12 obligations in memory, every upstream route, SSE streams, and the `a2a-server` echo agent; `InProcess` runs the same obligations through the generated `System` without HTTP. Declares no type under a name the generated crate exports, at any visibility or qualifier; `tests/defines_none.rs` fails if it does | authored |
 | `crates/a2a-client/` | Typed client of A2A's HTTP+JSON binding over `generated/rust/a2a` (`server` feature codecs): one method per operation, `tenant` selecting the `/{tenant}/` route, `google.rpc.Status` errors as `Error::Status` with a `Reason`, streams as `Events` iterators. HTTP/1.1 over `std::net::TcpStream`, `http://` only. Declares no type under a name the generated crate exports; `tests/defines_none.rs` fails if it does, and `tests/routes.rs` if the (method, path) pairs it sends differ from `upstream/openapi/` | authored |
+| `crates/a2a-conformance/` | Interpreter of an `ess-conformance/52` suite against a `Target` (writes `ess-conformance-results/1`), the in-process target over `a2a-server`'s own obligations, and the gate `task conform` holds the report to | authored |
+| `crates/a2a-conformance/unsupported.tsv` | The scenarios allowed to come out `unsupported`, one per line: scenario id, a tab, the exact reason the run gives. The gate fails on one missing, one extra or a changed reason | authored |
 | `website/` | Docusaurus site on `@beyond10x/docs-system`; `docs/concepts/`, `docs/guides/`, `docs/index.md` | authored |
 | `website/docs/reference/`, `website/static/downloads/` | Specification pages, routes, marker index, downloads with `SHA256SUMS` | `task docs-generate` |
 | `.engineering/` | AEP planning store; the plan lives here, not in chat or plan files | `aep` |
@@ -36,11 +38,12 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 
 | Command | Does |
 |---|---|
-| `task check` | The gate: validate `ess/`, projection and synthesis drift, fmt, clippy, test, build the generated crate |
+| `task check` | The gate: validate `ess/`, projection and synthesis drift, `task conform`, fmt, clippy, test, build the generated crate |
 | `task generate`, `task projections` | Rewrite `generated/` after a change to `ess/` |
 | `task docs-generate` | Rewrite `website/docs/reference/` and `website/static/downloads/`; `task docs-check` (in `task check`) fails on a missing, stale or hand-edited file there, and on any file there it does not generate |
 | `task website` | `npm ci` and `npm run build` in `website/`, as `.github/workflows/pages.yml` does. Not in `task check` |
 | `cargo run -p a2a-server -- --listen 127.0.0.1:8080 [--card <json>] [--extended-card <json> --extended-card-token-file <path>] [--max-connections 256] [--request-timeout 10] [--max-subscribers-per-task 16] [--max-subscribers <half of --max-connections>] [--max-tasks 10000] [--max-history 1000] [--max-push-configs 16]` | Serve the echo agent; the card at `/.well-known/agent-card.json`. Over the connection cap a connection is closed; a request not in within the timeout (seconds) is answered 408. A stream, task, history message or push config over its bound is answered 429 and nothing is kept. `GET /extendedAgentCard` answers 401 without `Authorization: Bearer <token>` (the token file's content), and `--extended-card` requires the token file. The token is never logged |
+| `task conform` | Synthesize the suite into `~/.cache/a2a-gen/conform/` (removed first), run it against `a2a-server`'s obligations in process (`cargo run -p a2a-conformance -- run`), write `report.json` with `ess verify conform report`, then `a2a-conformance gate`: fails unless 0 failed, 0 error and the unsupported scenarios are exactly those `crates/a2a-conformance/unsupported.tsv` names, with their reasons. In `task check` |
 | `task conform-interpreted` | Synthesized suite on the ESS interpreted target. Not a gate; on ESS 0.75.0, 177 of 177 scenarios pass |
 | `task upstream` | Fetch the pinned tarball, verify sha256, refresh `upstream/`. Needs `buf`, `protoc-gen-openapiv2`, `npx` |
 | `task plan` | `aep plan artifact validate` |

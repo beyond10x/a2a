@@ -20,6 +20,18 @@ under `[Unreleased]` until the next release.
   `http://` URLs; `https://` is refused with `Error::UnsupportedScheme`. It declares no model
   type of the generated crate; `ListTasksRequest` and `ListTasksResponse` are its own, since the
   generated crate has none.
+- `crates/a2a-conformance`: an interpreter of `ess-conformance/52` suites against a `Target` trait
+  (execute a command as an actor, query a view, force an external outcome, read the events
+  published since the last step; `TargetError::Unsupported` makes a scenario `unsupported`), which
+  writes `ess-conformance-results/1`. Its in-process target runs every scenario on a fresh
+  `a2a-server` through the generated `System`. `task conform`, now in `task check`, synthesizes the
+  suite, runs it, reports with `ess verify conform report` and fails unless 0 failed, 0 error and
+  every `unsupported` scenario is listed with its reason in `crates/a2a-conformance/unsupported.tsv`.
+  On ESS 0.75.0: 163 of 177 pass, 14 unsupported (11 on push configs across tenants, whose tenant
+  guard `ess/domains/tasks.yaml` leaves `UNMAPPED`; 3 authored claims whose `status` literal leaves
+  out the `timestamp` the server stamps).
+- `a2a-server` exports `InProcess`, `Obligations` and `ServerPorts`: the server's obligations run
+  without HTTP, settings and limits reconfigurable between calls.
 
 ## [0.4.0] - 2026-10-29
 
