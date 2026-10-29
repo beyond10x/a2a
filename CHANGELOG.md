@@ -8,6 +8,74 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-29
+
+### Added
+
+- `crates/a2a-client`: a typed client of A2A's HTTP+JSON binding over the generated crate. One
+  method per operation (the public card, `SendMessage`, `SendStreamingMessage`, `GetTask`,
+  `ListTasks`, `CancelTask`, `SubscribeToTask`, the four push notification config operations and
+  `GetExtendedAgentCard`); a request's `tenant` selects the `/{tenant}/` route. Error answers are
+  `Error::Status` with the HTTP status, the `google.rpc.Status` code, status and message, and the
+  `ErrorInfo` reason as a `Reason`; an answer that is not the binding's is `Error::Protocol`.
+  Streams are iterators of typed stream responses. HTTP/1.1 over `std::net::TcpStream` to
+  `http://` URLs; `https://` is refused with `Error::UnsupportedScheme`. It declares no model
+  type of the generated crate; `ListTasksRequest` and `ListTasksResponse` are its own, since the
+  generated crate has none.
+- `crates/a2a-conformance`: an interpreter of `ess-conformance/52` suites against a `Target` trait
+  (execute a command as an actor, query a view, force an external outcome, read the events
+  published since the last step; `TargetError::Unsupported` makes a scenario `unsupported`), which
+  writes `ess-conformance-results/1`. Its in-process target runs every scenario on a fresh
+  `a2a-server` through the generated `System`. `task conform`, now in `task check`, synthesizes the
+  suite, runs it, reports with `ess verify conform report` and fails unless 0 failed, 0 error and
+  every `unsupported` scenario is listed with its reason in `crates/a2a-conformance/unsupported.tsv`.
+  On ESS 0.75.0: 169 of 182 pass, 13 unsupported (10 on push configs across tenants, whose tenant
+  guard `ess/domains/tasks.yaml` leaves `UNMAPPED`; 3 authored claims whose `status` literal leaves
+  out the `timestamp` the server stamps). An unsupported scenario's reason joins every distinct
+  reason its checks gave. A configuration that only arranges what a later step reads, on a task of
+  another tenant and naming no tenant, is created under the task's tenant, so the step the
+  scenario is about runs. The extended card the target serves differs from the public card and is
+  read with a bearer token, as an authenticated client sends it. A scenario's `arrange` setup of an
+  `a2a.tasks.Task` (`establish_entity`) is stored in the server as given; another target answers
+  it `unsupported`.
+- Authored scenarios under `ess/scenarios/`: the `TaskPushNotificationConfigs` view of a task
+  under its own tenant answers its url and token; `Tasks` under another tenant, or with no tenant,
+  leaves out a tenant's task; `Tasks` with a `status` leaves out a task in another state; `GetTask`
+  with `history_length: 1` answers the last message only; `ListTaskPushNotificationConfigs` with
+  `page_size: 1` answers the first configuration only.
+- `a2a-server` exports `InProcess`, `Obligations` and `ServerPorts`: the server's obligations run
+  without HTTP, settings and limits reconfigurable between calls. `InProcess` is a trusted harness
+  entry: it runs a command for whatever caller it is handed, and reads the
+  `TaskPushNotificationConfigs` view, which has no tenant scope and which the binary serves on no
+  route, for any task. `with_access` gives it the extended card's bearer token, which
+  `call_presenting` checks as the binary does; the agent's steps run through the code the server
+  loop runs them with.
+- `crates/a2a-testkit`: checks any A2A endpoint from outside. `WireTarget` is a `Target` of
+  `a2a-conformance` over `a2a-client`, each command sent as the operation `OPERATIONS` binds it to
+  (the routes of `ess/http.yaml` plus the two `ess/http-unmapped.tsv` names), the tenant taken from
+  the scenario's input, and each answer read as the outcome the generated contract declares for
+  it. An error counts only at the HTTP status and `google.rpc.Status` status A2A maps its reason
+  to, and the external outcomes the scenario rules out (`VERSION_NOT_SUPPORTED` to the client's own
+  version, a refusal of a capability the card declares, a task that cannot be canceled when there
+  is no task) are set aside first. An outcome other than the one the scenario expects is `failed`.
+  A published event, a forced or taken external outcome, an actor other than the client, a view
+  with no A2A operation and a read of `a2a.tasks.Tasks`, whose state a live endpoint cannot reset,
+  are `unsupported` with that reason. `a2a-testkit run --url <base> --suite <suite.json>
+  [--results <out>] [--bearer-file <path>]` prints one line per scenario and the counts, then
+  writes `ess-conformance-results/1` with `--results`, and exits 0 only when at least one scenario
+  passed and none is failed or error. `--bearer-file` sends the token the file holds and never
+  prints it; without it, an extended card served only to authenticated clients is `unsupported`.
+  Against `a2a-server` 7 of 182 pass and 175 are unsupported. The helpers `expect_card`,
+  `expect_task_state`, `expect_error_reason`, `expect_stream_states` and
+  `expect_push_config_roundtrip` answer a `Mismatch` naming the expected and the observed value
+  instead of panicking. They check the task's id, the mapped status of an error, that a stream
+  starts with its task and carries updates of that task only, and a push config's authentication.
+
+### Changed
+
+- `Taskfile.yml` no longer points every checkout at one shared `CARGO_TARGET_DIR`; each checkout
+  builds into its own `target/`.
+
 ## [0.4.0] - 2026-10-29
 
 ### Added
@@ -154,7 +222,8 @@ ESS specification of A2A v1.0.1 and the artifacts generated from it.
 - Release assets: `a2a.proto`, both OpenAPI documents, the AsyncAPI document, the JSON Schema
   archive and the specification bundle, with `SHA256SUMS`.
 
-[Unreleased]: https://github.com/beyond10x/a2a/compare/0.4.0...HEAD
+[Unreleased]: https://github.com/beyond10x/a2a/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/beyond10x/a2a/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/beyond10x/a2a/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/beyond10x/a2a/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/beyond10x/a2a/compare/0.1.0...0.2.0

@@ -8,19 +8,34 @@ specification in [ESS](https://github.com/beyond10x/ess), and the Rust that is g
 | `ess/` | The specification: task lifecycle, messages, push-notification configs, the extended Agent Card |
 | `upstream/` | The pinned upstream `a2a.proto`, its licence, and an OpenAPI 3.0 document derived from it |
 | `generated/` | OpenAPI, AsyncAPI and JSON Schema projections, and the synthesized Rust crate |
-| `crates/` | Hand-written Rust: repository checks and the documentation generator today; server, client and test kit to follow |
+| `crates/` | Hand-written Rust: repository checks, the documentation generator, the server, the client and the test kit |
 | `website/` | The documentation site (Docusaurus) |
 
 ```console
 task check
 ```
 
-validates the specification and fails when anything generated from it has drifted.
+validates the specification and fails when anything generated from it has drifted. It also runs
+`task conform`: the conformance suite ESS synthesizes from `ess/`, run against the server's own
+implementation in process (`crates/a2a-conformance`), fails on any failed or error scenario and on
+any `unsupported` one not listed with its reason in `crates/a2a-conformance/unsupported.tsv`.
 
 `cargo run -p a2a-server -- --listen 127.0.0.1:8080` serves an echo agent over A2A's HTTP+JSON
 binding. An extended Agent Card given with `--extended-card` is served only to requests carrying
 `Authorization: Bearer <token>`, the token read from `--extended-card-token-file`, which
 `--extended-card` requires.
+
+`crates/a2a-client` is a typed Rust client of that binding: one method per A2A operation over the
+generated types, a request's `tenant` selecting the `/{tenant}/` route, every `google.rpc.Status`
+error decoded with its `ErrorInfo` reason, and streams read as iterators of server-sent events. It
+speaks HTTP/1.1 to `http://` URLs only; TLS and the JSON-RPC binding are not yet supported.
+
+`crates/a2a-testkit` checks any A2A endpoint from outside through that client.
+`cargo run -p a2a-testkit -- run --url http://127.0.0.1:8080 --suite <suite.json>` runs the suite
+`ess verify conform synthesize` writes against the endpoint, prints one line per scenario and the
+counts, and exits non-zero on any failed or error scenario. Steps the wire cannot observe, such as
+published events or a command the agent issues, come out `unsupported` with the reason. Its
+`expect_*` helpers check one behaviour each and name the expected and the observed value.
 
 ## Documentation
 
