@@ -1,0 +1,56 @@
+# A2A v1.0.1 section 13.1: "Implementations MUST scope results to the caller's authorized access
+# boundaries". A configuration created without a tenant, on a task created without one, is a row
+# of the view a2a.tasks.TaskPushNotificationConfigs (domains/tasks.yaml) read without a tenant,
+# with its url and token, and no row of the view read under a tenant (story:view-tenant-scope).
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: push-config-view-without-tenant
+summary: A configuration created without a tenant is read back without one, and is no row under a tenant.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-03-02T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-03-02T09:00:01Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-plain
+      url: https://client.example.test/plain-webhook
+      token: plain-token
+    outcome: created
+
+assert:
+  - view: a2a.tasks.TaskPushNotificationConfigs
+    params:
+      task_id: {$instance: task}
+    contains:
+      task_id: {$instance: task}
+      config_id: cfg-plain
+      url: https://client.example.test/plain-webhook
+      token: plain-token
+  - view: a2a.tasks.TaskPushNotificationConfigs
+    params:
+      task_id: {$instance: task}
+    counts:
+      at_most: 1
+  - view: a2a.tasks.TaskPushNotificationConfigs
+    params:
+      task_id: {$instance: task}
+      tenant: tenant-a
+    counts:
+      at_most: 0

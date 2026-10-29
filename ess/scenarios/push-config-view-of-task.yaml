@@ -34,7 +34,6 @@ timeline:
     input:
       tenant: tenant-view
       task_id: {$instance: task}
-      tenant: tenant-view
       id: cfg-view
       url: https://client.example.test/view-webhook
       token: view-token

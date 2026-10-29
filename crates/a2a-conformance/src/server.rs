@@ -99,17 +99,15 @@ const ACROSS_TENANTS: [&str; 3] = [
 /// The scenarios, by the command they are about, whose arranging runs are sent under the task's
 /// tenant even where they name another.
 // ESS gap (ess 0.75.0): since the TaskPushNotificationConfigs view takes a `tenant` parameter
-// (story:view-tenant-scope), synthesis arranges the configurations these scenarios read under
-// tenants of its own (`tenant-1` …) on a task created under `tenant`, as the configuration's
-// tenant is a free field to the model (the UNMAPPED tenant guard above). No claim of these
-// scenarios reads a configuration's tenant (`found` claims the response's shape), so the
+// (story:view-tenant-scope), synthesis arranges the configurations GetTaskPushNotificationConfig
+// reads under tenants of its own (`tenant-1` …) on a task created under `tenant`, as the
+// configuration's tenant is a free field to the model (the UNMAPPED tenant guard above). No claim
+// of those scenarios reads a configuration's tenant (`found` claims the response's shape), so the
 // arrangement runs under the task's tenant and the step the scenario is about stays held to the
 // suite; without it, removing GetTaskPushNotificationConfig's tenant guard leaves the gate green
-// (`tests/sec_tenant_guards.rs`).
-const REARRANGED: [&str; 2] = [
-    "a2a.tasks.GetTaskPushNotificationConfig",
-    "a2a.tasks.DeleteTaskPushNotificationConfig",
-];
+// (`tests/sec_tenant_guards.rs`). DeleteTaskPushNotificationConfig is not listed: its `deleted`
+// claims the PushNotificationConfigs rows' tenant, and its guard stays measured without it.
+const REARRANGED: [&str; 1] = ["a2a.tasks.GetTaskPushNotificationConfig"];
 
 /// The reason a run of an [`ACROSS_TENANTS`] command on another tenant's task is unsupported.
 fn across_tenants(command: &str) -> String {

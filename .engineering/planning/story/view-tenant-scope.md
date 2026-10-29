@@ -7,7 +7,7 @@ title: TaskPushNotificationConfigs view scoped to the caller's tenant
 summary: The push-config view answers a client only its own tenant's configs; found by wave 4 reviews of story:conformance-gate.
 relations:
 - decomposes: epic:a2a-delivery
-revision: 5
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T14:49:08Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-29T14:49:08Z", actor: "human:timo", revision: 5}
@@ -37,7 +37,8 @@ filters tasks.
 4. Scenarios: the two assertions of `ess/scenarios/push-config-view-of-task.yaml` pass
    `tenant: tenant-view`; the new `ess/scenarios/push-config-view-other-tenant.yaml` reads the
    view under `tenant-b` and under no tenant with `counts: {at_most: 0}` and under its own tenant
-   with `at_most: 1`. `task conform` passes with `crates/a2a-conformance/unsupported.tsv`
+   with `at_most: 1`; `push-config-view-without-tenant.yaml` reads a tenant-less configuration back
+   without a tenant (`contains`) and counts 0 rows under one. `task conform` passes with `crates/a2a-conformance/unsupported.tsv`
    unchanged, and `crates/a2a-conformance/tests/sec_tenant_guards.rs` still turns the gate red
    for each push-config command without its tenant guard.
 5. Documentation: `grep -rn "no tenant scope" AGENTS.md crates/a2a-server/src
@@ -56,7 +57,7 @@ ESS gap A stays open and is out of scope: the tenant guard of the push-config co
 cannot be expressed on ESS 0.75.0, so the synthesized cross-tenant scenarios stay `unsupported`.
 The guard is enforced in `crates/a2a-server` and held by `tests/tenants.rs`,
 `tests/sec_cg_inprocess.rs` and `crates/a2a-conformance/tests/sec_tenant_guards.rs`. With the
-view's parameter, synthesis arranges the configurations of the Get and Delete scenarios under
+view's parameter, synthesis arranges the configurations of the GetTaskPushNotificationConfig scenarios under
 tenants of its own; the in-process target sends those arrangements under the task's tenant, so
 the gate keeps measuring both guards.
 
