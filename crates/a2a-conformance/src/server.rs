@@ -89,15 +89,29 @@ const ALL_TASKS: &str = "a2a.tasks.AllTasks";
 // was created under, so the step the scenario is about runs and is held to the suite. A run that
 // names a tenant keeps it: the configuration would store another tenant than the one it names,
 // which a later claim reads (the PushNotificationConfigs rows of the TaskPushNotificationConfigs
-// grant scenarios claim `tenant`).
-const ACROSS_TENANTS: [&str; 3] = [
+// grant scenarios claim `tenant`). Except in the scenarios of [`REARRANGED`].
+pub const ACROSS_TENANTS: [&str; 3] = [
     "a2a.tasks.CreateTaskPushNotificationConfig",
     "a2a.tasks.GetTaskPushNotificationConfig",
     "a2a.tasks.DeleteTaskPushNotificationConfig",
 ];
 
-/// The reason a run of an [`ACROSS_TENANTS`] command on another tenant's task is unsupported.
-fn across_tenants(command: &str) -> String {
+/// The scenarios, by the command they are about, whose arranging runs are sent under the task's
+/// tenant even where they name another.
+// ESS gap (ess 0.75.0): since the TaskPushNotificationConfigs view takes a `tenant` parameter
+// (story:view-tenant-scope), synthesis arranges the configurations GetTaskPushNotificationConfig
+// reads under tenants of its own (`tenant-1` …) on a task created under `tenant`, as the
+// configuration's tenant is a free field to the model (the UNMAPPED tenant guard above). No claim
+// of those scenarios reads a configuration's tenant (`found` claims the response's shape), so the
+// arrangement runs under the task's tenant and the step the scenario is about stays held to the
+// suite; without it, removing GetTaskPushNotificationConfig's tenant guard leaves the gate green
+// (`tests/sec_tenant_guards.rs`). DeleteTaskPushNotificationConfig is not listed: its `deleted`
+// claims the PushNotificationConfigs rows' tenant, and its guard stays measured without it.
+const REARRANGED: [&str; 1] = ["a2a.tasks.GetTaskPushNotificationConfig"];
+
+/// The reason a run of an [`ACROSS_TENANTS`] command on another tenant's task is unsupported, which
+/// a target over the wire (`a2a-testkit`) gives as well.
+pub fn across_tenants(command: &str) -> String {
     format!(
         "{command} on a task of another tenant: a2a-server answers TaskNotFound (A2A v1.0.1 section 13.1), a guard ess/domains/tasks.yaml leaves UNMAPPED, so the synthesized scenario expects the command to act across tenants"
     )
@@ -472,7 +486,11 @@ impl<P: Obligations> Target for ServerTarget<P> {
         let mut input = Naming::contract().input_to_wire(command, input);
         let admitted = a2a_agent::admit(caller.as_ref(), command).is_ok();
         let across = match self.owner_elsewhere(command, &input) {
-            Some(owner) if command != self.subject && input.member("tenant").is_none() => {
+            Some(owner)
+                if command != self.subject
+                    && (input.member("tenant").is_none()
+                        || REARRANGED.contains(&self.subject.as_str())) =>
+            {
                 input = with_tenant(input, owner);
                 false
             }

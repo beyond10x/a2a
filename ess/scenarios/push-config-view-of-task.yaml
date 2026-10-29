@@ -3,7 +3,8 @@
 # configurations for the specified task". The configurations of a task are read through the view
 # a2a.tasks.TaskPushNotificationConfigs (domains/tasks.yaml, ListTaskPushNotificationConfigs: "the
 # rows are observable only through the view"). The task and its configuration are under one tenant,
-# so the view's row carries the url and the token the configuration was created with.
+# so the view read under that tenant carries the url and the token the configuration was created
+# with.
 type: ess-scenario/1
 domain: a2a.tasks
 scenario: push-config-view-of-task
@@ -42,13 +43,16 @@ assert:
   - view: a2a.tasks.TaskPushNotificationConfigs
     params:
       task_id: {$instance: task}
+      tenant: tenant-view
     contains:
       task_id: {$instance: task}
+      tenant: tenant-view
       config_id: cfg-view
       url: https://client.example.test/view-webhook
       token: view-token
   - view: a2a.tasks.TaskPushNotificationConfigs
     params:
       task_id: {$instance: task}
+      tenant: tenant-view
     counts:
       at_most: 1

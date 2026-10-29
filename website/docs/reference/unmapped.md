@@ -64,7 +64,7 @@ The HTTP+JSON routes ESS cannot serve at A2A's path are on [HTTP+JSON routes](./
 | [1711](https://github.com/beyond10x/a2a/blob/main/ess/domains/tasks.yaml#L1711) | ESS gap | wire type is TaskState (TASK\_STATE\_\*); ESS 0.67.0 has no map from it to the lifecycle states the filter compares. |
 | [1742](https://github.com/beyond10x/a2a/blob/main/ess/domains/tasks.yaml#L1742) | ESS gap | the wire spells the state TASK\_STATE\_\*. ESS 0.67.0 gives a lifecycle state no wire spelling: `states: [{name: Submitted, wire: TASK_STATE_SUBMITTED}, …]` is refused "invalid type: map, expected a string", so the row carries the lifecycle name. |
 | [1766](https://github.com/beyond10x/a2a/blob/main/ess/domains/tasks.yaml#L1766) | ESS gap | the per-row boundary within the Agent's reads (which tasks one authenticated caller may see); ESS 0.67.0 grants a whole view to an actor, no subset of rows. |
-| [1827](https://github.com/beyond10x/a2a/blob/main/ess/domains/tasks.yaml#L1827) | ESS gap | `row` has no A2A source; dropping it is refused, ESS-SYNTH-001 on DeleteTaskPushNotificationConfig/deleted "published by no immediate, unfiltered, unparameterised, unpaged view carrying its identity". |
+| [1840](https://github.com/beyond10x/a2a/blob/main/ess/domains/tasks.yaml#L1840) | ESS gap | `row` has no A2A source; dropping it is refused, ESS-SYNTH-001 on DeleteTaskPushNotificationConfig/deleted "published by no immediate, unfiltered, unparameterised, unpaged view carrying its identity". |
 
 ## `ess/http.yaml`
 

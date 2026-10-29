@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
-// contract digest 91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a
+// model digest 911794dff39b27311ddc6db22aa294d7c70c823fd2310684ad996b6eab4c5cdf
+// contract digest f3a9f588bb74b749958999da8b7430eaf336cfa0d5e58a72b23699edc898a4dd
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Tasks — `a2a.tasks`.
@@ -2031,7 +2031,7 @@ pub struct PushNotificationConfigs {
 
 /// List push notification configs — one row of the view `a2a.tasks.TaskPushNotificationConfigs`.
 ///
-/// Projects `a2a.tasks.PushNotificationConfig` at `read_your_writes` consistency, containing instances where `task_id == param.task_id`.
+/// Projects `a2a.tasks.PushNotificationConfig` at `read_your_writes` consistency, containing instances where `(task_id == param.task_id and ((defined(param.tenant) and defined(tenant) and tenant == param.tenant) or (not (defined(param.tenant)) and not (defined(tenant)))))`.
 /// Serving it is an implementation obligation — see the plan — because how a projection is kept
 /// current is a storage decision the specification does not take.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -2301,13 +2301,13 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a view parameter (`params:`), which a generated query does not apply.
     ///
-    /// Contract: a query answering `a2a.tasks.TaskPushNotificationConfigs` with rows projected from `a2a.tasks.PushNotificationConfig` at `read_your_writes` consistency, containing instances where `task_id == param.task_id`.
+    /// Contract: a query answering `a2a.tasks.TaskPushNotificationConfigs` with rows projected from `a2a.tasks.PushNotificationConfig` at `read_your_writes` consistency, containing instances where `(task_id == param.task_id and ((defined(param.tenant) and defined(tenant) and tenant == param.tenant) or (not (defined(param.tenant)) and not (defined(tenant)))))`.
     pub trait TaskPushNotificationConfigsQuery {
         /// Serves `a2a.tasks.TaskPushNotificationConfigs` rows at the view's declared consistency.
         ///
         /// `Err` is the typed refusal of an obligation nothing has satisfied; a satisfying
         /// implementation never returns it.
-        fn task_push_notification_configs(&self, task_id: crate::tasks::TaskId) -> Result<Vec<super::TaskPushNotificationConfigs>, crate::obligation::UnmetObligation>;
+        fn task_push_notification_configs(&self, task_id: crate::tasks::TaskId, tenant: Option<String>) -> Result<Vec<super::TaskPushNotificationConfigs>, crate::obligation::UnmetObligation>;
     }
 
     /// The query `a2a.tasks.Tasks` — an implementation obligation.
@@ -2384,7 +2384,7 @@ pub mod obligations {
     }
 
     impl TaskPushNotificationConfigsQuery for Unimplemented {
-        fn task_push_notification_configs(&self, _task_id: crate::tasks::TaskId) -> Result<Vec<super::TaskPushNotificationConfigs>, crate::obligation::UnmetObligation> {
+        fn task_push_notification_configs(&self, _task_id: crate::tasks::TaskId, _tenant: Option<String>) -> Result<Vec<super::TaskPushNotificationConfigs>, crate::obligation::UnmetObligation> {
             Err(crate::obligation::UnmetObligation { capability: "view query", source: "a2a.tasks.TaskPushNotificationConfigs" })
         }
     }

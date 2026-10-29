@@ -1358,10 +1358,12 @@ impl TaskPushNotificationConfigsQuery for ServerPorts {
     fn task_push_notification_configs(
         &self,
         task_id: TaskId,
+        tenant: Option<String>,
     ) -> Result<Vec<TaskPushNotificationConfigs>, UnmetObligation> {
         Ok(self
             .configs_of(&task_id)
             .into_iter()
+            .filter(|data| same_tenant(data.tenant.as_deref(), tenant.as_deref()))
             .map(|data| TaskPushNotificationConfigs {
                 config_id: data.config_id,
                 task_id: data.task_id,

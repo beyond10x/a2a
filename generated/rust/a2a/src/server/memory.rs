@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
-// contract digest 91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a
+// model digest 911794dff39b27311ddc6db22aa294d7c70c823fd2310684ad996b6eab4c5cdf
+// contract digest f3a9f588bb74b749958999da8b7430eaf336cfa0d5e58a72b23699edc898a4dd
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Ephemeral stores for the generated network entry points; no durability.
@@ -100,7 +100,7 @@ impl crate::tasks::obligations::SubscribeToTaskBehavior for MemoryPorts {
 fn subscribe_to_task(&mut self, input: crate::tasks::SubscribeToTask) -> Result<crate::tasks::SubscribeToTaskOutcome, crate::obligation::UnmetObligation> { crate::tasks::obligations::SubscribeToTaskBehavior::subscribe_to_task(&mut crate::tasks::obligations::Unimplemented, input) }
 }
 impl crate::tasks::obligations::TaskPushNotificationConfigsQuery for MemoryPorts {
-fn task_push_notification_configs(&self, task_id: crate::tasks::TaskId) -> Result<Vec<crate::tasks::TaskPushNotificationConfigs>, crate::obligation::UnmetObligation> { crate::tasks::obligations::TaskPushNotificationConfigsQuery::task_push_notification_configs(&crate::tasks::obligations::Unimplemented, task_id) }
+fn task_push_notification_configs(&self, task_id: crate::tasks::TaskId, tenant: Option<String>) -> Result<Vec<crate::tasks::TaskPushNotificationConfigs>, crate::obligation::UnmetObligation> { crate::tasks::obligations::TaskPushNotificationConfigsQuery::task_push_notification_configs(&crate::tasks::obligations::Unimplemented, task_id, tenant) }
 }
 impl crate::tasks::obligations::TasksQuery for MemoryPorts {
 fn tasks(&self, context_id: Option<crate::tasks::ContextId>, status: Option<crate::tasks::TaskState>, status_timestamp_after: Option<crate::primitives::Timestamp>, tenant: Option<String>) -> Result<Vec<crate::tasks::Tasks>, crate::obligation::UnmetObligation> { crate::tasks::obligations::TasksQuery::tasks(&crate::tasks::obligations::Unimplemented, context_id, status, status_timestamp_after, tenant) }

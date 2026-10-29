@@ -33,7 +33,7 @@
 # operation request parameters as path parameters or query parameters": `query` encoding is
 # admitted on `get` only (ESS-HTTP-020).
 type: ess-http/1
-specification: {system: a2a, version: v1, source_digest: "sha256:d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d"}
+specification: {system: a2a, version: v1, source_digest: "sha256:911794dff39b27311ddc6db22aa294d7c70c823fd2310684ad996b6eab4c5cdf"}
 routes:
   # a2a.proto SendMessage: post "/message:send", body "*"; section 11.3.1.
   - command: a2a.tasks.SendMessage

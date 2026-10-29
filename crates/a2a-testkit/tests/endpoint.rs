@@ -4,6 +4,11 @@
 //! counts, writes `ess-conformance-results/1` with `--results`, and exits 0: no scenario is
 //! `failed` or `error`, and GetTask and CancelTask of an unknown id are `passed`. Every assertion
 //! helper returns no `Mismatch` against the same server.
+//!
+//! story:testkit-wire-events acceptance 6: against `a2a-server` with an agent that takes each
+//! message into a task and asks for no step, as `task conform` runs it in process, no scenario is
+//! `failed` or `error`, and the scenarios whose setup sends a message and whose check is a client
+//! operation on that task, or a stream of it, are `passed` besides the 7 the echo agent passes.
 
 mod common;
 
@@ -16,10 +21,66 @@ use a2a_testkit::{
     expect_card, expect_error_reason, expect_push_config_roundtrip, expect_stream_states,
     expect_task_state,
 };
-use common::{echo, message, printed, results, run, scratch, send, stream, synthesize, testkit};
+use common::{
+    echo, idle, message, printed, results, run, scratch, send, stream, synthesize, testkit,
+};
 
 const GET_TASK: &str = "a2a.tasks.GetTask/outcome/not-found";
 const CANCEL_TASK: &str = "a2a.tasks.CancelTask/outcome/not-found";
+
+/// The scenarios the echo agent passes: the task lookups of an unknown id.
+const LOOKUPS: [&str; 7] = [
+    "a2a.tasks.CancelTask/outcome/not-found",
+    "a2a.tasks.DeleteTaskPushNotificationConfig/outcome/task-not-found",
+    "a2a.tasks.GetTask/outcome/not-found",
+    "a2a.tasks.GetTaskPushNotificationConfig/outcome/not-found",
+    "a2a.tasks.ListTaskPushNotificationConfigs/outcome/task-not-found",
+    "a2a.tasks.SubscribeToTask/outcome/not-found",
+    "a2a.tasks/authored/adv-delete-config-of-unknown-task",
+];
+
+/// The scenarios story:testkit-wire-events acceptance 6 names: a message sets up a task, and a
+/// client operation on it, or a stream of it, is the check.
+const ON_A_TASK: [&str; 5] = [
+    "a2a.tasks.SendMessage/outcome/task-created",
+    "a2a.tasks.SendStreamingMessage/outcome/task-created",
+    "a2a.tasks.GetTask/outcome/found",
+    "a2a.tasks.CancelTask/outcome/canceled",
+    "a2a.tasks.SubscribeToTask/outcome/subscribed",
+];
+
+#[test]
+fn the_task_scenarios_pass_against_a2a_server_with_an_agent_that_takes_no_step() {
+    let server = idle();
+    let directory = scratch("endpoint-idle");
+    let suite = synthesize(&directory);
+    let written = directory.join("results.json");
+
+    let output = run(&server.url(), &suite, &written);
+    let results = results(&written);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let line = |scenario: &str| {
+        stdout
+            .lines()
+            .find(|line| {
+                line.split_once(' ')
+                    .is_some_and(|(_, rest)| rest.starts_with(scenario))
+            })
+            .unwrap_or_default()
+            .to_owned()
+    };
+    for scenario in ON_A_TASK.iter().chain(&LOOKUPS) {
+        assert_eq!(
+            results.status(scenario),
+            Some(Status::Passed),
+            "{}",
+            line(scenario)
+        );
+    }
+    assert_eq!(results.count(Status::Failed), 0, "{}", printed(&output));
+    assert_eq!(results.count(Status::Error), 0, "{}", printed(&output));
+    assert_eq!(output.status.code(), Some(0), "{}", printed(&output));
+}
 
 #[test]
 fn the_suite_runs_against_a2a_server_with_no_failed_or_error_scenario() {

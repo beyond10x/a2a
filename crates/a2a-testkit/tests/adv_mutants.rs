@@ -3,12 +3,19 @@
 //! operation for an id the server does not hold; each test asserts the run reports that
 //! operation's not-found scenario `failed` and exits 1. A red test is a wrong endpoint the run
 //! lets through.
+//!
+//! story:testkit-wire-events acceptance 7: mutants of `a2a-server` with an agent that takes no
+//! step, each a proxy that changes the task id, state or context of the answer an event is
+//! derived from; each test asserts the run reports the scenario that reads it `failed`.
 
 mod adv_support;
 mod common;
 
-use adv_support::{assert_caught, assert_rejected, mutant, run_against, sse, suite};
-use common::{answer, echo, error_answer};
+use adv_support::{assert_caught, assert_rejected, mutant, rewriting, run_against, sse, suite};
+use common::{answer, echo, error_answer, idle};
+
+const TASK_CREATED: &str = "a2a.tasks.SendMessage/outcome/task-created";
+const CANCELED: &str = "a2a.tasks.CancelTask/outcome/canceled";
 
 const GET_TASK: &str = "a2a.tasks.GetTask/outcome/not-found";
 const CANCEL_TASK: &str = "a2a.tasks.CancelTask/outcome/not-found";
@@ -53,6 +60,67 @@ fn check(name: &str, matches: adv_support::Matches, rewritten: String, scenario:
     let proxy = mutant(server.address, matches, rewritten);
     let (output, results) = run_against(&proxy.url(), &suite("adv_mutants"), name);
     assert_caught(&output, &results, scenario);
+}
+
+fn send_message(method: &str, target: &str) -> bool {
+    method == "POST" && target.ends_with("/message:send")
+}
+
+fn cancel_any(method: &str, target: &str) -> bool {
+    method == "POST" && target.ends_with(":cancel")
+}
+
+/// Asserts the run against a proxy making `change` in the answers `matches` selects, in front of
+/// `a2a-server` with an agent that takes no step, reports `scenario` failed.
+fn check_changed(
+    name: &str,
+    matches: adv_support::Matches,
+    change: adv_support::Change,
+    scenario: &str,
+) {
+    let server = idle();
+    let proxy = rewriting(server.address, matches, change);
+    let (output, results) = run_against(&proxy.url(), &suite("adv_mutants"), name);
+    assert_caught(&output, &results, scenario);
+}
+
+// story:testkit-wire-events acceptance 7: a wrong task id, state or context in the answer an
+// event is derived from.
+
+/// SendMessage answers the task it created under another id: `TaskCreated` names a task the
+/// endpoint does not hold, so `AllTasks`, read back with GetTask, has no row for it.
+#[test]
+fn m12_send_message_answers_its_task_under_another_id() {
+    check_changed(
+        "adv-m12",
+        send_message,
+        ("task.id", "t-wrong"),
+        TASK_CREATED,
+    );
+}
+
+/// CancelTask answers the task still working: the `TaskStatusUpdated` it is read as carries
+/// `TASK_STATE_WORKING`, not `TASK_STATE_CANCELED`.
+#[test]
+fn m13_cancel_answers_the_task_in_another_state() {
+    check_changed(
+        "adv-m13",
+        cancel_any,
+        ("status.state", "TASK_STATE_WORKING"),
+        CANCELED,
+    );
+}
+
+/// CancelTask answers the task under another context.
+#[test]
+fn m14_cancel_answers_the_task_under_another_context() {
+    check_changed("adv-m14", cancel_any, ("contextId", "c-wrong"), CANCELED);
+}
+
+/// CancelTask answers another task than the one it canceled.
+#[test]
+fn m15_cancel_answers_another_task() {
+    check_changed("adv-m15", cancel_any, ("id", "t-wrong"), CANCELED);
 }
 
 // Mutants the run catches today: the controls that show the proxy plants what it claims.

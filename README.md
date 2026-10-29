@@ -33,9 +33,14 @@ speaks HTTP/1.1 to `http://` URLs only; TLS and the JSON-RPC binding are not yet
 `crates/a2a-testkit` checks any A2A endpoint from outside through that client.
 `cargo run -p a2a-testkit -- run --url http://127.0.0.1:8080 --suite <suite.json>` runs the suite
 `ess verify conform synthesize` writes against the endpoint, prints one line per scenario and the
-counts, and exits non-zero on any failed or error scenario. Steps the wire cannot observe, such as
-published events or a command the agent issues, come out `unsupported` with the reason. Its
-`expect_*` helpers check one behaviour each and name the expected and the observed value.
+counts, and exits non-zero on any failed or error scenario. It reads a command's events from what
+the endpoint answered and the task views from the tasks the scenario created. Steps the wire cannot
+observe, such as an event no answer carries, a task the agent moved by steps of its own or a command
+the agent issues, come out `unsupported` with the reason. Against `a2a-server` on a loopback port the
+184-scenario suite gives 20 passed, 0 failed, 0 error and 164 unsupported with an agent that takes
+no step, and 7 passed, 0 failed, 0 error and 177 unsupported with the binary's echo agent, which
+moves each task it creates before it answers. Its `expect_*` helpers check one behaviour each and
+name the expected and the observed value.
 
 ## Documentation
 

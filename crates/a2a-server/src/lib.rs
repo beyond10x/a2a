@@ -270,10 +270,12 @@ impl<P> Obligations for P where
 /// A trusted harness entry, not a serving surface: it runs any command or view of the generated
 /// layer for any actor a grant names, the binary's caller being fixed per route
 /// (`a2a.discovery.Client` for the extended card, `a2a.tasks.Client` otherwise). So it answers what
-/// the binary serves on no route: the `TaskPushNotificationConfigs` view is read for any task
-/// id, whatever tenant the task was created under, with each configuration's token and
-/// authentication. It is for conformance runs and tests; never put it behind a network or hand
-/// it input from an untrusted caller.
+/// the binary serves on no route: the `TaskPushNotificationConfigs` view, with each
+/// configuration's token and authentication. That view is scoped by its `tenant` parameter as the
+/// binary scopes a route by its `/{tenant}/` prefix: a configuration is a row only under the
+/// tenant it was created under, and one created without a tenant only without one. The tenant is
+/// whatever the harness passes, so it is for conformance runs and tests; never put it behind a
+/// network or hand it input from an untrusted caller.
 ///
 /// The generated system runs over `P`: [`ServerPorts`] itself, or a wrapper of them
 /// ([`InProcess::wrapped`]).

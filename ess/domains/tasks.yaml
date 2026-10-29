@@ -1791,13 +1791,26 @@ views:
       - name: metadata
         type: Optional<Json>
 
+  # The configurations of one task, read under one tenant: a2a.proto
+  # ListTaskPushNotificationConfigsRequest.tenant, and the `{tenant}` of the route. A
+  # configuration is a row only under the tenant it was created under, which is its task's, and
+  # one created without a tenant only without one (section 13.1: "Implementations MUST scope
+  # results to the caller's authorized access boundaries"), so no client reads another tenant's
+  # url or token. The rule is the `Tasks` view's.
   - name: a2a.tasks.TaskPushNotificationConfigs
     source: a2a.tasks.PushNotificationConfig
     consistency: read_your_writes
     params:
       - name: task_id
         type: a2a.tasks.TaskId
-    filter: task_id == param.task_id
+      - name: tenant
+        type: Optional<String>
+    filter:
+      all:
+        - task_id == param.task_id
+        - any:
+            - all: ["defined(param.tenant)", "defined(tenant)", tenant == param.tenant]
+            - all: ["not defined(param.tenant)", "not defined(tenant)"]
     naming:
       wire: pushNotificationConfigs
       display: List push notification configs
