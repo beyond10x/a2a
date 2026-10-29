@@ -445,7 +445,7 @@ impl Router {
         }
         self.later.extend(self.ports.take_work());
         for work in std::mem::take(&mut self.later) {
-            let frames = steps::run(&mut self.system, &self.ports, work);
+            let frames = steps::frames(steps::run(&mut self.system, &self.ports, work));
             self.frames.extend(frames);
         }
         self.deliver();
@@ -471,7 +471,7 @@ impl Router {
         for work in self.ports.take_work() {
             if work.awaited {
                 awaited.push((work.task.clone(), work.history_length));
-                let frames = steps::run(&mut self.system, &self.ports, work);
+                let frames = steps::frames(steps::run(&mut self.system, &self.ports, work));
                 self.frames.extend(frames);
             } else {
                 self.later.push(work);

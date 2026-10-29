@@ -1,0 +1,50 @@
+# A2A v1.0.1 section 3.1.9: ListTaskPushNotificationConfigs "MUST return all active push
+# notification configurations for the specified task and MAY support pagination"; a2a.proto
+# ListTaskPushNotificationConfigsRequest.page_size: "The maximum number of configurations to
+# return." The task is set up with a known identity, so the direct response can be claimed whole:
+# of two configurations, a page of size 1 holds one.
+type: ess-scenario/4
+domain: a2a.tasks
+scenario: list-configs-page-size
+summary: ListTaskPushNotificationConfigs with page_size 1 answers one of a task's two configurations.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+    setup:
+      identity: task-configs
+      state: Submitted
+      fields:
+        context_id: ctx-configs
+
+timeline:
+  - at: 2026-03-06T09:00:00Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-1
+      url: https://client.example.test/one
+    outcome: created
+
+  - at: 2026-03-06T09:00:01Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      id: cfg-2
+      url: https://client.example.test/two
+    outcome: created
+
+  - at: 2026-03-06T09:00:02Z
+    command: a2a.tasks.ListTaskPushNotificationConfigs
+    actor: a2a.tasks.Client
+    input:
+      task_id: {$instance: task}
+      page_size: 1
+    outcome: listed
+    response:
+      configs:
+        - task_id: task-configs
+          id: cfg-1
+          url: https://client.example.test/one

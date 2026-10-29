@@ -19,6 +19,10 @@
 //! | `continued`, `history-limit`, `task-terminal`, `context-mismatch` | the message names a task an earlier message created: as it is, at a history limit of one message, canceled, or of another context |
 //! | `task-not-found` | the message names a task id nothing created |
 //!
+//! The server is configured with an extended card that differs from the public one and a bearer
+//! token for it, which every run as `a2a.discovery.Client` presents, as an authenticated client
+//! of the binary does (A2A v1.0.1 section 13.3).
+//!
 //! What an arrangement publishes is not the run's and is dropped. Otherwise the agent takes every
 //! message into a task and asks for no step: the system's own commands are issued when a
 //! scenario awaits them, as the server loop issues an agent's step.
@@ -28,13 +32,15 @@ use std::rc::Rc;
 
 use a2a::actor::{Actor, Caller};
 use a2a::discovery::AgentExtension;
-use a2a::json::{self, Value};
+use a2a::json::{self, DecodeError, Value};
+use a2a::primitives::Timestamp;
 use a2a::server::entry::Refused;
 use a2a::server::{a2a_agent, wire};
 use a2a::system::SystemEvent;
-use a2a::tasks::{Artifact, Message, Part, TaskId, TaskSnapshot};
+use a2a::tasks::{Artifact, Message, Part, TaskData, TaskEntitySnapshot, TaskId, TaskSnapshot};
 use a2a_server::{
-    Agent, Called, InProcess, Limits, Obligations, Refusal, ServerPorts, Settings, Step, Turn,
+    Access, Agent, BearerToken, Called, InProcess, Limits, Obligations, Refusal, ServerPorts,
+    Settings, Step, Turn,
 };
 
 use crate::naming::Naming;
@@ -55,6 +61,19 @@ const OTHER_CONTEXT: &str = "a2a-conformance-other-context";
 /// The task id a `task-not-found` message names.
 const UNKNOWN_TASK: &str = "a2a-conformance-unknown-task";
 
+/// The bearer token the server is configured to serve the extended card for, which every run as
+/// `a2a.discovery.Client` presents (A2A v1.0.1 section 13.3).
+const CARD_TOKEN: &str = "a2a-conformance-card-token";
+
+/// The actor the token is presented for: the one the binary runs `GET /extendedAgentCard` as.
+const CARD_READER: Actor = Actor::DiscoveryClient;
+
+/// The entity an authored `setup:` may hand the server.
+const TASK: &str = "a2a.tasks.Task";
+
+/// The view whose rows spell every field of a task, as a setup's fields are read.
+const ALL_TASKS: &str = "a2a.tasks.AllTasks";
+
 /// The commands whose tenant guard the model leaves unmapped, and why a run of one on a task of
 /// another tenant is not held to the suite.
 // ESS gap (ess 0.75.0): `ess/domains/tasks.yaml` leaves the tenant guard of these three commands
@@ -63,7 +82,14 @@ const UNKNOWN_TASK: &str = "a2a-conformance-unknown-task";
 // task created under another tenant and expects `created`, `assigned`, `config-limit`, `found`,
 // `config-not-found` or `deleted`. a2a-server answers such a request TaskNotFound by hand, as
 // GetTask `other-tenant` declares for its own command (A2A v1.0.1 section 13.1). Such a run is
-// declared unsupported with this reason rather than failed against a model that cannot say it.
+// declared unsupported with this reason rather than failed against a model that cannot say it,
+// with one exception: a run that names no tenant and only arranges what a later step reads (a
+// command other than the one the scenario is about, its id up to the first `/`, such as the
+// configurations GetTaskPushNotificationConfig `found` reads) is sent under the tenant the task
+// was created under, so the step the scenario is about runs and is held to the suite. A run that
+// names a tenant keeps it: the configuration would store another tenant than the one it names,
+// which a later claim reads (the PushNotificationConfigs rows of the TaskPushNotificationConfigs
+// grant scenarios claim `tenant`).
 const ACROSS_TENANTS: [&str; 3] = [
     "a2a.tasks.CreateTaskPushNotificationConfig",
     "a2a.tasks.GetTaskPushNotificationConfig",
@@ -102,13 +128,24 @@ impl Agent for Scripted {
 }
 
 /// The settings every run is decided by unless a forced outcome arranges others: the built-in
-/// card, declaring an extended card, and that card configured as the extended one.
+/// card, declaring an extended card, and an extended card that differs from it, so an answer of
+/// the public card where the extended one is due is not the extended card.
 fn settings() -> Settings {
     let mut card = a2a_server::default_card();
     card.capabilities.extended_agent_card = Some(true);
+    let mut extended = card.clone();
+    extended.name = format!("{} (extended)", card.name);
+    extended.description = format!("{} Served to authenticated clients.", card.description);
     Settings {
-        extended_card: Some(card.clone()),
+        extended_card: Some(extended),
         card,
+    }
+}
+
+/// What the server admits: the extended card for [`CARD_TOKEN`].
+fn access() -> Access {
+    Access {
+        extended_card_token: BearerToken::new(CARD_TOKEN),
     }
 }
 
@@ -130,6 +167,8 @@ pub struct ServerTarget<P = ServerPorts> {
     pending: Vec<Event>,
     /// The tenant each task a scenario's message created was created under.
     tenants: Vec<(String, Option<String>)>,
+    /// The command or view the open scenario is about: its id up to the first `/`.
+    subject: String,
 }
 
 impl ServerTarget<ServerPorts> {
@@ -158,21 +197,22 @@ impl<P: Obligations> ServerTarget<P> {
             forced: None,
             pending: Vec::new(),
             tenants: Vec::new(),
+            subject: String::new(),
         }
     }
 
-    /// Whether `input` of `command` names a task a message of this scenario created under
-    /// another tenant than the one `input` names.
-    fn across_tenants(&self, command: &str, input: &Value) -> bool {
-        let Some(task) = text(input.member("taskId")) else {
-            return false;
-        };
+    /// The tenant a message of this scenario created the task `input` of `command` names under,
+    /// where `command` is one of [`ACROSS_TENANTS`] and `input` names another tenant.
+    fn owner_elsewhere(&self, command: &str, input: &Value) -> Option<Option<String>> {
+        if !ACROSS_TENANTS.contains(&command) {
+            return None;
+        }
+        let task = text(input.member("taskId"))?;
         let tenant = text(input.member("tenant"));
-        ACROSS_TENANTS.contains(&command)
-            && self
-                .tenants
-                .iter()
-                .any(|(created, under)| *created == task && *under != tenant)
+        self.tenants
+            .iter()
+            .find(|(created, under)| *created == task && *under != tenant)
+            .map(|(_, under)| under.clone())
     }
 
     fn server(&mut self) -> Result<&mut InProcess<P>, TargetError> {
@@ -181,16 +221,27 @@ impl<P: Obligations> ServerTarget<P> {
             .ok_or_else(|| TargetError::Failed("no scenario is open".to_owned()))
     }
 
-    /// Runs `name` as `caller` in the circumstances `run`, then sets the settings back.
+    /// Runs `name` as `caller` in the circumstances `run`, then sets the settings back. A run as
+    /// [`CARD_READER`] presents [`CARD_TOKEN`], as an authenticated client of the binary sends it.
     fn call(
         &mut self,
         caller: Option<&Caller>,
         name: &str,
         run: Run,
     ) -> Result<Called, TargetError> {
+        let presented = caller
+            .is_some_and(|caller| caller.actor == CARD_READER)
+            .then_some(CARD_TOKEN);
         let server = self.server()?;
         server.reconfigure(run.settings, run.limits);
-        let called = server.call(caller, Some(run.version), Vec::new(), name, run.input);
+        let called = server.call_presenting(
+            caller,
+            presented,
+            Some(run.version),
+            Vec::new(),
+            name,
+            run.input,
+        );
         server.reconfigure(settings(), Limits::DEFAULT);
         Ok(called)
     }
@@ -361,17 +412,53 @@ impl<P: Obligations> ServerTarget<P> {
 }
 
 impl<P: Obligations> Target for ServerTarget<P> {
-    fn begin(&mut self, _scenario: &str) -> Result<(), TargetError> {
+    fn begin(&mut self, scenario: &str) -> Result<(), TargetError> {
+        scenario
+            .split('/')
+            .next()
+            .unwrap_or_default()
+            .clone_into(&mut self.subject);
         self.script = Rc::new(Script::default());
         self.forced = None;
         self.pending.clear();
         self.tenants.clear();
-        self.server = Some(InProcess::wrapped(
-            settings(),
-            Box::new(Scripted(Rc::clone(&self.script))),
-            Limits::DEFAULT,
-            self.wrap,
-        ));
+        self.server = Some(
+            InProcess::wrapped(
+                settings(),
+                Box::new(Scripted(Rc::clone(&self.script))),
+                Limits::DEFAULT,
+                self.wrap,
+            )
+            .with_access(access()),
+        );
+        Ok(())
+    }
+
+    /// Stores an `a2a.tasks.Task` as a2a-server's task store holds one
+    /// ([`InProcess::establish_task`]); its fields are read as the `a2a.tasks.AllTasks` view
+    /// spells a task, which carries every field the entity declares.
+    fn establish(
+        &mut self,
+        entity: &str,
+        identity: &Value,
+        fields: &Value,
+        state: &str,
+    ) -> Result<(), TargetError> {
+        if entity != TASK {
+            return Err(TargetError::Unsupported(format!(
+                "a2a-conformance sets up no {entity} in a2a-server: only {TASK}"
+            )));
+        }
+        let Value::Text(id) = identity else {
+            return Err(TargetError::Failed(format!(
+                "a {TASK} is set up with a text identity, not {identity:?}"
+            )));
+        };
+        let task = task_of(id, fields, state).map_err(|error| {
+            TargetError::Failed(format!("the setup of {TASK} `{id}` is no task: {error}"))
+        })?;
+        self.tenants.push((id.clone(), task.data.tenant.clone()));
+        self.server()?.establish_task(task);
         Ok(())
     }
 
@@ -382,9 +469,15 @@ impl<P: Obligations> Target for ServerTarget<P> {
         input: &Value,
     ) -> Result<Answer, TargetError> {
         let caller = actor.map(caller).transpose()?;
-        let input = Naming::contract().input_to_wire(command, input);
+        let mut input = Naming::contract().input_to_wire(command, input);
         let admitted = a2a_agent::admit(caller.as_ref(), command).is_ok();
-        let across = self.across_tenants(command, &input);
+        let across = match self.owner_elsewhere(command, &input) {
+            Some(owner) if command != self.subject && input.member("tenant").is_none() => {
+                input = with_tenant(input, owner);
+                false
+            }
+            owner => owner.is_some(),
+        };
         let tenant = text(input.member("tenant"));
         let forced = match self.forced.take() {
             Some((forced, outcome)) if forced == command && admitted => Some(outcome),
@@ -608,6 +701,77 @@ fn with_message_member(input: Value, name: &str, value: Value) -> Value {
             fields.push((name.to_owned(), value));
             break;
         }
+    }
+    Value::Object(members)
+}
+
+/// The task `id` in the lifecycle state `state` with the ESS-named `fields` of an entity setup.
+fn task_of(id: &str, fields: &Value, state: &str) -> Result<TaskEntitySnapshot, DecodeError> {
+    let row = Naming::contract().row_to_wire(ALL_TASKS, fields);
+    let present = |name: &str| present(&row, name);
+    let context_id = match present("context_id") {
+        Some(value) => wire::decode_a2a_tasks_context_id(value, "context_id")?,
+        None => {
+            return Err(DecodeError {
+                at: "context_id".to_owned(),
+                expected: "a context id".to_owned(),
+                found: "nothing".to_owned(),
+            });
+        }
+    };
+    Ok(TaskEntitySnapshot {
+        state: wire::decode_a2a_tasks_task_state(&Value::Text(state.to_owned()), "state")?,
+        data: TaskData {
+            id: TaskId(id.to_owned()),
+            context_id,
+            tenant: text(present("tenant")),
+            status_message: present("status_message")
+                .map(|message| wire::decode_a2a_tasks_message(message, "status_message"))
+                .transpose()?,
+            status_timestamp: text(present("status_timestamp")).map(Timestamp),
+            artifacts: list(&row, "artifacts", wire::decode_a2a_tasks_artifact)?,
+            history: list(&row, "history", wire::decode_a2a_tasks_message)?,
+            metadata: present("metadata").cloned(),
+        },
+    })
+}
+
+/// The member `name` of `row`, where it holds a value other than `null`.
+fn present<'a>(row: &'a Value, name: &str) -> Option<&'a Value> {
+    row.member(name).filter(|value| **value != Value::Null)
+}
+
+/// The list the member `name` of `row` holds, each item read by `decode`; `None` where it holds
+/// none.
+fn list<T>(
+    row: &Value,
+    name: &str,
+    decode: fn(&Value, &str) -> Result<T, DecodeError>,
+) -> Result<Option<Vec<T>>, DecodeError> {
+    match present(row, name) {
+        Some(Value::Array(items)) => items
+            .iter()
+            .enumerate()
+            .map(|(at, item)| decode(item, &format!("{name}[{at}]")))
+            .collect::<Result<Vec<_>, _>>()
+            .map(Some),
+        Some(other) => Err(DecodeError {
+            at: name.to_owned(),
+            expected: "a list".to_owned(),
+            found: format!("{other:?}"),
+        }),
+        None => Ok(None),
+    }
+}
+
+/// `input` under the tenant `tenant`: its `tenant` member set to it, or left out for none.
+fn with_tenant(input: Value, tenant: Option<String>) -> Value {
+    let Value::Object(mut members) = input else {
+        return input;
+    };
+    members.retain(|(key, _)| key != "tenant");
+    if let Some(tenant) = tenant {
+        members.push(("tenant".to_owned(), Value::Text(tenant)));
     }
     Value::Object(members)
 }

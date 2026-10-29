@@ -406,6 +406,15 @@ impl ResponsePayload {
 /// One step of a scenario.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Step {
+    /// An authored `setup:`: an instance of `entity` the target is to hold, with this identity,
+    /// these ESS-named fields and this lifecycle state, bound to `instance` once it does.
+    EstablishEntity {
+        instance: String,
+        entity: String,
+        identity: Value,
+        fields: Value,
+        state: String,
+    },
     ExecuteCommand {
         command: String,
         actor: Option<String>,
@@ -530,6 +539,21 @@ impl Step {
         let mut fields = Fields::of(value, "a step")?;
         let kind = fields.text("step")?;
         let step = match kind.as_str() {
+            "establish_entity" => Self::EstablishEntity {
+                instance: fields.text("instance")?,
+                entity: fields.text("entity")?,
+                identity: fields.required("identity")?,
+                fields: match fields.required("fields")? {
+                    object @ Value::Object(_) => object,
+                    other => {
+                        return Err(format!(
+                            "the fields of an entity setup are an object, not {}",
+                            other.describes()
+                        ));
+                    }
+                },
+                state: fields.text("state")?,
+            },
             "execute_command" => {
                 not_interpreted(&mut fields, "caller", &kind)?;
                 Self::ExecuteCommand {

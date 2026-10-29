@@ -1,0 +1,54 @@
+# A2A v1.0.1 section 3.1.7: CreateTaskPushNotificationConfig "Creates a push notification
+# configuration for a task"; section 3.1.9: "The operation MUST return all active push notification
+# configurations for the specified task". The configurations of a task are read through the view
+# a2a.tasks.TaskPushNotificationConfigs (domains/tasks.yaml, ListTaskPushNotificationConfigs: "the
+# rows are observable only through the view"). The task and its configuration are under one tenant,
+# so the view's row carries the url and the token the configuration was created with.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: push-config-view-of-task
+summary: A configuration created under the task's own tenant is read back with its url and token.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-03-02T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      tenant: tenant-view
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-03-02T09:00:01Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      tenant: tenant-view
+      task_id: {$instance: task}
+      id: cfg-view
+      url: https://client.example.test/view-webhook
+      token: view-token
+    outcome: created
+
+assert:
+  - view: a2a.tasks.TaskPushNotificationConfigs
+    params:
+      task_id: {$instance: task}
+    contains:
+      task_id: {$instance: task}
+      config_id: cfg-view
+      url: https://client.example.test/view-webhook
+      token: view-token
+  - view: a2a.tasks.TaskPushNotificationConfigs
+    params:
+      task_id: {$instance: task}
+    counts:
+      at_most: 1

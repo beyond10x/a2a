@@ -23,6 +23,8 @@ const CONTRACT: &str =
 enum Form {
     /// As it is: a primitive, an enum, or `Json`, whose members are the caller's.
     Verbatim,
+    /// An integer, written without a fraction toward the wire.
+    Integer,
     /// The schema of this name.
     Named(String),
     /// An object of these fields.
@@ -158,6 +160,12 @@ impl Naming {
         self.complete(&format!("{name}.Row"), row)
     }
 
+    /// A row of the view `name`, ESS-named, as the wire spells it.
+    #[must_use]
+    pub fn row_to_wire(&self, name: &str, row: &Value) -> Value {
+        self.rename(&Form::Named(format!("{name}.Row")), row, Toward::Wire)
+    }
+
     /// `value` of the schema `name` renamed to ESS names, with every top-level field the schema
     /// declares and `value` leaves out as `null`.
     ///
@@ -234,9 +242,26 @@ impl Naming {
                     .map(|(key, each)| (key.clone(), self.rename(item, each, toward)))
                     .collect(),
             ),
+            (Form::Integer, Value::Number(number)) if toward == Toward::Wire => {
+                Value::Number(integral(number).unwrap_or_else(|| number.clone()))
+            }
             _ => value.clone(),
         }
     }
+}
+
+/// `number` without its fraction, where it is a whole number written with one (`1.0`).
+// ESS gap (ess 0.75.0): authoring writes an authored integer literal (`history_length: 1`) into
+// the suite as `1.0`, and the decoder ess generates for an `Integer` input refuses `1.0` ("expected
+// an integer, found the number 1.0"), so a suite's whole number is written as the wire's integer.
+fn integral(number: &str) -> Option<String> {
+    let (whole, fraction) = number.split_once('.')?;
+    let digits = whole.strip_prefix('-').unwrap_or(whole);
+    let whole_number = !digits.is_empty()
+        && digits.bytes().all(|byte| byte.is_ascii_digit())
+        && !fraction.is_empty()
+        && fraction.bytes().all(|byte| byte == b'0');
+    whole_number.then(|| whole.to_owned())
 }
 
 /// The form a schema declares.
@@ -264,6 +289,7 @@ fn form(schema: &Value) -> Form {
     }
     match schema.member("additionalProperties") {
         Some(values @ Value::Object(_)) => Form::Map(Box::new(form(values))),
+        _ if schema.member("type") == Some(&Value::Text("integer".to_owned())) => Form::Integer,
         _ => Form::Verbatim,
     }
 }
@@ -307,6 +333,31 @@ mod tests {
         assert_eq!(
             naming.input_to_wire("a2a.tasks.Tasks", &value(r#"{"context_id":"c"}"#)),
             value(r#"{"contextId":"c"}"#)
+        );
+    }
+
+    #[test]
+    fn writes_a_whole_number_of_an_integer_input_without_its_fraction() {
+        let naming = Naming::contract();
+        let wire = |input: &str| naming.input_to_wire("a2a.tasks.GetTask", &value(input));
+        assert_eq!(
+            wire(r#"{"id":"t","history_length":1.0}"#),
+            value(r#"{"id":"t","historyLength":1}"#)
+        );
+        assert_eq!(
+            wire(r#"{"id":"t","history_length":-2.00}"#),
+            value(r#"{"id":"t","historyLength":-2}"#)
+        );
+        assert_eq!(
+            wire(r#"{"id":"t","history_length":1.5}"#),
+            value(r#"{"id":"t","historyLength":1.5}"#)
+        );
+        assert_eq!(
+            naming.input_to_ess(
+                "a2a.tasks.GetTask",
+                &value(r#"{"id":"t","historyLength":1}"#)
+            ),
+            value(r#"{"id":"t","history_length":1}"#)
         );
     }
 
