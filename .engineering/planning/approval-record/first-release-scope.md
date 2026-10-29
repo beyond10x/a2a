@@ -15,7 +15,7 @@ relations:
 - decides: story:client
 - decides: story:conformance-gate
 - decides: story:testkit
-revision: 3
+revision: 4
 ---
 ## Decision
 
@@ -42,3 +42,13 @@ approved under the plan of 07:3x."
 
 Wave 3, b10x-chef-orchestrator, 2026-10-22, after verifying 0.3.0: "Approved: wave 3 in your order
 (server, then client ∥ conformance-gate, then testkit, then 0.4.0). Start server now."
+
+Wave 3 resumed, b10x-chef-orchestrator, 2026-10-29 (D199): "resume a2a wave 3 and release it.
+Approved under the grant" ... "adopt that work: read the adversary passes, finish the server story
+from it (do not discard it; commit it as the wave's unit commits), and add client /
+conformance-gate / testkit only if they are accepted in the store and fit the wave cap (at most 4
+units or 4 h)." D198, same message: "do NOT move the ESS pin; keep whatever version main pins."
+
+Effect: wave 3 ships story:server alone as 0.4.0, on the ESS 0.75.0 that main pins. story:client,
+story:conformance-gate and story:testkit stay draft for the next wave: none was accepted in the
+store at resume.

@@ -22,7 +22,7 @@ tasks:
       - task: drift
       - task: http-paths
       - task: docs-check
-      - cargo fmt --all --check
+      - cargo fmt --check
       - cargo clippy --workspace --all-targets --locked -- -D warnings
       - cargo test --workspace --locked
       - cargo build --locked --manifest-path generated/rust/a2a/Cargo.toml --features server

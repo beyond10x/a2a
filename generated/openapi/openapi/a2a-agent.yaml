@@ -1,6 +1,6 @@
 # generated from a2a v1
-# model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
-# contract digest slice-sha256/2:615b0c77c8a180035f814eee7b02a71dce351e297daa69d4945ed8e8a37108c4
+# model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
+# contract digest slice-sha256/2:2de2936951ce7e4042256d840c7857008955378103fb89a060bb1fc0f028713e
 # do not edit: regenerate with `ess generate`
 openapi: 3.1.0
 info:
@@ -18,8 +18,8 @@ info:
   x-ess-provenance:
     system: a2a
     specification_version: v1
-    source_digest: d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
-    contract_digest: slice-sha256/2:615b0c77c8a180035f814eee7b02a71dce351e297daa69d4945ed8e8a37108c4
+    source_digest: d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
+    contract_digest: slice-sha256/2:2de2936951ce7e4042256d840c7857008955378103fb89a060bb1fc0f028713e
   x-ess-reached-by: network
 tags:
 - name: discovery
@@ -176,7 +176,7 @@ paths:
                 - committed
                 type: object
         '502':
-          description: 'Outcomes `task-not-found`, `task-terminal`, `context-mismatch`, `context-not-accepted`, `content-type-not-supported`, `version-not-supported` and `extension-required`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.'
+          description: 'Outcomes `task-not-found`, `task-terminal`, `context-mismatch`, `context-not-accepted`, `content-type-not-supported`, `task-limit`, `history-limit`, `version-not-supported` and `extension-required`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.'
           content:
             application/json:
               schema:
@@ -186,6 +186,8 @@ paths:
                     context-mismatch: '#/components/schemas/a2a.tasks.SendMessage.context-mismatch.Response'
                     context-not-accepted: '#/components/schemas/a2a.tasks.SendMessage.context-not-accepted.Response'
                     extension-required: '#/components/schemas/a2a.tasks.SendMessage.extension-required.Response'
+                    history-limit: '#/components/schemas/a2a.tasks.SendMessage.history-limit.Response'
+                    task-limit: '#/components/schemas/a2a.tasks.SendMessage.task-limit.Response'
                     task-not-found: '#/components/schemas/a2a.tasks.SendMessage.task-not-found.Response'
                     task-terminal: '#/components/schemas/a2a.tasks.SendMessage.task-terminal.Response'
                     version-not-supported: '#/components/schemas/a2a.tasks.SendMessage.version-not-supported.Response'
@@ -196,6 +198,8 @@ paths:
                 - $ref: '#/components/schemas/a2a.tasks.SendMessage.context-mismatch.Response'
                 - $ref: '#/components/schemas/a2a.tasks.SendMessage.context-not-accepted.Response'
                 - $ref: '#/components/schemas/a2a.tasks.SendMessage.content-type-not-supported.Response'
+                - $ref: '#/components/schemas/a2a.tasks.SendMessage.task-limit.Response'
+                - $ref: '#/components/schemas/a2a.tasks.SendMessage.history-limit.Response'
                 - $ref: '#/components/schemas/a2a.tasks.SendMessage.version-not-supported.Response'
                 - $ref: '#/components/schemas/a2a.tasks.SendMessage.extension-required.Response'
   /tasks/commands/message:stream:
@@ -269,7 +273,7 @@ paths:
                 - committed
                 type: object
         '502':
-          description: 'Outcomes `task-not-found`, `task-terminal`, `context-mismatch`, `context-not-accepted`, `content-type-not-supported`, `version-not-supported`, `extension-required` and `streaming-not-supported`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.'
+          description: 'Outcomes `task-not-found`, `task-terminal`, `context-mismatch`, `context-not-accepted`, `content-type-not-supported`, `task-limit`, `history-limit`, `version-not-supported`, `extension-required` and `streaming-not-supported`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.'
           content:
             application/json:
               schema:
@@ -279,7 +283,9 @@ paths:
                     context-mismatch: '#/components/schemas/a2a.tasks.SendStreamingMessage.context-mismatch.Response'
                     context-not-accepted: '#/components/schemas/a2a.tasks.SendStreamingMessage.context-not-accepted.Response'
                     extension-required: '#/components/schemas/a2a.tasks.SendStreamingMessage.extension-required.Response'
+                    history-limit: '#/components/schemas/a2a.tasks.SendStreamingMessage.history-limit.Response'
                     streaming-not-supported: '#/components/schemas/a2a.tasks.SendStreamingMessage.streaming-not-supported.Response'
+                    task-limit: '#/components/schemas/a2a.tasks.SendStreamingMessage.task-limit.Response'
                     task-not-found: '#/components/schemas/a2a.tasks.SendStreamingMessage.task-not-found.Response'
                     task-terminal: '#/components/schemas/a2a.tasks.SendStreamingMessage.task-terminal.Response'
                     version-not-supported: '#/components/schemas/a2a.tasks.SendStreamingMessage.version-not-supported.Response'
@@ -290,6 +296,8 @@ paths:
                 - $ref: '#/components/schemas/a2a.tasks.SendStreamingMessage.context-mismatch.Response'
                 - $ref: '#/components/schemas/a2a.tasks.SendStreamingMessage.context-not-accepted.Response'
                 - $ref: '#/components/schemas/a2a.tasks.SendStreamingMessage.content-type-not-supported.Response'
+                - $ref: '#/components/schemas/a2a.tasks.SendStreamingMessage.task-limit.Response'
+                - $ref: '#/components/schemas/a2a.tasks.SendStreamingMessage.history-limit.Response'
                 - $ref: '#/components/schemas/a2a.tasks.SendStreamingMessage.version-not-supported.Response'
                 - $ref: '#/components/schemas/a2a.tasks.SendStreamingMessage.extension-required.Response'
                 - $ref: '#/components/schemas/a2a.tasks.SendStreamingMessage.streaming-not-supported.Response'
@@ -368,12 +376,13 @@ paths:
                 - committed
                 type: object
         '502':
-          description: 'Outcomes `version-not-supported`, `extension-required` and `push-not-supported`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.'
+          description: 'Outcomes `version-not-supported`, `extension-required`, `push-not-supported` and `config-limit`: something outside the request refused. The input was acceptable, so the caller has nothing to correct and a retry is meaningful.'
           content:
             application/json:
               schema:
                 discriminator:
                   mapping:
+                    config-limit: '#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.config-limit.Response'
                     extension-required: '#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.extension-required.Response'
                     push-not-supported: '#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.push-not-supported.Response'
                     version-not-supported: '#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.version-not-supported.Response'
@@ -382,6 +391,7 @@ paths:
                 - $ref: '#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.version-not-supported.Response'
                 - $ref: '#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.extension-required.Response'
                 - $ref: '#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.push-not-supported.Response'
+                - $ref: '#/components/schemas/a2a.tasks.CreateTaskPushNotificationConfig.config-limit.Response'
   /tasks/commands/pushNotificationConfigs:delete:
     post:
       operationId: a2a.tasks.DeleteTaskPushNotificationConfig
@@ -602,6 +612,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.task-not-found.Response'
+        '409':
+          description: 'Outcome `other-tenant`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/a2a.tasks.ListTaskPushNotificationConfigs.other-tenant.Response'
         '501':
           description: 'No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command''s effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.'
           content:
@@ -685,11 +701,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/a2a.tasks.CancelTask.not-found.Response'
         '409':
-          description: 'Outcome `not-cancelable`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.'
+          description: 'Outcomes `other-tenant` and `not-cancelable`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/a2a.tasks.CancelTask.not-cancelable.Response'
+                discriminator:
+                  mapping:
+                    not-cancelable: '#/components/schemas/a2a.tasks.CancelTask.not-cancelable.Response'
+                    other-tenant: '#/components/schemas/a2a.tasks.CancelTask.other-tenant.Response'
+                  propertyName: outcome
+                oneOf:
+                - $ref: '#/components/schemas/a2a.tasks.CancelTask.other-tenant.Response'
+                - $ref: '#/components/schemas/a2a.tasks.CancelTask.not-cancelable.Response'
         '501':
           description: 'No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command''s effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.'
           content:
@@ -918,6 +941,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/a2a.tasks.GetTask.not-found.Response'
+        '409':
+          description: 'Outcome `other-tenant`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/a2a.tasks.GetTask.other-tenant.Response'
         '501':
           description: 'No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command''s effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.'
           content:
@@ -1218,11 +1247,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/a2a.tasks.SubscribeToTask.not-found.Response'
         '409':
-          description: 'Outcome `task-terminal`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.'
+          description: 'Outcomes `other-tenant` and `task-terminal`: the input was acceptable and the subject is in a state this command does not act from. Resending the same request changes nothing until something else moves it.'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/a2a.tasks.SubscribeToTask.task-terminal.Response'
+                discriminator:
+                  mapping:
+                    other-tenant: '#/components/schemas/a2a.tasks.SubscribeToTask.other-tenant.Response'
+                    task-terminal: '#/components/schemas/a2a.tasks.SubscribeToTask.task-terminal.Response'
+                  propertyName: outcome
+                oneOf:
+                - $ref: '#/components/schemas/a2a.tasks.SubscribeToTask.other-tenant.Response'
+                - $ref: '#/components/schemas/a2a.tasks.SubscribeToTask.task-terminal.Response'
         '501':
           description: 'No declared outcome: the realization is unfinished. Either a port this command runs reported an unmet obligation, and nothing was written: `committed` is `false`. Or the command''s effect was committed and delivering what this command published to a binding failed: `committed` is `true`, the effect and its events stand, and each binding whose delivery failed keeps its event and is attempted again on a later delivery, while no other binding receives it twice. Do not retry: after a failed delivery a retry performs the command a second time.'
           content:
@@ -1524,28 +1560,36 @@ paths:
       - a2a.tasks.Client
       x-ess-consistency: read_your_writes
       parameters:
-      - name: context_id
+      - name: contextId
         in: query
         description: Read by the view's filter as `param.context_id`; it selects which rows the view holds.
         required: false
         schema:
           $ref: '#/components/schemas/a2a.tasks.ContextId'
+          x-ess-field: context_id
       - name: status
         in: query
         description: Read by the view's filter as `param.status`; it selects which rows the view holds.
         required: false
         schema:
           $ref: '#/components/schemas/a2a.tasks.Task.State'
-      - name: status_timestamp_after
+      - name: statusTimestampAfter
         in: query
         description: Read by the view's filter as `param.status_timestamp_after`; it selects which rows the view holds.
         required: false
         schema:
+          x-ess-field: status_timestamp_after
           type: string
           format: date-time
+      - name: tenant
+        in: query
+        description: Read by the view's filter as `param.tenant`; it selects which rows the view holds.
+        required: false
+        schema:
+          type: string
       responses:
         '200':
-          description: 'Every row of `a2a.tasks.Tasks`, a projection of `a2a.tasks.Task`. Contains the instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp))` holds. Read-your-writes: a caller that has just issued a command sees its effect here.'
+          description: 'Every row of `a2a.tasks.Tasks`, a projection of `a2a.tasks.Task`. Contains the instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp) and ((defined(param.tenant) and defined(tenant) and tenant == param.tenant) or (not (defined(param.tenant)) and not (defined(tenant)))))` holds. Read-your-writes: a caller that has just issued a command sees its effect here.'
           content:
             application/json:
               schema:
@@ -2159,6 +2203,8 @@ components:
           $ref: '#/components/schemas/a2a.tasks.TaskId'
         context_id:
           $ref: '#/components/schemas/a2a.tasks.ContextId'
+        tenant:
+          type: string
         state:
           $ref: '#/components/schemas/a2a.tasks.Task.State'
         status_message:
@@ -2359,6 +2405,26 @@ components:
       - published
       - error
       type: object
+    a2a.tasks.CancelTask.other-tenant.Response:
+      additionalProperties: false
+      description: Taken when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`.
+      properties:
+        error:
+          const: a2a.tasks.TaskNotFound
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          type: string
+        outcome:
+          const: other-tenant
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
+      type: object
     a2a.tasks.CancelTask.version-not-supported.Response:
       additionalProperties: false
       description: 'Decided outside the request: the A2A-Version service parameter names a version the agent does not support.'
@@ -2538,6 +2604,26 @@ components:
       - outcome
       - published
       - response
+      type: object
+    a2a.tasks.CreateTaskPushNotificationConfig.config-limit.Response:
+      additionalProperties: false
+      description: 'Decided outside the request: the task already holds as many push-notification configurations as the agent keeps, and the request adds one rather than replacing one of the same id.'
+      properties:
+        error:
+          const: a2a.tasks.ResourceExhausted
+          description: 'Not an A2A error (gRPC RESOURCE_EXHAUSTED, HTTP 429): the agent already holds as many tasks per tenant, messages per task history, or push-notification configurations per task as it keeps, so the request stored nothing.'
+          type: string
+        outcome:
+          const: config-limit
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
       type: object
     a2a.tasks.CreateTaskPushNotificationConfig.created.Response:
       additionalProperties: false
@@ -2951,6 +3037,26 @@ components:
       - published
       - error
       type: object
+    a2a.tasks.GetTask.other-tenant.Response:
+      additionalProperties: false
+      description: Taken when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`.
+      properties:
+        error:
+          const: a2a.tasks.TaskNotFound
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          type: string
+        outcome:
+          const: other-tenant
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
+      type: object
     a2a.tasks.GetTask.version-not-supported.Response:
       additionalProperties: false
       description: 'Decided outside the request: the A2A-Version service parameter names a version the agent does not support.'
@@ -3192,6 +3298,26 @@ components:
       - outcome
       - published
       - response
+      type: object
+    a2a.tasks.ListTaskPushNotificationConfigs.other-tenant.Response:
+      additionalProperties: false
+      description: Taken when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`.
+      properties:
+        error:
+          const: a2a.tasks.TaskNotFound
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          type: string
+        outcome:
+          const: other-tenant
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
       type: object
     a2a.tasks.ListTaskPushNotificationConfigs.push-not-supported.Response:
       additionalProperties: false
@@ -3832,6 +3958,26 @@ components:
       - published
       - error
       type: object
+    a2a.tasks.SendMessage.history-limit.Response:
+      additionalProperties: false
+      description: 'Decided outside the request: message.taskId names a task whose history already holds as many messages as the agent keeps.'
+      properties:
+        error:
+          const: a2a.tasks.ResourceExhausted
+          description: 'Not an A2A error (gRPC RESOURCE_EXHAUSTED, HTTP 429): the agent already holds as many tasks per tenant, messages per task history, or push-notification configurations per task as it keeps, so the request stored nothing.'
+          type: string
+        outcome:
+          const: history-limit
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
+      type: object
     a2a.tasks.SendMessage.task-created.Response:
       additionalProperties: false
       description: A new task. With returnImmediately true the answer carries it as created; otherwise the answer waits until it is terminal or interrupted. Taken when no other outcome's condition matched. A `a2a.tasks.Task` now exists, in `Submitted`. Its identity is published as `task_id` on `a2a.tasks.TaskCreated`. Emits `TaskCreated`, published to consumers and listed under `published`.
@@ -3864,9 +4010,29 @@ components:
       - published
       - response
       type: object
+    a2a.tasks.SendMessage.task-limit.Response:
+      additionalProperties: false
+      description: 'Decided outside the request: the message names no task, the agent would create one, and the tenant of the request, or every request without one, already holds as many tasks as the agent keeps.'
+      properties:
+        error:
+          const: a2a.tasks.ResourceExhausted
+          description: 'Not an A2A error (gRPC RESOURCE_EXHAUSTED, HTTP 429): the agent already holds as many tasks per tenant, messages per task history, or push-notification configurations per task as it keeps, so the request stored nothing.'
+          type: string
+        outcome:
+          const: task-limit
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
+      type: object
     a2a.tasks.SendMessage.task-not-found.Response:
       additionalProperties: false
-      description: 'Decided outside the request: message.taskId names no task the caller can access (section 3.4.2).'
+      description: 'Decided outside the request: message.taskId names no task the caller can access (section 3.4.2); a task of another tenant is not one (GetTask `other-tenant`).'
       properties:
         error:
           const: a2a.tasks.TaskNotFound
@@ -4119,6 +4285,26 @@ components:
       - published
       - error
       type: object
+    a2a.tasks.SendStreamingMessage.history-limit.Response:
+      additionalProperties: false
+      description: 'Decided outside the request: message.taskId names a task whose history already holds as many messages as the agent keeps.'
+      properties:
+        error:
+          const: a2a.tasks.ResourceExhausted
+          description: 'Not an A2A error (gRPC RESOURCE_EXHAUSTED, HTTP 429): the agent already holds as many tasks per tenant, messages per task history, or push-notification configurations per task as it keeps, so the request stored nothing.'
+          type: string
+        outcome:
+          const: history-limit
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
+      type: object
     a2a.tasks.SendStreamingMessage.streaming-not-supported.Response:
       additionalProperties: false
       description: 'Decided outside the request: the agent card does not declare capabilities.streaming.'
@@ -4182,9 +4368,29 @@ components:
       - published
       - response
       type: object
+    a2a.tasks.SendStreamingMessage.task-limit.Response:
+      additionalProperties: false
+      description: 'Decided outside the request: the message names no task, the agent would create one, and the tenant of the request, or every request without one, already holds as many tasks as the agent keeps.'
+      properties:
+        error:
+          const: a2a.tasks.ResourceExhausted
+          description: 'Not an A2A error (gRPC RESOURCE_EXHAUSTED, HTTP 429): the agent already holds as many tasks per tenant, messages per task history, or push-notification configurations per task as it keeps, so the request stored nothing.'
+          type: string
+        outcome:
+          const: task-limit
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
+      type: object
     a2a.tasks.SendStreamingMessage.task-not-found.Response:
       additionalProperties: false
-      description: 'Decided outside the request: message.taskId names no task the caller can access (section 3.4.2).'
+      description: 'Decided outside the request: message.taskId names no task the caller can access (section 3.4.2); a task of another tenant is not one (GetTask `other-tenant`).'
       properties:
         error:
           const: a2a.tasks.TaskNotFound
@@ -4384,6 +4590,26 @@ components:
           type: string
         outcome:
           const: not-found
+          description: Which declared outcome the command took.
+        published:
+          description: 'Every event this branch published, in publication order: its qualified name and its payload.'
+          maxItems: 0
+          type: array
+      required:
+      - outcome
+      - published
+      - error
+      type: object
+    a2a.tasks.SubscribeToTask.other-tenant.Response:
+      additionalProperties: false
+      description: Taken when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`.
+      properties:
+        error:
+          const: a2a.tasks.TaskNotFound
+          description: 'TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the push-notification configuration, does not exist or is not accessible to the caller.'
+          type: string
+        outcome:
+          const: other-tenant
           description: Which declared outcome the command took.
         published:
           description: 'Every event this branch published, in publication order: its qualified name and its payload.'
@@ -4741,13 +4967,16 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/a2a.tasks.TaskId'
-        context_id:
+        contextId:
           $ref: '#/components/schemas/a2a.tasks.ContextId'
+          x-ess-field: context_id
         state:
           $ref: '#/components/schemas/a2a.tasks.Task.State'
-        status_message:
+        statusMessage:
           $ref: '#/components/schemas/a2a.tasks.Message'
-        status_timestamp:
+          x-ess-field: status_message
+        statusTimestamp:
+          x-ess-field: status_timestamp
           type: string
           format: date-time
         artifacts:
@@ -4761,7 +4990,7 @@ components:
         metadata: {}
       required:
       - id
-      - context_id
+      - contextId
       - state
       additionalProperties: false
     a2a.tasks.UpdateArtifact.Input:
@@ -5015,6 +5244,8 @@ x-ess-entities:
         $ref: '#/x-ess-entities/a2a.tasks.TaskId'
       context_id:
         $ref: '#/x-ess-entities/a2a.tasks.ContextId'
+      tenant:
+        type: string
       status_message:
         $ref: '#/x-ess-entities/a2a.tasks.Message'
       status_timestamp:

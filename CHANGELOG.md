@@ -8,6 +8,65 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-29
+
+### Added
+
+- `crates/a2a-server` serves A2A's HTTP+JSON binding over the generated crate's `server` feature
+  and defines no model type of its own. It implements the 12 obligations of
+  `generated/rust/a2a/PLAN.md` over stores of its own, answers all 22 upstream (method, path)
+  pairs (9 through the generated layer, 13 by hand) plus `/.well-known/agent-card.json`, and
+  streams over server-sent events. Errors are `google.rpc.Status`. The `a2a-server` binary takes
+  `--listen`, `--card`, `--extended-card`, `--extended-card-token-file`, `--max-connections`,
+  `--request-timeout`, `--max-subscribers-per-task`, `--max-subscribers`, `--max-tasks`,
+  `--max-history` and `--max-push-configs`. The agent's steps run as commands of the system's
+  `agent` actor, and streams carry the events the system publishes. Status timestamps carry
+  milliseconds, one instant per command.
+- Connections: each connection has its own reading and writing thread, so a client that sends or
+  reads slowly holds back no other. At most `--max-connections` (default 256, fewer where the file
+  descriptor limit would run out first) are held; over the cap the connection waiting longest for
+  a request head, before or after its answer, is closed, or the new one when every connection is
+  being answered. A request not in within `--request-timeout` seconds (default 10) of its
+  connection opening is answered 408 `DEADLINE_EXCEEDED`; bytes arriving do not extend it, and a
+  connection that sent nothing is closed without an answer. Once its answer is written, a
+  connection is closed when as long again has passed. At most 4 MiB waits for one connection's
+  writer; a stream whose client falls further behind is dropped and closed. A stream whose client
+  hung up or half-closed is dropped within 250 ms of the end of its input; bytes it sends before
+  that are ignored.
+- Bounds: at most `--max-subscribers-per-task` streams (default 16) follow one task and
+  `--max-subscribers` (default half of `--max-connections`) in all; at most `--max-tasks` tasks
+  (default 10000) per tenant, requests without a tenant counting as one tenant; at most
+  `--max-history` messages (default 1000) in one task's history and `--max-push-configs` push
+  notification configs (default 16) per task. A request over a bound is answered 429
+  `RESOURCE_EXHAUSTED` and keeps nothing; replacing a push notification config of the same id is
+  not refused. A status message an agent's step adds to a history already at its bound is not
+  kept. ListTasks orders and pages by status timestamp and id and reads only its page's tasks, and
+  GetTask copies only the `historyLength` messages it answers.
+- `GET /extendedAgentCard` (and its tenant twin) answers 401 `UNAUTHENTICATED` with
+  `WWW-Authenticate: Bearer` unless the request carries `Authorization: Bearer <token>`, the
+  token read from `--extended-card-token-file` and compared in constant time. `--extended-card`
+  without the token file is refused at startup, and the token is never logged.
+- A request head over its limit is answered 431 and a chunked body 411, as `google.rpc.Status`
+  `INVALID_ARGUMENT`, no longer 500. The generated layer's answers are read back with a nesting
+  limit of 128, so a message within the request limit of 64 leaves its task readable.
+- Tenants: a task belongs to the tenant of the route that created it, and a plain route creates
+  and sees only tenant-less tasks. ListTasks lists only the request's tenant's tasks. GetTask,
+  CancelTask, SubscribeToTask, SendMessage with a `taskId` and the four push-config operations
+  answer another tenant's task exactly as an unknown id.
+- Page tokens are cursors bound to their operation: a ListTasks token is refused by
+  ListTaskPushNotificationConfigs and the reverse, and a token this server did not issue
+  (including `0a` and `+0`) is answered 400 `INVALID_ARGUMENT`.
+- `ess/domains/tasks.yaml`: a task keeps the `tenant` it was created under, and the `Tasks` view
+  names its fields and parameters as the wire does (`contextId`, `statusTimestampAfter`) and takes
+  a `tenant` parameter. GetTask, CancelTask, SubscribeToTask and
+  ListTaskPushNotificationConfigs answer `TaskNotFound` for a task of another tenant, with an
+  `other-tenant` scenario each.
+  `ess/http.yaml` ignores unknown query fields on its four query routes; the specification says
+  implementations "SHOULD ignore unrecognized fields".
+  `ess/domains/tasks.yaml` declares the error `ResourceExhausted` and the outcomes `task-limit` and
+  `history-limit` of SendMessage and SendStreamingMessage and `config-limit` of
+  CreateTaskPushNotificationConfig.
+
 ### Changed
 
 - The documentation site uses `@beyond10x/docs-system` 0.12.0 with `product: 'a2a'`: the A2A
@@ -18,6 +77,9 @@ under `[Unreleased]` until the next release.
   and the crate's dependency requirements are caret ranges instead of exact versions.
 - ESS pinned to 0.75.0, and `generated/rust/a2a` resynthesized: its public types are unchanged; the
   `server` feature gains `dispatch_with_events`, `handle_with_events` and per-event wire decoders.
+- `task check` runs `cargo fmt --check` instead of `cargo fmt --all --check`. `--all` also reaches
+  path dependencies, which now include the synthesized `generated/rust/a2a`, and that crate is not
+  rustfmt-clean. The workspace crates are checked as before.
 
 ## [0.3.0] - 2026-10-22
 
@@ -92,7 +154,8 @@ ESS specification of A2A v1.0.1 and the artifacts generated from it.
 - Release assets: `a2a.proto`, both OpenAPI documents, the AsyncAPI document, the JSON Schema
   archive and the specification bundle, with `SHA256SUMS`.
 
-[Unreleased]: https://github.com/beyond10x/a2a/compare/0.3.0...HEAD
+[Unreleased]: https://github.com/beyond10x/a2a/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/beyond10x/a2a/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/beyond10x/a2a/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/beyond10x/a2a/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/beyond10x/a2a/releases/tag/0.1.0

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ResourceExhausted payload",
+  "description": "Not an A2A error (gRPC RESOURCE_EXHAUSTED, HTTP 429): the agent already holds as many tasks per tenant, messages per task history, or push-notification configurations per task as it keeps, so the request stored nothing.",
+  "x-ess-name": "a2a.tasks.ResourceExhausted",
+  "x-ess-kind": "error-payload",
+  "type": "object",
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "a2a",
+    "specification_version": "v1",
+    "source_digest": "d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d",
+    "contract_digest": "slice-sha256/2:c1adf15d93d11eb500b586bced5998cb38b5efe5e6efd8a08667a6a1acaff706",
+    "regenerate": "ess generate"
+  }
+}

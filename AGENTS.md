@@ -26,6 +26,7 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 | `generated/rust/a2a/` | Rust crate synthesized from `ess/` (model, contracts, `server` feature) | `task generate` |
 | `crates/a2a-xtask/` | Repository checks (generated-crate drift, HTTP path parity) | authored |
 | `crates/a2a-docs/` | Generator of the site's reference pages and downloads, and the build's provenance | authored |
+| `crates/a2a-server/` | A2A's HTTP+JSON binding over `generated/rust/a2a` (`server` feature): the 12 obligations in memory, every upstream route, SSE streams, and the `a2a-server` echo agent. Declares no type under a name the generated crate exports, at any visibility or qualifier; `tests/defines_none.rs` fails if it does | authored |
 | `website/` | Docusaurus site on `@beyond10x/docs-system`; `docs/concepts/`, `docs/guides/`, `docs/index.md` | authored |
 | `website/docs/reference/`, `website/static/downloads/` | Specification pages, routes, marker index, downloads with `SHA256SUMS` | `task docs-generate` |
 | `.engineering/` | AEP planning store; the plan lives here, not in chat or plan files | `aep` |
@@ -38,7 +39,8 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 | `task generate`, `task projections` | Rewrite `generated/` after a change to `ess/` |
 | `task docs-generate` | Rewrite `website/docs/reference/` and `website/static/downloads/`; `task docs-check` (in `task check`) fails on a missing, stale or hand-edited file there, and on any file there it does not generate |
 | `task website` | `npm ci` and `npm run build` in `website/`, as `.github/workflows/pages.yml` does. Not in `task check` |
-| `task conform-interpreted` | Synthesized suite on the ESS interpreted target. Not a gate: 14 of 120 scenarios error on ESS defects |
+| `cargo run -p a2a-server -- --listen 127.0.0.1:8080 [--card <json>] [--extended-card <json> --extended-card-token-file <path>] [--max-connections 256] [--request-timeout 10] [--max-subscribers-per-task 16] [--max-subscribers <half of --max-connections>] [--max-tasks 10000] [--max-history 1000] [--max-push-configs 16]` | Serve the echo agent; the card at `/.well-known/agent-card.json`. Over the connection cap a connection is closed; a request not in within the timeout (seconds) is answered 408. A stream, task, history message or push config over its bound is answered 429 and nothing is kept. `GET /extendedAgentCard` answers 401 without `Authorization: Bearer <token>` (the token file's content), and `--extended-card` requires the token file. The token is never logged |
+| `task conform-interpreted` | Synthesized suite on the ESS interpreted target. Not a gate; on ESS 0.75.0, 177 of 177 scenarios pass |
 | `task upstream` | Fetch the pinned tarball, verify sha256, refresh `upstream/`. Needs `buf`, `protoc-gen-openapiv2`, `npx` |
 | `task plan` | `aep plan artifact validate` |
 
@@ -65,6 +67,9 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 - `ess/http.yaml` pins the specification's `source_digest`. After any change to `ess/`'s
   specification files, `ess specify http validate` refuses it with `ESS-HTTP-002`, naming the new
   digest: copy that digest into `ess/http.yaml`.
+- A task belongs to the tenant of the route that created it; a plain route creates and sees only
+  tenant-less tasks. Every task read, list, cancel, subscribe and push-config operation answers
+  another tenant's task exactly as an unknown id (`TaskNotFound`).
 - Every commit and push is `b10x-bot[bot]` through `b10x-gates bot`. The repository is enrolled in
   the common Gates policy (`.github/workflows/shared-gates.yml`).
 - Nothing from a customer or employer outside beyond10x enters this repository.

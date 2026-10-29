@@ -7,6 +7,8 @@ use clap::{Parser, Subcommand};
 
 const SPECIFICATION: &str = "ess";
 const GENERATED: &str = "generated/rust/a2a";
+/// The ess-http/1 binding the synthesized `server` feature routes A2A's HTTP+JSON paths by.
+const BINDING: &str = "ess/http.yaml";
 /// `.ess-output/` carries a per-run anchor; `Cargo.lock` is held by `--locked`, not by synthesis.
 const IGNORED: [&str; 2] = [".ess-output", "Cargo.lock"];
 
@@ -96,6 +98,7 @@ fn synthesize(root: &Path, out: &Path) -> Result<(), String> {
     let status = Command::new("ess")
         .current_dir(root)
         .args(["generate", "synthesize", "--path", SPECIFICATION])
+        .args(["--http", BINDING])
         .args(["--target", "rust", "--layout", "crate", "--out"])
         .arg(out)
         .status()

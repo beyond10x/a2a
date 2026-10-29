@@ -17,6 +17,11 @@ task check
 
 validates the specification and fails when anything generated from it has drifted.
 
+`cargo run -p a2a-server -- --listen 127.0.0.1:8080` serves an echo agent over A2A's HTTP+JSON
+binding. An extended Agent Card given with `--extended-card` is served only to requests carrying
+`Authorization: Bearer <token>`, the token read from `--extended-card-token-file`, which
+`--extended-card` requires.
+
 ## Documentation
 
 The documentation site is <https://beyond10x.github.io/a2a/>. It has the specification's pages,

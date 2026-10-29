@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-29T11:06:24Z",
+  "actor": "human:timo",
+  "artifact": "story:server",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "ess 0.75.0 verify conform run --target interpreted on wave/3-int 429b83d: 177 scenarios, 177 passed, 0 failed, 0 error",
+    "reference": "429b83d"
+  }
+}
