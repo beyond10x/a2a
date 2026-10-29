@@ -32,6 +32,18 @@ under `[Unreleased]` until the next release.
   out the `timestamp` the server stamps).
 - `a2a-server` exports `InProcess`, `Obligations` and `ServerPorts`: the server's obligations run
   without HTTP, settings and limits reconfigurable between calls.
+- `crates/a2a-testkit`: checks any A2A endpoint from outside. `WireTarget` is a `Target` of
+  `a2a-conformance` over `a2a-client`, each command sent as the operation `OPERATIONS` binds it to
+  (the routes of `ess/http.yaml` plus the two `ess/http-unmapped.tsv` names), the tenant taken from
+  the scenario's input, and each answer read as the outcome the generated contract declares for
+  it. A published event, a forced or taken external outcome, an actor other than the client, a
+  view with no A2A operation and a read of `a2a.tasks.Tasks`, whose state a live endpoint cannot
+  reset, are `unsupported` with that reason. `a2a-testkit run --url <base> --suite <suite.json>
+  [--results <out>]` prints one line per scenario and the counts, writes `ess-conformance-results/1`
+  with `--results`, and exits 0 only when no scenario is failed or error; against `a2a-server` 7 of
+  177 pass and 170 are unsupported. The helpers `expect_card`, `expect_task_state`,
+  `expect_error_reason`, `expect_stream_states` and `expect_push_config_roundtrip` answer a
+  `Mismatch` naming the expected and the observed value instead of panicking.
 
 ## [0.4.0] - 2026-10-29
 
