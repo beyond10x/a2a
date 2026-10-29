@@ -291,6 +291,9 @@ entities:
     fields:
       - name: context_id
         type: a2a.tasks.ContextId
+      # The tenant of the request that created the task; the wire Task carries none.
+      - name: tenant
+        type: Optional<String>
       - name: status_message
         type: Optional<a2a.tasks.Message>
       - name: status_timestamp
@@ -488,6 +491,16 @@ errors:
     summary: >-
       InvalidParamsError (JSON-RPC -32602, gRPC INVALID_ARGUMENT, HTTP 400): the agent cannot
       accept the contextId the client provided.
+  # Not an A2A error: A2A v1.0.1 names none for an agent that holds as much as it keeps. Section
+  # 13.4: "Agents **SHOULD** implement rate limiting on all operations" and "Agents **SHOULD**
+  # return appropriate error responses when rate limits are exceeded". Section 3.3.2 lists "rate
+  # limit exceeded" among its system-error scenarios without a code of its own; the code chosen is
+  # the one gRPC gives an exhausted quota.
+  - name: a2a.tasks.ResourceExhausted
+    summary: >-
+      Not an A2A error (gRPC RESOURCE_EXHAUSTED, HTTP 429): the agent already holds as many tasks
+      per tenant, messages per task history, or push-notification configurations per task as it
+      keeps, so the request stored nothing.
   # Not an A2A wire error: the agent-side commands below are internal to the agent, and this is
   # what they answer from a state their transition does not leave.
   - name: a2a.tasks.TaskStateConflict
@@ -597,7 +610,9 @@ commands:
       # section 3.4.3 "Agents MUST infer contextId from the task if only taskId is provided" on
       # `continued`. Missing construct: a row addressed through a member of a struct input.
       - name: task-not-found
-        external: message.taskId names no task the caller can access (section 3.4.2)
+        external: >-
+          message.taskId names no task the caller can access (section 3.4.2); a task of another
+          tenant is not one (GetTask `other-tenant`)
         error: a2a.tasks.TaskNotFound
       - name: task-terminal
         external: message.taskId names a task in Completed, Failed, Canceled or Rejected
@@ -613,6 +628,19 @@ commands:
       - name: content-type-not-supported
         external: a part's media type is not supported by the agent
         error: a2a.tasks.ContentTypeNotSupported
+      # The agent's own bounds (section 13.4, see ResourceExhausted). The bound is the server's
+      # (`--max-tasks`, `--max-history`), not a stored field, so both branches are external, and
+      # neither stores the message.
+      - name: task-limit
+        external: >-
+          the message names no task, the agent would create one, and the tenant of the request,
+          or every request without one, already holds as many tasks as the agent keeps
+        error: a2a.tasks.ResourceExhausted
+      - name: history-limit
+        external: >-
+          message.taskId names a task whose history already holds as many messages as the agent
+          keeps
+        error: a2a.tasks.ResourceExhausted
       # A message to a running task changes no state and no stored field the protocol fixes.
       # Section 3.4.3: "Clients MAY use taskId (with or without contextId) to continue or refine
       # a specific task"; section 3.7: "The agent is responsible to determine which Messages are
@@ -636,6 +664,7 @@ commands:
         instance: task_id
         sets:
           context_id: {input: message.context_id, else: {generated: true}}
+          tenant: input.tenant
           status_timestamp: {generated: true}
         emits: [a2a.tasks.TaskCreated]
         payload:
@@ -692,7 +721,9 @@ commands:
       # task if only taskId is provided" on `continued`. Missing construct: a row addressed
       # through a member of a struct input.
       - name: task-not-found
-        external: message.taskId names no task the caller can access (section 3.4.2)
+        external: >-
+          message.taskId names no task the caller can access (section 3.4.2); a task of another
+          tenant is not one (GetTask `other-tenant`)
         error: a2a.tasks.TaskNotFound
       - name: task-terminal
         external: message.taskId names a task in Completed, Failed, Canceled or Rejected
@@ -708,6 +739,19 @@ commands:
       - name: content-type-not-supported
         external: a part's media type is not supported by the agent
         error: a2a.tasks.ContentTypeNotSupported
+      # The agent's own bounds (section 13.4, see ResourceExhausted). The bound is the server's
+      # (`--max-tasks`, `--max-history`), not a stored field, so both branches are external, and
+      # neither stores the message.
+      - name: task-limit
+        external: >-
+          the message names no task, the agent would create one, and the tenant of the request,
+          or every request without one, already holds as many tasks as the agent keeps
+        error: a2a.tasks.ResourceExhausted
+      - name: history-limit
+        external: >-
+          message.taskId names a task whose history already holds as many messages as the agent
+          keeps
+        error: a2a.tasks.ResourceExhausted
       # A message to a running task changes no state and no stored field the protocol fixes.
       # Section 3.4.3: "Clients MAY use taskId (with or without contextId) to continue or refine
       # a specific task"; section 3.7: "The agent is responsible to determine which Messages are
@@ -749,6 +793,7 @@ commands:
         instance: task_id
         sets:
           context_id: {input: message.context_id, else: {generated: true}}
+          tenant: input.tenant
           status_timestamp: {generated: true}
         emits: [a2a.tasks.TaskCreated, a2a.tasks.MessageStreamResponse]
         payload:
@@ -802,6 +847,18 @@ commands:
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
+      # A task answers only requests under the tenant it was created under, and a task created
+      # without one only requests without one. Any other task is answered as an unknown id, so a
+      # request learns nothing of another tenant's tasks (section 13.1: "Implementations MUST
+      # scope results to the caller's authorized access boundaries").
+      - name: other-tenant
+        when_subject:
+          predicate:
+            any:
+              - all: ["defined(tenant)", "defined(input.tenant)", tenant != input.tenant]
+              - all: ["defined(tenant)", "not defined(input.tenant)"]
+              - all: ["not defined(tenant)", "defined(input.tenant)"]
+        error: a2a.tasks.TaskNotFound
       - name: found
         preserves: a2a.tasks.Task
         instance: id
@@ -836,6 +893,15 @@ commands:
         error: a2a.tasks.ExtensionSupportRequired
       - name: not-found
         unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      # A task of another tenant answers as an unknown id, as GetTask `other-tenant` says.
+      - name: other-tenant
+        when_subject:
+          predicate:
+            any:
+              - all: ["defined(tenant)", "defined(input.tenant)", tenant != input.tenant]
+              - all: ["defined(tenant)", "not defined(input.tenant)"]
+              - all: ["not defined(tenant)", "defined(input.tenant)"]
         error: a2a.tasks.TaskNotFound
       - name: not-cancelable-now
         external: the agent cannot cancel the task at its current stage
@@ -897,6 +963,15 @@ commands:
         error: a2a.tasks.UnsupportedOperation
       - name: not-found
         unknown_instance: true
+        error: a2a.tasks.TaskNotFound
+      # A task of another tenant answers as an unknown id, as GetTask `other-tenant` says.
+      - name: other-tenant
+        when_subject:
+          predicate:
+            any:
+              - all: ["defined(tenant)", "defined(input.tenant)", tenant != input.tenant]
+              - all: ["defined(tenant)", "not defined(input.tenant)"]
+              - all: ["not defined(tenant)", "defined(input.tenant)"]
         error: a2a.tasks.TaskNotFound
       - name: task-terminal
         when_subject:
@@ -979,6 +1054,22 @@ commands:
           via: input.task_id
           exists: false
         error: a2a.tasks.TaskNotFound
+      # UNMAPPED (ESS gap): a task of another tenant, or of one when the request has none (and
+      # the reverse), answers TaskNotFound, as GetTask `other-tenant` says. The same guard as
+      # `when_related: {via: input.task_id, predicate: …}` validates on ESS 0.67.0, but synthesis
+      # refuses its scenario, "ESS-SYNTH-003: … no candidate of the 4 tried satisfies `a related
+      # row on which …`", and then finds no configuration rows to arrange for
+      # GetTaskPushNotificationConfig `found` and DeleteTaskPushNotificationConfig `deleted`
+      # (ESS-SYNTH-001). Missing construct: a related-row guard comparing a stored Optional with
+      # an input Optional that synthesis can witness.
+      # The agent's own bound (section 13.4, see ResourceExhausted), declared before `created` so
+      # that it is taken. The bound is the server's (`--max-push-configs`), so the branch is
+      # external.
+      - name: config-limit
+        external: >-
+          the task already holds as many push-notification configurations as the agent keeps,
+          and the request adds one rather than replacing one of the same id
+        error: a2a.tasks.ResourceExhausted
       - name: created
         when: defined(id)
         creates: a2a.tasks.PushNotificationConfig
@@ -1053,6 +1144,14 @@ commands:
       - name: not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
+      # A configuration answers only requests under the tenant it was created under, which is its
+      # task's (CreateTaskPushNotificationConfig `other-tenant`), and one created without a tenant
+      # only requests without one. Any other is answered as an unknown id (section 13.1).
+      # UNMAPPED (ESS gap): the rule is on the configuration's tenant, not the task's. ESS 0.67.0
+      # refuses a `when_subject:` guard beside this row-set guard: "ESS-COMMAND-009:
+      # `a2a.tasks.GetTaskPushNotificationConfig` selects on a row set (`when_related: {entity,
+      # where, …}`) and on a `when_subject` guard; one command reads one kind of related row in
+      # this cut".
       - name: config-not-found
         when_related:
           entity: a2a.tasks.PushNotificationConfig
@@ -1119,6 +1218,15 @@ commands:
       - name: task-not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
+      # A task of another tenant answers as an unknown id, as GetTask `other-tenant` says.
+      - name: other-tenant
+        when_subject:
+          predicate:
+            any:
+              - all: ["defined(tenant)", "defined(input.tenant)", tenant != input.tenant]
+              - all: ["defined(tenant)", "not defined(input.tenant)"]
+              - all: ["not defined(tenant)", "defined(input.tenant)"]
+        error: a2a.tasks.TaskNotFound
       - name: listed
         preserves: a2a.tasks.Task
         instance: task_id
@@ -1164,6 +1272,14 @@ commands:
       - name: task-not-found
         unknown_instance: true
         error: a2a.tasks.TaskNotFound
+      # UNMAPPED (ESS gap): a task of another tenant, or of one when the request has none (and
+      # the reverse), answers TaskNotFound, as GetTask `other-tenant` says. The same
+      # `when_subject:` guard here validates and synthesizes on ESS 0.67.0, but the synthesized
+      # `deleted` scenario arranges its selected rows under a task it created with tenant
+      # "tenant-1" and deletes there with input tenant "tenant", so the interpreted target answers
+      # `other-tenant` and the scenario fails, "expected outcome = deleted, observed outcome =
+      # other-tenant". Missing: synthesis that arranges an `affects:` branch past a
+      # `when_subject:` refusal declared before it.
       # UNMAPPED: (ESS gap) a no-op delete emits PushNotificationConfigDeleted; a separate no-op branch (when_related exists: false) is refused, ESS-SYNTH-001 "a step of the scenario changes rows of the selector's entity in a way synthesis does not follow".
       - name: deleted
         updates: a2a.tasks.Task
@@ -1591,16 +1707,26 @@ views:
     params:
       - name: context_id
         type: Optional<a2a.tasks.ContextId>
+        wire: contextId
       # UNMAPPED (ESS gap): wire type is TaskState (TASK_STATE_*); ESS 0.67.0 has no map from it to the lifecycle states the filter compares.
       - name: status
         type: Optional<a2a.tasks.Task.State>
       - name: status_timestamp_after
         type: Optional<Timestamp>
+        wire: statusTimestampAfter
+      # The tenant of the request: a2a.proto ListTasksRequest.tenant, and the `{tenant}` of the
+      # route. A task is listed only under the tenant it was created under, and a task created
+      # without one only without one (section 13.1).
+      - name: tenant
+        type: Optional<String>
     filter:
       all:
         - any: ["not defined(param.context_id)", context_id == param.context_id]
         - any: ["not defined(param.status)", state == param.status]
         - any: ["not defined(param.status_timestamp_after)", status_timestamp >= param.status_timestamp_after]
+        - any:
+            - all: ["defined(param.tenant)", "defined(tenant)", tenant == param.tenant]
+            - all: ["not defined(param.tenant)", "not defined(tenant)"]
     naming:
       wire: tasks
       display: List tasks
@@ -1612,12 +1738,18 @@ views:
         type: a2a.tasks.TaskId
       - name: context_id
         type: a2a.tasks.ContextId
+        wire: contextId
+      # UNMAPPED (ESS gap): the wire spells the state TASK_STATE_*. ESS 0.67.0 gives a lifecycle
+      # state no wire spelling: `states: [{name: Submitted, wire: TASK_STATE_SUBMITTED}, …]` is
+      # refused "invalid type: map, expected a string", so the row carries the lifecycle name.
       - name: state
         type: a2a.tasks.Task.State
       - name: status_message
         type: Optional<a2a.tasks.Message>
+        wire: statusMessage
       - name: status_timestamp
         type: Optional<Timestamp>
+        wire: statusTimestamp
       - name: artifacts
         type: Optional<List<a2a.tasks.Artifact>>
       - name: history
@@ -1644,6 +1776,8 @@ views:
         type: a2a.tasks.TaskId
       - name: context_id
         type: a2a.tasks.ContextId
+      - name: tenant
+        type: Optional<String>
       - name: state
         type: a2a.tasks.Task.State
       - name: status_message

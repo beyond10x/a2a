@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
-// contract digest 3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f
+// model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
+// contract digest 91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! a2a-agent — the `a2a-agent` component of `a2a` v1.
@@ -94,6 +94,7 @@ where
             crate::tasks::CancelTaskOutcome::VersionNotSupported { .. } => {}
             crate::tasks::CancelTaskOutcome::ExtensionRequired { .. } => {}
             crate::tasks::CancelTaskOutcome::NotFound { .. } => {}
+            crate::tasks::CancelTaskOutcome::OtherTenant { .. } => {}
             crate::tasks::CancelTaskOutcome::NotCancelableNow { .. } => {}
             crate::tasks::CancelTaskOutcome::Canceled { task_status_updated, .. } => {
                 self.outbox.push(PublishedEvent::TaskStatusUpdated(task_status_updated.clone()));
@@ -132,6 +133,7 @@ where
             crate::tasks::CreateTaskPushNotificationConfigOutcome::ExtensionRequired { .. } => {}
             crate::tasks::CreateTaskPushNotificationConfigOutcome::PushNotSupported { .. } => {}
             crate::tasks::CreateTaskPushNotificationConfigOutcome::TaskNotFound { .. } => {}
+            crate::tasks::CreateTaskPushNotificationConfigOutcome::ConfigLimit { .. } => {}
             crate::tasks::CreateTaskPushNotificationConfigOutcome::Created { push_notification_config_created, .. } => {
                 self.outbox.push(PublishedEvent::PushNotificationConfigCreated(push_notification_config_created.clone()));
             }
@@ -189,6 +191,7 @@ where
             crate::tasks::GetTaskOutcome::VersionNotSupported { .. } => {}
             crate::tasks::GetTaskOutcome::ExtensionRequired { .. } => {}
             crate::tasks::GetTaskOutcome::NotFound { .. } => {}
+            crate::tasks::GetTaskOutcome::OtherTenant { .. } => {}
             crate::tasks::GetTaskOutcome::Found { .. } => {}
         }
         Ok(outcome)
@@ -224,6 +227,7 @@ where
             crate::tasks::ListTaskPushNotificationConfigsOutcome::ExtensionRequired { .. } => {}
             crate::tasks::ListTaskPushNotificationConfigsOutcome::PushNotSupported { .. } => {}
             crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { .. } => {}
+            crate::tasks::ListTaskPushNotificationConfigsOutcome::OtherTenant { .. } => {}
             crate::tasks::ListTaskPushNotificationConfigsOutcome::Listed { .. } => {}
         }
         Ok(outcome)
@@ -293,6 +297,8 @@ where
             crate::tasks::SendMessageOutcome::ContextMismatch { .. } => {}
             crate::tasks::SendMessageOutcome::ContextNotAccepted { .. } => {}
             crate::tasks::SendMessageOutcome::ContentTypeNotSupported { .. } => {}
+            crate::tasks::SendMessageOutcome::TaskLimit { .. } => {}
+            crate::tasks::SendMessageOutcome::HistoryLimit { .. } => {}
             crate::tasks::SendMessageOutcome::Continued { .. } => {}
             crate::tasks::SendMessageOutcome::DirectMessage { .. } => {}
             crate::tasks::SendMessageOutcome::TaskCreated { task_created, .. } => {
@@ -317,6 +323,8 @@ where
             crate::tasks::SendStreamingMessageOutcome::ContextMismatch { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::ContextNotAccepted { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::ContentTypeNotSupported { .. } => {}
+            crate::tasks::SendStreamingMessageOutcome::TaskLimit { .. } => {}
+            crate::tasks::SendStreamingMessageOutcome::HistoryLimit { .. } => {}
             crate::tasks::SendStreamingMessageOutcome::Continued { message_stream_response, .. } => {
                 self.outbox.push(PublishedEvent::MessageStreamResponse(message_stream_response.clone()));
             }
@@ -363,6 +371,7 @@ where
             crate::tasks::SubscribeToTaskOutcome::ExtensionRequired { .. } => {}
             crate::tasks::SubscribeToTaskOutcome::StreamingNotSupported { .. } => {}
             crate::tasks::SubscribeToTaskOutcome::NotFound { .. } => {}
+            crate::tasks::SubscribeToTaskOutcome::OtherTenant { .. } => {}
             crate::tasks::SubscribeToTaskOutcome::TaskTerminal { .. } => {}
             crate::tasks::SubscribeToTaskOutcome::Subscribed { .. } => {}
         }
@@ -401,7 +410,7 @@ where
     }
 
     /// Serves `a2a.tasks.Tasks` at `read_your_writes` consistency, from the owed projection.
-    pub fn tasks(&self, context_id: Option<crate::tasks::ContextId>, status: Option<crate::tasks::TaskState>, status_timestamp_after: Option<crate::primitives::Timestamp>) -> Result<Vec<crate::tasks::Tasks>, crate::obligation::UnmetObligation> {
-        self.behaviors.tasks(context_id, status, status_timestamp_after)
+    pub fn tasks(&self, context_id: Option<crate::tasks::ContextId>, status: Option<crate::tasks::TaskState>, status_timestamp_after: Option<crate::primitives::Timestamp>, tenant: Option<String>) -> Result<Vec<crate::tasks::Tasks>, crate::obligation::UnmetObligation> {
+        self.behaviors.tasks(context_id, status, status_timestamp_after, tenant)
     }
 }
