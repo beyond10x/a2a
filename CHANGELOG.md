@@ -8,6 +8,8 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-29
+
 ### Changed
 
 - The ESS pin moves from 0.75.0 to 0.76.0 (`ess/ess-inputs.yaml`, `check.yml`, `pages.yml`); the
@@ -247,7 +249,8 @@ ESS specification of A2A v1.0.1 and the artifacts generated from it.
 - Release assets: `a2a.proto`, both OpenAPI documents, the AsyncAPI document, the JSON Schema
   archive and the specification bundle, with `SHA256SUMS`.
 
-[Unreleased]: https://github.com/beyond10x/a2a/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/beyond10x/a2a/compare/0.6.0...HEAD
+[0.6.0]: https://github.com/beyond10x/a2a/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/beyond10x/a2a/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/beyond10x/a2a/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/beyond10x/a2a/compare/0.2.0...0.3.0
