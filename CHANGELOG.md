@@ -8,6 +8,8 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-29
+
 ### Added
 
 - `crates/a2a-server` serves A2A's HTTP+JSON binding over the generated crate's `server` feature
@@ -152,7 +154,8 @@ ESS specification of A2A v1.0.1 and the artifacts generated from it.
 - Release assets: `a2a.proto`, both OpenAPI documents, the AsyncAPI document, the JSON Schema
   archive and the specification bundle, with `SHA256SUMS`.
 
-[Unreleased]: https://github.com/beyond10x/a2a/compare/0.3.0...HEAD
+[Unreleased]: https://github.com/beyond10x/a2a/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/beyond10x/a2a/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/beyond10x/a2a/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/beyond10x/a2a/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/beyond10x/a2a/releases/tag/0.1.0

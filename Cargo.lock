@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "a2a-docs"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -25,7 +25,7 @@ dependencies = [
 
 [[package]]
 name = "a2a-server"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "a2a",
  "clap",
@@ -35,7 +35,7 @@ dependencies = [
 
 [[package]]
 name = "a2a-xtask"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "clap",
 ]
