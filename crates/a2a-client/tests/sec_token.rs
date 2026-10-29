@@ -1,7 +1,7 @@
 //! Security review: the bearer token leaves the client only in the `Authorization` header of the
-//! `GetExtendedAgentCard` request to the configured origin. Not on another operation, not to a
-//! redirect target, not in `Debug` or error text, and only in the RFC 6750 `b64token` form the
-//! server side (`a2a_server::BearerToken`) accepts.
+//! requests of operations under the base path, to the configured origin. Not with the public
+//! card, not to a redirect target, not in `Debug` or error text, and only in the RFC 6750
+//! `b64token` form the server side (`a2a_server::BearerToken`) accepts.
 
 mod common;
 
@@ -71,7 +71,8 @@ fn every_other_operation(client: &Client) {
 }
 
 #[test]
-fn the_bearer_token_is_sent_only_with_get_extended_agent_card() {
+fn the_bearer_token_is_sent_with_every_operation_but_not_the_public_card() {
+    const CARD: &str = "/.well-known/agent-card.json";
     let (address, seen) = answering(answer(404, "application/json", "{}"));
     let client = client_of(address).with_bearer(TOKEN);
     let _ = client.extended_agent_card(&GetExtendedAgentCard { tenant: None });
@@ -79,18 +80,19 @@ fn the_bearer_token_is_sent_only_with_get_extended_agent_card() {
     let seen = seen.lock().expect("the list");
     assert_eq!(seen.len(), 12, "every operation sent one request");
     assert!(
-        seen[0].path == "/extendedAgentCard" && seen[0].head.contains(TOKEN),
-        "GetExtendedAgentCard carries the token: {}",
+        seen[0].path == "/extendedAgentCard",
+        "the first request is GetExtendedAgentCard: {}",
         seen[0].head
     );
-    let leaked: Vec<String> = seen[1..]
+    let wrong: Vec<String> = seen
         .iter()
-        .filter(|request| request.head.contains(TOKEN))
+        .filter(|request| request.head.contains(TOKEN) == (request.path == CARD))
         .map(|request| format!("{} {}", request.method, request.path))
         .collect();
     assert!(
-        leaked.is_empty(),
-        "the bearer token for GetExtendedAgentCard was also sent with: {leaked:?}"
+        wrong.is_empty() && seen.iter().any(|request| request.path == CARD),
+        "story:client: the bearer token goes with every operation under the base path and never \
+         with the public card {CARD}; these requests broke that: {wrong:?}"
     );
 }
 
@@ -111,8 +113,17 @@ fn the_bearer_token_is_not_followed_to_a_redirect_target() {
             .with_bearer(TOKEN)
             .extended_agent_card(&GetExtendedAgentCard { tenant: None });
         assert!(answered.is_err(), "{status}: {answered:?}");
-        let text = format!("{answered:?} {}", answered.as_ref().err().map_or(String::new(), ToString::to_string));
-        assert!(!text.contains(TOKEN), "{status}: the token is in the error: {text}");
+        let text = format!(
+            "{answered:?} {}",
+            answered
+                .as_ref()
+                .err()
+                .map_or(String::new(), ToString::to_string)
+        );
+        assert!(
+            !text.contains(TOKEN),
+            "{status}: the token is in the error: {text}"
+        );
     }
     assert!(
         reached.lock().expect("the list").is_empty(),
@@ -122,7 +133,9 @@ fn the_bearer_token_is_not_followed_to_a_redirect_target() {
 
 #[test]
 fn the_bearer_token_never_appears_in_debug_or_error_text() {
-    let client = Client::new("http://127.0.0.1:9").expect("a base URL").with_bearer(TOKEN);
+    let client = Client::new("http://127.0.0.1:9")
+        .expect("a base URL")
+        .with_bearer(TOKEN);
     let shown = format!("{client:?}");
     assert!(!shown.contains(TOKEN), "Debug shows the token: {shown}");
 
@@ -135,7 +148,11 @@ fn the_bearer_token_never_appears_in_debug_or_error_text() {
     assert!(!text.contains(TOKEN), "the refusal shows the token: {text}");
 
     for answered in [
-        answer(401, "application/json", "{\"error\":{\"code\":16,\"message\":\"no\"}}"),
+        answer(
+            401,
+            "application/json",
+            "{\"error\":{\"code\":16,\"message\":\"no\"}}",
+        ),
         answer(200, "application/json", "not json"),
         b"garbage\r\n\r\n".to_vec(),
     ] {

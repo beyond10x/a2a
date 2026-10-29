@@ -12,6 +12,9 @@ use a2a::tasks::{
 use a2a_client::{Client, Error};
 use common::{Seen, answer, answering};
 
+/// One operation called on a client, its answer dropped.
+type Operation = Box<dyn Fn(&Client) -> Result<(), Error>>;
+
 /// Calls the operations a tenant and ids select a route segment in, under base path
 /// `/agents/a`, and answers what each sent (or that it was refused before sending).
 fn sent(tenant: Option<&str>, id: &str) -> Vec<(String, Result<Seen, String>)> {
@@ -20,7 +23,7 @@ fn sent(tenant: Option<&str>, id: &str) -> Vec<(String, Result<Seen, String>)> {
     let tenant = tenant.map(str::to_owned);
     let task = TaskId(id.to_owned());
     let config = PushNotificationConfigId(id.to_owned());
-    let calls: Vec<(&str, Box<dyn Fn(&Client) -> Result<(), Error>>)> = vec![
+    let calls: Vec<(&str, Operation)> = vec![
         ("GetExtendedAgentCard", {
             let tenant = tenant.clone();
             Box::new(move |client| {
@@ -165,7 +168,11 @@ fn a_tenant_or_id_never_becomes_a_dot_segment_or_an_empty_one() {
 #[test]
 fn a_tenant_or_id_cannot_inject_a_header_a_request_line_or_another_origin() {
     let hostile = "x\r\nX-Injected: 1\r\n\r\nGET /evil HTTP/1.1 @other.example:80/../?#%";
-    for (tenant, id) in [(Some(hostile), "t-1"), (None, hostile), (Some(hostile), hostile)] {
+    for (tenant, id) in [
+        (Some(hostile), "t-1"),
+        (None, hostile),
+        (Some(hostile), hostile),
+    ] {
         for (name, result) in sent(tenant, id) {
             let request = result.unwrap_or_else(|detail| {
                 panic!("{name}: an encodable value was refused: {detail}")

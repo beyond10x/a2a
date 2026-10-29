@@ -2,7 +2,8 @@
 //!
 //! One method per operation, taking and answering the types of the generated `a2a` crate; this
 //! crate defines no model type of its own but the `ListTasks` request and answer, which the
-//! generated crate lacks. A request's `tenant` selects the `/{tenant}/` route. Every error answer
+//! generated crate lacks. A request's `tenant` selects the `/{tenant}/` route; an empty, `.` or
+//! `..` tenant or id is refused as [`Error::InvalidRequest`] before anything is sent. Every error answer
 //! is decoded into [`Error::Status`]; an answer that is not the binding's is
 //! [`Error::Protocol`]. Streams are [`Events`] iterators over server-sent events.
 //!
@@ -80,7 +81,8 @@ pub struct ListTasksResponse {
 ///
 /// Each call opens one connection, sends `A2A-Version` (default `1.0`), `A2A-Extensions` where
 /// any are set and `Authorization: Bearer` where a token is set, and closes the connection when
-/// the answer is read. The token is never shown by `Debug`.
+/// the answer is read. The token goes with every operation under the base path, never with the
+/// public card, and is never shown by `Debug`.
 #[derive(Clone)]
 pub struct Client {
     origin: Origin,
@@ -110,7 +112,8 @@ impl Client {
     /// # Errors
     ///
     /// [`Error::UnsupportedScheme`] for any scheme but `http`, `https` included;
-    /// [`Error::InvalidRequest`] where `base_url` is not such a URL.
+    /// [`Error::InvalidRequest`] where `base_url` is not such a URL. Neither error's text quotes
+    /// the URL, so user information or control bytes in it go nowhere.
     pub fn new(base_url: &str) -> Result<Self, Error> {
         Ok(Self {
             origin: transport::origin(base_url)?,
@@ -135,15 +138,18 @@ impl Client {
         self
     }
 
-    /// Sends `Authorization: Bearer token`.
+    /// Sends `Authorization: Bearer token` with every operation under the base path; the public
+    /// card is read without it. A token that is not an RFC 6750 `b64token` makes every call fail
+    /// with [`Error::InvalidRequest`] before anything is sent, and the error does not quote it.
     #[must_use]
     pub fn with_bearer(mut self, token: &str) -> Self {
         self.bearer = Some(token.to_owned());
         self
     }
 
-    /// Bounds connecting, and each read and write, by `timeout`; `None` waits without end. The
-    /// default is 30 seconds, which also bounds the wait between two events of a stream.
+    /// Bounds a call by `timeout`; `None` waits without end. A one-shot call ends within it as a
+    /// whole, connecting included (name resolution aside); a stream's call is bounded as a whole up to its head, and then each
+    /// wait between two events. The default is 30 seconds.
     #[must_use]
     pub fn with_timeout(mut self, timeout: Option<Duration>) -> Self {
         self.timeout = timeout;
@@ -161,6 +167,7 @@ impl Client {
             "/.well-known/agent-card.json".to_owned(),
             None,
             "application/json",
+            false,
         )?;
         decoded(wire::decode_a2a_discovery_agent_card(&card, "card"))
     }
@@ -171,8 +178,8 @@ impl Client {
     ///
     /// See [`Error`].
     pub fn extended_agent_card(&self, request: &GetExtendedAgentCard) -> Result<AgentCard, Error> {
-        let path = self.path(request.tenant.as_deref(), "/extendedAgentCard");
-        let card = self.json("GET", path, None, A2A_JSON)?;
+        let path = self.path(request.tenant.as_deref(), "/extendedAgentCard")?;
+        let card = self.json("GET", path, None, A2A_JSON, true)?;
         decoded(wire::decode_a2a_discovery_agent_card(&card, "card"))
     }
 
@@ -191,8 +198,8 @@ impl Client {
             },
             &mut body,
         );
-        let path = self.path(request.tenant.as_deref(), "/message:send");
-        let answer = self.json("POST", path, Some(body), A2A_JSON)?;
+        let path = self.path(request.tenant.as_deref(), "/message:send")?;
+        let answer = self.json("POST", path, Some(body), A2A_JSON, true)?;
         let task = match answer.member("task") {
             None | Some(Value::Null) => None,
             Some(task) => Some(decoded(wire::decode_a2a_tasks_task_snapshot(task, "task"))?),
@@ -227,7 +234,7 @@ impl Client {
             },
             &mut body,
         );
-        let path = self.path(request.tenant.as_deref(), "/message:stream");
+        let path = self.path(request.tenant.as_deref(), "/message:stream")?;
         self.stream(
             "POST",
             path,
@@ -244,12 +251,12 @@ impl Client {
     pub fn get_task(&self, request: &GetTask) -> Result<TaskSnapshot, Error> {
         let mut path = self.path(
             request.tenant.as_deref(),
-            &format!("/tasks/{}", segment(&request.id.0)),
-        );
+            &format!("/tasks/{}", segment(&request.id.0, "task id")?),
+        )?;
         if let Some(length) = request.history_length {
             path.push_str(&format!("?historyLength={length}"));
         }
-        let task = self.json("GET", path, None, A2A_JSON)?;
+        let task = self.json("GET", path, None, A2A_JSON, true)?;
         decoded(wire::decode_a2a_tasks_task_snapshot(&task, "task"))
     }
 
@@ -283,14 +290,14 @@ impl Client {
         if let Some(include) = request.include_artifacts {
             query.push(("includeArtifacts", include.to_string()));
         }
-        let mut path = self.path(request.tenant.as_deref(), "/tasks");
+        let mut path = self.path(request.tenant.as_deref(), "/tasks")?;
         for (at, (name, value)) in query.iter().enumerate() {
             path.push(if at == 0 { '?' } else { '&' });
             path.push_str(name);
             path.push('=');
             path.push_str(&a2a::server::http::form_encoded(value));
         }
-        let answer = self.json("GET", path, None, A2A_JSON)?;
+        let answer = self.json("GET", path, None, A2A_JSON, true)?;
         decoded(list_tasks_response(&answer))
     }
 
@@ -308,9 +315,9 @@ impl Client {
         body.push('}');
         let path = self.path(
             request.tenant.as_deref(),
-            &format!("/tasks/{}:cancel", segment(&request.id.0)),
-        );
-        let task = self.json("POST", path, Some(body), A2A_JSON)?;
+            &format!("/tasks/{}:cancel", segment(&request.id.0, "task id")?),
+        )?;
+        let task = self.json("POST", path, Some(body), A2A_JSON, true)?;
         decoded(wire::decode_a2a_tasks_task_snapshot(&task, "task"))
     }
 
@@ -325,8 +332,8 @@ impl Client {
     ) -> Result<Events<TaskSubscriptionResponse>, Error> {
         let path = self.path(
             request.tenant.as_deref(),
-            &format!("/tasks/{}:subscribe", segment(&request.id.0)),
-        );
+            &format!("/tasks/{}:subscribe", segment(&request.id.0, "task id")?),
+        )?;
         self.stream(
             "GET",
             path,
@@ -365,10 +372,10 @@ impl Client {
             request.tenant.as_deref(),
             &format!(
                 "/tasks/{}/pushNotificationConfigs",
-                segment(&request.task_id.0)
+                segment(&request.task_id.0, "task id")?
             ),
-        );
-        let config = self.json("POST", path, Some(body), A2A_JSON)?;
+        )?;
+        let config = self.json("POST", path, Some(body), A2A_JSON, true)?;
         decoded(wire::decode_a2a_tasks_task_push_notification_config(
             &config, "config",
         ))
@@ -388,11 +395,11 @@ impl Client {
             request.tenant.as_deref(),
             &format!(
                 "/tasks/{}/pushNotificationConfigs/{}",
-                segment(&request.task_id.0),
-                segment(&request.id.0)
+                segment(&request.task_id.0, "task id")?,
+                segment(&request.id.0, "config id")?
             ),
-        );
-        let config = self.json("GET", path, None, A2A_JSON)?;
+        )?;
+        let config = self.json("GET", path, None, A2A_JSON, true)?;
         decoded(wire::decode_a2a_tasks_task_push_notification_config(
             &config, "config",
         ))
@@ -412,9 +419,9 @@ impl Client {
             request.tenant.as_deref(),
             &format!(
                 "/tasks/{}/pushNotificationConfigs",
-                segment(&request.task_id.0)
+                segment(&request.task_id.0, "task id")?
             ),
-        );
+        )?;
         let mut separator = '?';
         if let Some(size) = request.page_size {
             path.push_str(&format!("{separator}pageSize={size}"));
@@ -426,7 +433,7 @@ impl Client {
                 a2a::server::http::form_encoded(token)
             ));
         }
-        let answer = self.json("GET", path, None, A2A_JSON)?;
+        let answer = self.json("GET", path, None, A2A_JSON, true)?;
         decoded(list_configs_response(&answer))
     }
 
@@ -444,34 +451,48 @@ impl Client {
             request.tenant.as_deref(),
             &format!(
                 "/tasks/{}/pushNotificationConfigs/{}",
-                segment(&request.task_id.0),
-                segment(&request.id.0)
+                segment(&request.task_id.0, "task id")?,
+                segment(&request.id.0, "config id")?
             ),
-        );
-        self.json("DELETE", path, None, A2A_JSON).map(|_| ())
+        )?;
+        self.json("DELETE", path, None, A2A_JSON, true).map(|_| ())
     }
 
-    /// The target of `route` under the base URL's path and, where given and not empty, the
-    /// tenant's segment.
-    fn path(&self, tenant: Option<&str>, route: &str) -> String {
-        match tenant.filter(|tenant| !tenant.is_empty()) {
-            Some(tenant) => format!("{}/{}{route}", self.origin.prefix, segment(tenant)),
-            None => format!("{}{route}", self.origin.prefix),
+    /// The target of `route` under the base URL's path and, where given, the tenant's segment.
+    fn path(&self, tenant: Option<&str>, route: &str) -> Result<String, Error> {
+        match tenant {
+            Some(tenant) => Ok(format!(
+                "{}/{}{route}",
+                self.origin.prefix,
+                segment(tenant, "tenant")?
+            )),
+            None => Ok(format!("{}{route}", self.origin.prefix)),
         }
     }
 
+    /// One exchange; `authorized` adds the bearer token where one is set.
     fn call(
         &self,
         method: &'static str,
         target: String,
         body: Option<String>,
         accept: &'static str,
+        authorized: bool,
     ) -> Result<Answer, Error> {
         let mut headers = vec![("Accept", accept), ("A2A-Version", self.version.as_str())];
         if !self.extensions.is_empty() {
             headers.push(("A2A-Extensions", self.extensions.as_str()));
         }
-        let authorization = self.bearer.as_ref().map(|token| format!("Bearer {token}"));
+        if self.bearer.as_deref().is_some_and(|token| !b64token(token)) {
+            return Err(Error::InvalidRequest(
+                "the bearer token is not an RFC 6750 b64token".to_owned(),
+            ));
+        }
+        let authorization = self
+            .bearer
+            .as_ref()
+            .filter(|_| authorized)
+            .map(|token| format!("Bearer {token}"));
         if let Some(authorization) = &authorization {
             headers.push(("Authorization", authorization.as_str()));
         }
@@ -494,8 +515,9 @@ impl Client {
         target: String,
         body: Option<String>,
         accept: &'static str,
+        authorized: bool,
     ) -> Result<Value, Error> {
-        let answer = self.call(method, target, body, accept)?;
+        let answer = self.call(method, target, body, accept, authorized)?;
         let status = answer.status;
         let text = answer.text()?;
         if !(200..300).contains(&status) {
@@ -517,7 +539,7 @@ impl Client {
         body: Option<String>,
         decode: fn(&Value, &str) -> Result<T, json::DecodeError>,
     ) -> Result<Events<T>, Error> {
-        let answer = self.call(method, target, body, EVENT_STREAM)?;
+        let mut answer = self.call(method, target, body, EVENT_STREAM, true)?;
         let status = answer.status;
         if !(200..300).contains(&status) {
             let text = answer.text()?;
@@ -530,8 +552,19 @@ impl Client {
                 "a stream was answered as `{media}`, not {EVENT_STREAM}"
             )));
         }
+        answer.body.unbound();
         Ok(Events::new(answer.body, decode))
     }
+}
+
+/// Whether `token` is an RFC 6750 `b64token`: `1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+"
+/// / "/" ) *"="`.
+fn b64token(token: &str) -> bool {
+    let body = token.trim_end_matches('=');
+    !body.is_empty()
+        && body
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || b"-._~+/".contains(&byte))
 }
 
 /// A decoded value, or the protocol error of a body that is not the operation's type.
