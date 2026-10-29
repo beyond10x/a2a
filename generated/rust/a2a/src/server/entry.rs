@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
-// contract digest 3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f
+// model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
+// contract digest 91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! The transport-free entry point's refusals.

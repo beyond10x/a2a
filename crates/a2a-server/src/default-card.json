@@ -1,0 +1,27 @@
+{
+  "name": "a2a-server echo agent",
+  "description": "The reference agent of beyond10x/a2a: it completes each task with the message's parts as an artifact.",
+  "supportedInterfaces": [
+    {
+      "url": "http://127.0.0.1:8080",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "version": "0.3.0",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": true,
+    "extendedAgentCard": false
+  },
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["text/plain", "application/json"],
+  "skills": [
+    {
+      "id": "echo",
+      "name": "Echo",
+      "description": "Answers a message with an artifact holding the message's parts.",
+      "tags": ["echo", "reference"]
+    }
+  ]
+}

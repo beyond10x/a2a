@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
-// contract digest 3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f
+// model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
+// contract digest 91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a
 // do not edit: regenerate with `ess synthesize --layout crate`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -2889,6 +2889,12 @@ pub fn encode_error_a2a_tasks_push_notification_not_supported(_value: &crate::ta
     out.push('}');
 }
 
+/// Writes the declared error `a2a.tasks.ResourceExhausted` as JSON.
+pub fn encode_error_a2a_tasks_resource_exhausted(_value: &crate::tasks::ResourceExhausted, out: &mut String) {
+    out.push('{');
+    out.push('}');
+}
+
 /// Writes the declared error `a2a.tasks.TaskNotCancelable` as JSON.
 pub fn encode_error_a2a_tasks_task_not_cancelable(_value: &crate::tasks::TaskNotCancelable, out: &mut String) {
     out.push('{');
@@ -2928,6 +2934,10 @@ pub fn encode_view_a2a_tasks_all_tasks(value: &crate::tasks::AllTasks, out: &mut
     encode_a2a_tasks_task_id(&value.id, out);
     json::member(out, "context_id");
     encode_a2a_tasks_context_id(&value.context_id, out);
+    if let Some(held0) = &value.tenant {
+        json::member(out, "tenant");
+        json::push_text(out, &*held0);
+    }
     json::member(out, "state");
     encode_a2a_tasks_task_state(&value.state, out);
     if let Some(held0) = &value.status_message {
@@ -3039,16 +3049,16 @@ pub fn encode_view_a2a_tasks_tasks(value: &crate::tasks::Tasks, out: &mut String
     out.push('{');
     json::member(out, "id");
     encode_a2a_tasks_task_id(&value.id, out);
-    json::member(out, "context_id");
+    json::member(out, "contextId");
     encode_a2a_tasks_context_id(&value.context_id, out);
     json::member(out, "state");
     encode_a2a_tasks_task_state(&value.state, out);
     if let Some(held0) = &value.status_message {
-        json::member(out, "status_message");
+        json::member(out, "statusMessage");
         encode_a2a_tasks_message(&*held0, out);
     }
     if let Some(held0) = &value.status_timestamp {
-        json::member(out, "status_timestamp");
+        json::member(out, "statusTimestamp");
         json::push_text(out, &(*held0).0);
     }
     if let Some(held0) = &value.artifacts {
@@ -3085,12 +3095,12 @@ pub fn encode_view_a2a_tasks_tasks(value: &crate::tasks::Tasks, out: &mut String
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_a2a_tasks_tasks(value: &json::Value, at: &str) -> Result<(Option<crate::tasks::ContextId>, Option<crate::tasks::TaskState>, Option<crate::primitives::Timestamp>,), json::DecodeError> {
+pub fn decode_params_a2a_tasks_tasks(value: &json::Value, at: &str) -> Result<(Option<crate::tasks::ContextId>, Option<crate::tasks::TaskState>, Option<crate::primitives::Timestamp>, Option<String>,), json::DecodeError> {
     Ok((
-        match value.member("context_id") {
+        match value.member("contextId") {
             None | Some(json::Value::Null) => None,
             Some(member0) => {
-                let at0 = json::nested(at, "context_id");
+                let at0 = json::nested(at, "contextId");
                 Some(decode_a2a_tasks_context_id(member0, &at0)?)
             }
         },
@@ -3101,11 +3111,18 @@ pub fn decode_params_a2a_tasks_tasks(value: &json::Value, at: &str) -> Result<(O
                 Some(decode_a2a_tasks_task_state(member1, &at1)?)
             }
         },
-        match value.member("status_timestamp_after") {
+        match value.member("statusTimestampAfter") {
             None | Some(json::Value::Null) => None,
             Some(member2) => {
-                let at2 = json::nested(at, "status_timestamp_after");
+                let at2 = json::nested(at, "statusTimestampAfter");
                 Some(crate::primitives::Timestamp(json::text_at(member2, &at2, "an RFC 3339 instant")?.to_owned()))
+            }
+        },
+        match value.member("tenant") {
+            None | Some(json::Value::Null) => None,
+            Some(member3) => {
+                let at3 = json::nested(at, "tenant");
+                Some(json::text_at(member3, &at3, "a string")?.to_owned())
             }
         },
     ))
@@ -3307,6 +3324,20 @@ pub fn encode_outcome_a2a_tasks_cancel_task(value: &crate::tasks::CancelTaskOutc
         crate::tasks::CancelTaskOutcome::NotFound { error } => {
             json::member(out, "outcome");
             json::push_text(out, "not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::CancelTaskOutcome::OtherTenant { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "other-tenant");
             json::member(out, "published");
             out.push('[');
             out.push(']');
@@ -3591,6 +3622,20 @@ pub fn encode_outcome_a2a_tasks_create_task_push_notification_config(value: &cra
             json::push_text(out, "a2a.tasks.TaskNotFound");
             json::member(out, "payload");
             encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::CreateTaskPushNotificationConfigOutcome::ConfigLimit { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "config-limit");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.ResourceExhausted");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_resource_exhausted(error, out);
             out.push('}');
         }
         crate::tasks::CreateTaskPushNotificationConfigOutcome::Created { push_notification_config_created, .. } => {
@@ -3932,6 +3977,20 @@ pub fn encode_outcome_a2a_tasks_get_task(value: &crate::tasks::GetTaskOutcome, o
             encode_error_a2a_tasks_task_not_found(error, out);
             out.push('}');
         }
+        crate::tasks::GetTaskOutcome::OtherTenant { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "other-tenant");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
         crate::tasks::GetTaskOutcome::Found { .. } => {
             json::member(out, "outcome");
             json::push_text(out, "found");
@@ -4217,6 +4276,20 @@ pub fn encode_outcome_a2a_tasks_list_task_push_notification_configs(value: &crat
         crate::tasks::ListTaskPushNotificationConfigsOutcome::TaskNotFound { error } => {
             json::member(out, "outcome");
             json::push_text(out, "task-not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::ListTaskPushNotificationConfigsOutcome::OtherTenant { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "other-tenant");
             json::member(out, "published");
             out.push('[');
             out.push(']');
@@ -4636,6 +4709,34 @@ pub fn encode_outcome_a2a_tasks_send_message(value: &crate::tasks::SendMessageOu
             encode_error_a2a_tasks_content_type_not_supported(error, out);
             out.push('}');
         }
+        crate::tasks::SendMessageOutcome::TaskLimit { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "task-limit");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.ResourceExhausted");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_resource_exhausted(error, out);
+            out.push('}');
+        }
+        crate::tasks::SendMessageOutcome::HistoryLimit { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "history-limit");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.ResourceExhausted");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_resource_exhausted(error, out);
+            out.push('}');
+        }
         crate::tasks::SendMessageOutcome::Continued { .. } => {
             json::member(out, "outcome");
             json::push_text(out, "continued");
@@ -4838,6 +4939,34 @@ pub fn encode_outcome_a2a_tasks_send_streaming_message(value: &crate::tasks::Sen
             json::push_text(out, "a2a.tasks.ContentTypeNotSupported");
             json::member(out, "payload");
             encode_error_a2a_tasks_content_type_not_supported(error, out);
+            out.push('}');
+        }
+        crate::tasks::SendStreamingMessageOutcome::TaskLimit { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "task-limit");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.ResourceExhausted");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_resource_exhausted(error, out);
+            out.push('}');
+        }
+        crate::tasks::SendStreamingMessageOutcome::HistoryLimit { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "history-limit");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.ResourceExhausted");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_resource_exhausted(error, out);
             out.push('}');
         }
         crate::tasks::SendStreamingMessageOutcome::Continued { message_stream_response, .. } => {
@@ -5108,6 +5237,20 @@ pub fn encode_outcome_a2a_tasks_subscribe_to_task(value: &crate::tasks::Subscrib
         crate::tasks::SubscribeToTaskOutcome::NotFound { error } => {
             json::member(out, "outcome");
             json::push_text(out, "not-found");
+            json::member(out, "published");
+            out.push('[');
+            out.push(']');
+            json::member(out, "refusal");
+            out.push('{');
+            json::member(out, "error");
+            json::push_text(out, "a2a.tasks.TaskNotFound");
+            json::member(out, "payload");
+            encode_error_a2a_tasks_task_not_found(error, out);
+            out.push('}');
+        }
+        crate::tasks::SubscribeToTaskOutcome::OtherTenant { error } => {
+            json::member(out, "outcome");
+            json::push_text(out, "other-tenant");
             json::member(out, "published");
             out.push('[');
             out.push(']');

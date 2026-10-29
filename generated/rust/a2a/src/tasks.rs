@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
-// contract digest 3dea9905e0cd94c1255be15d5619996d104b54b00e2b8097da86f0bf80643b7f
+// model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
+// contract digest 91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! Tasks — `a2a.tasks`.
@@ -411,6 +411,8 @@ pub struct TaskData {
     pub id: TaskId,
     /// `context_id` — `a2a.tasks.ContextId`.
     pub context_id: ContextId,
+    /// `tenant` — `Optional<String>`.
+    pub tenant: Option<String>,
     /// `status_message` — `Optional<a2a.tasks.Message>`.
     pub status_message: Option<Message>,
     /// `status_timestamp` — `Optional<Timestamp>`.
@@ -924,6 +926,11 @@ pub enum CancelTaskOutcome {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
     },
+    /// `other-tenant` — when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`.
+    OtherTenant {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
     /// `not-cancelable-now` — externally decided (the agent cannot cancel the task at its current stage).
     NotCancelableNow {
         /// Why it was refused: `a2a.tasks.TaskNotCancelable`.
@@ -1036,6 +1043,11 @@ pub enum CreateTaskPushNotificationConfigOutcome {
     TaskNotFound {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
+    },
+    /// `config-limit` — externally decided (the task already holds as many push-notification configurations as the agent keeps, and the request adds one rather than replacing one of the same id).
+    ConfigLimit {
+        /// Why it was refused: `a2a.tasks.ResourceExhausted`.
+        error: ResourceExhausted,
     },
     /// `created` — when `defined(id)`.
     Created {
@@ -1183,6 +1195,11 @@ pub enum GetTaskOutcome {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
     },
+    /// `other-tenant` — when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`.
+    OtherTenant {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
     /// `found` — otherwise.
     Found {
         /// Actual response returned by this branch.
@@ -1301,6 +1318,11 @@ pub enum ListTaskPushNotificationConfigsOutcome {
     },
     /// `task-not-found` — for an identity no record carries.
     TaskNotFound {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
+    /// `other-tenant` — when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`.
+    OtherTenant {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
     },
@@ -1455,7 +1477,7 @@ pub struct SendMessageResponse {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SendMessageOutcome {
-    /// `task-not-found` — externally decided (message.taskId names no task the caller can access (section 3.4.2)).
+    /// `task-not-found` — externally decided (message.taskId names no task the caller can access (section 3.4.2); a task of another tenant is not one (GetTask `other-tenant`)).
     TaskNotFound {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
@@ -1479,6 +1501,16 @@ pub enum SendMessageOutcome {
     ContentTypeNotSupported {
         /// Why it was refused: `a2a.tasks.ContentTypeNotSupported`.
         error: ContentTypeNotSupported,
+    },
+    /// `task-limit` — externally decided (the message names no task, the agent would create one, and the tenant of the request, or every request without one, already holds as many tasks as the agent keeps).
+    TaskLimit {
+        /// Why it was refused: `a2a.tasks.ResourceExhausted`.
+        error: ResourceExhausted,
+    },
+    /// `history-limit` — externally decided (message.taskId names a task whose history already holds as many messages as the agent keeps).
+    HistoryLimit {
+        /// Why it was refused: `a2a.tasks.ResourceExhausted`.
+        error: ResourceExhausted,
     },
     /// `continued` — externally decided (message.taskId names a non-terminal task, and the agent takes the message into it).
     ///
@@ -1546,7 +1578,7 @@ pub struct SendStreamingMessageResponse {
 /// outcomes exist to prevent.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SendStreamingMessageOutcome {
-    /// `task-not-found` — externally decided (message.taskId names no task the caller can access (section 3.4.2)).
+    /// `task-not-found` — externally decided (message.taskId names no task the caller can access (section 3.4.2); a task of another tenant is not one (GetTask `other-tenant`)).
     TaskNotFound {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
@@ -1570,6 +1602,16 @@ pub enum SendStreamingMessageOutcome {
     ContentTypeNotSupported {
         /// Why it was refused: `a2a.tasks.ContentTypeNotSupported`.
         error: ContentTypeNotSupported,
+    },
+    /// `task-limit` — externally decided (the message names no task, the agent would create one, and the tenant of the request, or every request without one, already holds as many tasks as the agent keeps).
+    TaskLimit {
+        /// Why it was refused: `a2a.tasks.ResourceExhausted`.
+        error: ResourceExhausted,
+    },
+    /// `history-limit` — externally decided (message.taskId names a task whose history already holds as many messages as the agent keeps).
+    HistoryLimit {
+        /// Why it was refused: `a2a.tasks.ResourceExhausted`.
+        error: ResourceExhausted,
     },
     /// `continued` — externally decided (message.taskId names a non-terminal task, and the agent takes the message into it).
     ///
@@ -1624,6 +1666,8 @@ impl SendStreamingMessageOutcome {
             Self::ContextMismatch { .. } => true,
             Self::ContextNotAccepted { .. } => true,
             Self::ContentTypeNotSupported { .. } => true,
+            Self::TaskLimit { .. } => true,
+            Self::HistoryLimit { .. } => true,
             Self::Continued { response, message_stream_response, .. } => message_stream_response.task == response.task.clone() && message_stream_response.message == response.reply.clone(),
             Self::DirectMessage { response, message_stream_response, .. } => message_stream_response.task == response.task.clone() && message_stream_response.message == response.reply.clone(),
             Self::TaskCreated { response, message_stream_response, .. } => message_stream_response.task == response.task.clone() && message_stream_response.message == response.reply.clone(),
@@ -1715,6 +1759,11 @@ pub enum SubscribeToTaskOutcome {
     },
     /// `not-found` — for an identity no record carries.
     NotFound {
+        /// Why it was refused: `a2a.tasks.TaskNotFound`.
+        error: TaskNotFound,
+    },
+    /// `other-tenant` — when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`.
+    OtherTenant {
         /// Why it was refused: `a2a.tasks.TaskNotFound`.
         error: TaskNotFound,
     },
@@ -1889,6 +1938,12 @@ pub struct InvalidAgentResponse;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PushNotificationNotSupported;
 
+/// The declared error `a2a.tasks.ResourceExhausted`.
+///
+/// Not an A2A error (gRPC RESOURCE_EXHAUSTED, HTTP 429): the agent already holds as many tasks per tenant, messages per task history, or push-notification configurations per task as it keeps, so the request stored nothing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResourceExhausted;
+
 /// The declared error `a2a.tasks.TaskNotCancelable`.
 ///
 /// TaskNotCancelableError (JSON-RPC -32002, gRPC FAILED_PRECONDITION, HTTP 400): the task is not in a cancelable state.
@@ -1933,6 +1988,8 @@ pub struct AllTasks {
     pub id: TaskId,
     /// `context_id` — `a2a.tasks.ContextId`.
     pub context_id: ContextId,
+    /// `tenant` — `Optional<String>`.
+    pub tenant: Option<String>,
     /// `state` — `a2a.tasks.Task.State`.
     pub state: TaskState,
     /// `status_message` — `Optional<a2a.tasks.Message>`.
@@ -1995,7 +2052,7 @@ pub struct TaskPushNotificationConfigs {
 
 /// List tasks — one row of the view `a2a.tasks.Tasks`.
 ///
-/// Projects `a2a.tasks.Task` at `read_your_writes` consistency, containing instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp))`.
+/// Projects `a2a.tasks.Task` at `read_your_writes` consistency, containing instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp) and ((defined(param.tenant) and defined(tenant) and tenant == param.tenant) or (not (defined(param.tenant)) and not (defined(tenant)))))`.
 /// Serving it is an implementation obligation — see the plan — because how a projection is kept
 /// current is a storage decision the specification does not take.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -2028,7 +2085,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.CancelTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `not-cancelable-now` externally decided (the agent cannot cancel the task at its current stage), error `a2a.tasks.TaskNotCancelable`; `canceled` otherwise, takes `cancel` of `a2a.tasks.Task`, emits `a2a.tasks.TaskStatusUpdated`; `not-cancelable` from a state no declared move starts in, error `a2a.tasks.TaskNotCancelable`.
+    /// Contract: given `a2a.tasks.CancelTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `other-tenant` when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`, error `a2a.tasks.TaskNotFound`; `not-cancelable-now` externally decided (the agent cannot cancel the task at its current stage), error `a2a.tasks.TaskNotCancelable`; `canceled` otherwise, takes `cancel` of `a2a.tasks.Task`, emits `a2a.tasks.TaskStatusUpdated`; `not-cancelable` from a state no declared move starts in, error `a2a.tasks.TaskNotCancelable`.
     pub trait CancelTaskBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.CancelTask`.
         ///
@@ -2052,7 +2109,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.CreateTaskPushNotificationConfig` input, decide and enact exactly one outcome. Selection precedence: on commands with `when_related:`, check `existing_instance` then `exists: false` before input-guarded refusals; choose the first declared input refusal whose guard holds; then check addressed-row existence (`unknown_instance`, and `existing_instance` on commands without `when_related:`); then the held state (`when_subject_state` and `when_subject`), with `wrong_state` only if the selected branch moves from a state the row does not hold; then accepting and external branches in declaration order. An accepting branch that moves nothing answers in every state. Related-presence predicates do not precede input-guarded refusals. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`; `task-not-found` when no `a2a.tasks.Task` carries the identity `input.task_id` names, error `a2a.tasks.TaskNotFound`; `created` when `defined(id)`, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`; `assigned` otherwise, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`.
+    /// Contract: given `a2a.tasks.CreateTaskPushNotificationConfig` input, decide and enact exactly one outcome. Selection precedence: on commands with `when_related:`, check `existing_instance` then `exists: false` before input-guarded refusals; choose the first declared input refusal whose guard holds; then check addressed-row existence (`unknown_instance`, and `existing_instance` on commands without `when_related:`); then the held state (`when_subject_state` and `when_subject`), with `wrong_state` only if the selected branch moves from a state the row does not hold; then accepting and external branches in declaration order. An accepting branch that moves nothing answers in every state. Related-presence predicates do not precede input-guarded refusals. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`; `task-not-found` when no `a2a.tasks.Task` carries the identity `input.task_id` names, error `a2a.tasks.TaskNotFound`; `config-limit` externally decided (the task already holds as many push-notification configurations as the agent keeps, and the request adds one rather than replacing one of the same id), error `a2a.tasks.ResourceExhausted`; `created` when `defined(id)`, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`; `assigned` otherwise, creates `a2a.tasks.PushNotificationConfig`, emits `a2a.tasks.PushNotificationConfigCreated`.
     pub trait CreateTaskPushNotificationConfigBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.CreateTaskPushNotificationConfig`.
         ///
@@ -2089,7 +2146,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.GetTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `found` otherwise, preserves `a2a.tasks.Task`.
+    /// Contract: given `a2a.tasks.GetTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `other-tenant` when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`, error `a2a.tasks.TaskNotFound`; `found` otherwise, preserves `a2a.tasks.Task`.
     pub trait GetTaskBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.GetTask`.
         ///
@@ -2115,7 +2172,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.ListTaskPushNotificationConfigs` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`; `task-not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `listed` otherwise, preserves `a2a.tasks.Task`.
+    /// Contract: given `a2a.tasks.ListTaskPushNotificationConfigs` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `push-not-supported` externally decided (the agent card does not declare capabilities.pushNotifications), error `a2a.tasks.PushNotificationNotSupported`; `task-not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `other-tenant` when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`, error `a2a.tasks.TaskNotFound`; `listed` otherwise, preserves `a2a.tasks.Task`.
     pub trait ListTaskPushNotificationConfigsBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.ListTaskPushNotificationConfigs`.
         ///
@@ -2161,7 +2218,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.SendMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it); `direct-message` externally decided (the agent answers with a message and creates no task); `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`.
+    /// Contract: given `a2a.tasks.SendMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2); a task of another tenant is not one (GetTask `other-tenant`)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `task-limit` externally decided (the message names no task, the agent would create one, and the tenant of the request, or every request without one, already holds as many tasks as the agent keeps), error `a2a.tasks.ResourceExhausted`; `history-limit` externally decided (message.taskId names a task whose history already holds as many messages as the agent keeps), error `a2a.tasks.ResourceExhausted`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it); `direct-message` externally decided (the agent answers with a message and creates no task); `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`.
     pub trait SendMessageBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.SendMessage`.
         ///
@@ -2174,7 +2231,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.SendStreamingMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it), emits `a2a.tasks.MessageStreamResponse`; `direct-message` externally decided (the agent answers with a message and creates no task), emits `a2a.tasks.MessageStreamResponse`; `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`, emits `a2a.tasks.MessageStreamResponse`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`.
+    /// Contract: given `a2a.tasks.SendStreamingMessage` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `task-not-found` externally decided (message.taskId names no task the caller can access (section 3.4.2); a task of another tenant is not one (GetTask `other-tenant`)), error `a2a.tasks.TaskNotFound`; `task-terminal` externally decided (message.taskId names a task in Completed, Failed, Canceled or Rejected), error `a2a.tasks.UnsupportedOperation`; `context-mismatch` externally decided (message.contextId differs from the contextId of the task message.taskId names), error `a2a.tasks.ContextMismatch`; `context-not-accepted` externally decided (the agent cannot accept the contextId the client provided, and generates none in its place (section 3.4.1)), error `a2a.tasks.ContextNotAccepted`; `content-type-not-supported` externally decided (a part's media type is not supported by the agent), error `a2a.tasks.ContentTypeNotSupported`; `task-limit` externally decided (the message names no task, the agent would create one, and the tenant of the request, or every request without one, already holds as many tasks as the agent keeps), error `a2a.tasks.ResourceExhausted`; `history-limit` externally decided (message.taskId names a task whose history already holds as many messages as the agent keeps), error `a2a.tasks.ResourceExhausted`; `continued` externally decided (message.taskId names a non-terminal task, and the agent takes the message into it), emits `a2a.tasks.MessageStreamResponse`; `direct-message` externally decided (the agent answers with a message and creates no task), emits `a2a.tasks.MessageStreamResponse`; `task-created` otherwise, creates `a2a.tasks.Task`, emits `a2a.tasks.TaskCreated`, emits `a2a.tasks.MessageStreamResponse`; `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`.
     pub trait SendStreamingMessageBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.SendStreamingMessage`.
         ///
@@ -2198,7 +2255,7 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a typed response (`response:`).
     ///
-    /// Contract: given `a2a.tasks.SubscribeToTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `task-terminal` when the existing subject's stored fields satisfy `state in [Completed, Failed, Canceled, Rejected]`, error `a2a.tasks.UnsupportedOperation`; `subscribed` otherwise, preserves `a2a.tasks.Task`.
+    /// Contract: given `a2a.tasks.SubscribeToTask` input, decide and enact exactly one outcome. Declared outcomes (declaration order, not selection precedence): `version-not-supported` externally decided (the A2A-Version service parameter names a version the agent does not support), error `a2a.tasks.VersionNotSupported`; `extension-required` externally decided (the agent card marks an extension required and the request does not declare it), error `a2a.tasks.ExtensionSupportRequired`; `streaming-not-supported` externally decided (the agent card does not declare capabilities.streaming), error `a2a.tasks.UnsupportedOperation`; `not-found` for an identity no record carries, error `a2a.tasks.TaskNotFound`; `other-tenant` when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`, error `a2a.tasks.TaskNotFound`; `task-terminal` when the existing subject's stored fields satisfy `state in [Completed, Failed, Canceled, Rejected]`, error `a2a.tasks.UnsupportedOperation`; `subscribed` otherwise, preserves `a2a.tasks.Task`.
     pub trait SubscribeToTaskBehavior {
         /// Decides and enacts exactly one declared outcome of `a2a.tasks.SubscribeToTask`.
         ///
@@ -2257,13 +2314,13 @@ pub mod obligations {
     ///
     /// Why it is not generated: kept an obligation by a view parameter (`params:`), which a generated query does not apply.
     ///
-    /// Contract: a query answering `a2a.tasks.Tasks` with rows projected from `a2a.tasks.Task` at `read_your_writes` consistency, containing instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp))`.
+    /// Contract: a query answering `a2a.tasks.Tasks` with rows projected from `a2a.tasks.Task` at `read_your_writes` consistency, containing instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp) and ((defined(param.tenant) and defined(tenant) and tenant == param.tenant) or (not (defined(param.tenant)) and not (defined(tenant)))))`.
     pub trait TasksQuery {
         /// Serves `a2a.tasks.Tasks` rows at the view's declared consistency.
         ///
         /// `Err` is the typed refusal of an obligation nothing has satisfied; a satisfying
         /// implementation never returns it.
-        fn tasks(&self, context_id: Option<crate::tasks::ContextId>, status: Option<crate::tasks::TaskState>, status_timestamp_after: Option<crate::primitives::Timestamp>) -> Result<Vec<super::Tasks>, crate::obligation::UnmetObligation>;
+        fn tasks(&self, context_id: Option<crate::tasks::ContextId>, status: Option<crate::tasks::TaskState>, status_timestamp_after: Option<crate::primitives::Timestamp>, tenant: Option<String>) -> Result<Vec<super::Tasks>, crate::obligation::UnmetObligation>;
     }
 
     /// Every obligation of this bounded context, refused in the type system.
@@ -2333,7 +2390,7 @@ pub mod obligations {
     }
 
     impl TasksQuery for Unimplemented {
-        fn tasks(&self, _context_id: Option<crate::tasks::ContextId>, _status: Option<crate::tasks::TaskState>, _status_timestamp_after: Option<crate::primitives::Timestamp>) -> Result<Vec<super::Tasks>, crate::obligation::UnmetObligation> {
+        fn tasks(&self, _context_id: Option<crate::tasks::ContextId>, _status: Option<crate::tasks::TaskState>, _status_timestamp_after: Option<crate::primitives::Timestamp>, _tenant: Option<String>) -> Result<Vec<super::Tasks>, crate::obligation::UnmetObligation> {
             Err(crate::obligation::UnmetObligation { capability: "view query", source: "a2a.tasks.Tasks" })
         }
     }

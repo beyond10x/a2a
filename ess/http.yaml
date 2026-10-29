@@ -33,7 +33,7 @@
 # operation request parameters as path parameters or query parameters": `query` encoding is
 # admitted on `get` only (ESS-HTTP-020).
 type: ess-http/1
-specification: {system: a2a, version: v1, source_digest: "sha256:d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002"}
+specification: {system: a2a, version: v1, source_digest: "sha256:d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d"}
 routes:
   # a2a.proto SendMessage: post "/message:send", body "*"; section 11.3.1.
   - command: a2a.tasks.SendMessage
@@ -48,7 +48,7 @@ routes:
     method: get
     path: /tasks/{id}
     parameters: {id: input.id}
-    request: {encoding: query}
+    request: {encoding: query, unknown: ignore}
   # a2a.proto ListTasks: get "/tasks"; section 11.3.2. ListTasks is the view a2a.tasks.Tasks.
   - view: a2a.tasks.Tasks
     method: get
@@ -74,14 +74,14 @@ routes:
     method: get
     path: /tasks/{taskId}/pushNotificationConfigs/{id}
     parameters: {taskId: input.task_id, id: input.id}
-    request: {encoding: query}
+    request: {encoding: query, unknown: ignore}
   # a2a.proto ListTaskPushNotificationConfigs: get "/tasks/{task_id=*}/pushNotificationConfigs";
   # section 11.3.3.
   - command: a2a.tasks.ListTaskPushNotificationConfigs
     method: get
     path: /tasks/{taskId}/pushNotificationConfigs
     parameters: {taskId: input.task_id}
-    request: {encoding: query}
+    request: {encoding: query, unknown: ignore}
   # a2a.proto DeleteTaskPushNotificationConfig: delete
   # "/tasks/{task_id=*}/pushNotificationConfigs/{id=*}"; section 11.3.3.
   - command: a2a.tasks.DeleteTaskPushNotificationConfig
@@ -92,7 +92,7 @@ routes:
   - command: a2a.discovery.GetExtendedAgentCard
     method: get
     path: /extendedAgentCard
-    request: {encoding: query}
+    request: {encoding: query, unknown: ignore}
   # Not an A2A operation (domains/tasks.yaml, views). Its derived route,
   # `get /tasks/views/pushNotificationConfigs`, overlaps `get /tasks/{taskId}/pushNotificationConfigs`:
   # "ESS-HTTP-011: … after an equal prefix, segment 2 is `{taskId}` in one and `views` in the

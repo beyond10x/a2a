@@ -1,6 +1,6 @@
 # generated from a2a v1
-# model digest d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
-# contract digest slice-sha256/2:174c2fb7249a1f7ae5c356e863f1fb607ef64daafa498264dbfdbd3feb0e10ff
+# model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
+# contract digest slice-sha256/2:02b575d15f2d0693bf3f56bcdc8c168a3df46bc6b100db72265e4e68e65265da
 # do not edit: regenerate with `ess generate`
 asyncapi: 3.0.0
 info:
@@ -16,8 +16,8 @@ info:
   x-ess-provenance:
     system: a2a
     specification_version: v1
-    source_digest: d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002
-    contract_digest: slice-sha256/2:174c2fb7249a1f7ae5c356e863f1fb607ef64daafa498264dbfdbd3feb0e10ff
+    source_digest: d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
+    contract_digest: slice-sha256/2:02b575d15f2d0693bf3f56bcdc8c168a3df46bc6b100db72265e4e68e65265da
 defaultContentType: application/json
 channels:
   a2a.tasks.MessageStreamResponse:

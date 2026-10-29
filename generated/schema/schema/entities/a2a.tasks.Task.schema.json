@@ -12,6 +12,9 @@
     "context_id": {
       "$ref": "#/$defs/a2a.tasks.ContextId"
     },
+    "tenant": {
+      "type": "string"
+    },
     "status_message": {
       "$ref": "#/$defs/a2a.tasks.Message"
     },
@@ -45,8 +48,8 @@
   "x-ess-provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002",
-    "contract_digest": "slice-sha256/2:816233287205b14054b0434a2a0d076ef9f2f769dbb1985f598ce8d19402a3af",
+    "source_digest": "d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d",
+    "contract_digest": "slice-sha256/2:855f73986d12d7e4b065e5ab7ccb6701c6e809b28f92ea8d1f8f9cd4e7a3e02c",
     "regenerate": "ess generate"
   },
   "$defs": {

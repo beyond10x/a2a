@@ -189,6 +189,7 @@ An instance is identified by `id`, a `a2a.tasks.TaskId`. The name is part of the
 It holds:
 
 - `context_id` — `a2a.tasks.ContextId`
+- `tenant` — `Optional<String>`, which may be absent
 - `status_message` — `Optional<a2a.tasks.Message>`, which may be absent
 - `status_timestamp` — `Optional<Timestamp>`, which may be absent
 - `artifacts` — `Optional<List<a2a.tasks.Artifact>>`, which may be absent
@@ -301,6 +302,7 @@ It exposes:
 
 - `id` — `a2a.tasks.TaskId`
 - `context_id` — `a2a.tasks.ContextId`
+- `tenant` — `Optional<String>`, which may be absent
 - `state` — `a2a.tasks.Task.State`
 - `status_message` — `Optional<a2a.tasks.Message>`, which may be absent
 - `status_timestamp` — `Optional<Timestamp>`, which may be absent
@@ -368,15 +370,15 @@ A generated scenario asserts it once, immediately after the command: a view prom
 
 It reads [`Task`](#task).
 
-It contains the instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp))` holds, and only those — so an instance a caller cannot find in here has been filtered out rather than lost.
+It contains the instances where `((not (defined(param.context_id)) or context_id == param.context_id) and (not (defined(param.status)) or state == param.status) and (not (defined(param.status_timestamp_after)) or status_timestamp >= param.status_timestamp_after as timestamp) and ((defined(param.tenant) and defined(tenant) and tenant == param.tenant) or (not (defined(param.tenant)) and not (defined(tenant)))))` holds, and only those — so an instance a caller cannot find in here has been filtered out rather than lost.
 
 It exposes:
 
 - `id` — `a2a.tasks.TaskId`
-- `context_id` — `a2a.tasks.ContextId`
+- `context_id` — `a2a.tasks.ContextId`, called `contextId` on the wire
 - `state` — `a2a.tasks.Task.State`
-- `status_message` — `Optional<a2a.tasks.Message>`, which may be absent
-- `status_timestamp` — `Optional<Timestamp>`, which may be absent
+- `status_message` — `Optional<a2a.tasks.Message>`, which may be absent, called `statusMessage` on the wire
+- `status_timestamp` — `Optional<Timestamp>`, which may be absent, called `statusTimestamp` on the wire
 - `artifacts` — `Optional<List<a2a.tasks.Artifact>>`, which may be absent
 - `history` — `Optional<List<a2a.tasks.Message>>`, which may be absent
 - `metadata` — `Optional<Json>`, which may be absent
@@ -399,13 +401,15 @@ It takes:
 - `id` — `a2a.tasks.TaskId`
 - `metadata` — `Optional<Json>`, which may be absent
 
-It has six outcomes.
+It has seven outcomes.
 
 **`version-not-supported`** — Decided outside the input: the A2A-Version service parameter names a version the agent does not support. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.VersionNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`extension-required`** — Decided outside the input: the agent card marks an extension required and the request does not declare it. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.ExtensionSupportRequired`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`not-found`** — Taken when the identity the command names is one no record carries, before any other answer for it. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test reaches it by sending an identity no record carries, arranging nothing.
+
+**`other-tenant`** — Taken when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test establishes and independently observes the subject enum fact before selecting this branch.
 
 **`not-cancelable-now`** — Decided outside the input: the agent cannot cancel the task at its current stage. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.TaskNotCancelable`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
@@ -443,7 +447,7 @@ It takes:
 - `token` — `Optional<String>`, which may be absent
 - `authentication` — `Optional<a2a.tasks.AuthenticationInfo>`, which may be absent
 
-It has six outcomes.
+It has seven outcomes.
 
 **`version-not-supported`** — Decided outside the input: the A2A-Version service parameter names a version the agent does not support. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.VersionNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
@@ -452,6 +456,8 @@ It has six outcomes.
 **`push-not-supported`** — Decided outside the input: the agent card does not declare capabilities.pushNotifications. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.PushNotificationNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`task-not-found`** — Taken when no `a2a.tasks.Task` carries the identity `input.task_id` names. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test reaches it by arranging the row of the other entity the input names, or its absence, and sending the command for it.
+
+**`config-limit`** — Decided outside the input: the task already holds as many push-notification configurations as the agent keeps, and the request adds one rather than replacing one of the same id. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.ResourceExhausted`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`created`** — Taken when `defined(id)` holds of the input. It creates a `a2a.tasks.PushNotificationConfig`, which starts in `Active`. The new instance's identity is published as `row` on `a2a.tasks.PushNotificationConfigCreated`. It emits `a2a.tasks.PushNotificationConfigCreated`. It sets `config_id` from `input.id`, `task_id` from `input.task_id`, `tenant` from `input.tenant`, `url` from `input.url`, `token` from `input.token` and `authentication` from `input.authentication`. A test reaches it by constructing an input that satisfies that condition.
 
@@ -506,13 +512,15 @@ It takes:
 - `id` — `a2a.tasks.TaskId`
 - `history_length` — `Optional<Integer>`, which may be absent, called `historyLength` on the wire
 
-It has four outcomes.
+It has five outcomes.
 
 **`version-not-supported`** — Decided outside the input: the A2A-Version service parameter names a version the agent does not support. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.VersionNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`extension-required`** — Decided outside the input: the agent card marks an extension required and the request does not declare it. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.ExtensionSupportRequired`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`not-found`** — Taken when the identity the command names is one no record carries, before any other answer for it. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test reaches it by sending an identity no record carries, arranging nothing.
+
+**`other-tenant`** — Taken when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test establishes and independently observes the subject enum fact before selecting this branch.
 
 **`found`** — The default branch, taken when no other outcome's condition matched. It preserves the existing subject, without an error or event. The instance is the one named by the input field `id`. It emits nothing. A test reaches it by constructing an input that satisfies no other outcome's condition.
 
@@ -551,7 +559,7 @@ It takes:
 - `page_size` — `Optional<Integer>`, which may be absent, called `pageSize` on the wire
 - `page_token` — `Optional<String>`, which may be absent, called `pageToken` on the wire
 
-It has five outcomes.
+It has six outcomes.
 
 **`version-not-supported`** — Decided outside the input: the A2A-Version service parameter names a version the agent does not support. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.VersionNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
@@ -560,6 +568,8 @@ It has five outcomes.
 **`push-not-supported`** — Decided outside the input: the agent card does not declare capabilities.pushNotifications. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.PushNotificationNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`task-not-found`** — Taken when the identity the command names is one no record carries, before any other answer for it. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test reaches it by sending an identity no record carries, arranging nothing.
+
+**`other-tenant`** — Taken when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test establishes and independently observes the subject enum fact before selecting this branch.
 
 **`listed`** — The default branch, taken when no other outcome's condition matched. It preserves the existing subject, without an error or event. The instance is the one named by the input field `task_id`. It emits nothing. A test reaches it by constructing an input that satisfies no other outcome's condition.
 
@@ -625,9 +635,9 @@ It takes:
 - `configuration` — `Optional<a2a.tasks.SendMessageConfiguration>`, which may be absent
 - `metadata` — `Optional<Json>`, which may be absent
 
-It has 10 outcomes.
+It has 12 outcomes.
 
-**`task-not-found`** — Decided outside the input: message.taskId names no task the caller can access (section 3.4.2). No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
+**`task-not-found`** — Decided outside the input: message.taskId names no task the caller can access (section 3.4.2); a task of another tenant is not one (GetTask `other-tenant`). No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`task-terminal`** — Decided outside the input: message.taskId names a task in Completed, Failed, Canceled or Rejected. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.UnsupportedOperation`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
@@ -637,11 +647,15 @@ It has 10 outcomes.
 
 **`content-type-not-supported`** — Decided outside the input: a part's media type is not supported by the agent. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.ContentTypeNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
+**`task-limit`** — Decided outside the input: the message names no task, the agent would create one, and the tenant of the request, or every request without one, already holds as many tasks as the agent keeps. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.ResourceExhausted`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
+
+**`history-limit`** — Decided outside the input: message.taskId names a task whose history already holds as many messages as the agent keeps. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.ResourceExhausted`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
+
 **`continued`** — The agent answers with the task the message continued, in the state it holds. Decided outside the input: message.taskId names a non-terminal task, and the agent takes the message into it. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`direct-message`** — Decided outside the input: the agent answers with a message and creates no task. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
-**`task-created`** — A new task. With returnImmediately true the answer carries it as created; otherwise the answer waits until it is terminal or interrupted. The default branch, taken when no other outcome's condition matched. It creates a `a2a.tasks.Task`, which starts in `Submitted`. The new instance's identity is published as `task_id` on `a2a.tasks.TaskCreated`. It emits `a2a.tasks.TaskCreated`. It sets `context_id` from `input.message.context_id, else implementation-generated` and `status_timestamp` from `implementation-generated`. A test reaches it by constructing an input that satisfies no other outcome's condition.
+**`task-created`** — A new task. With returnImmediately true the answer carries it as created; otherwise the answer waits until it is terminal or interrupted. The default branch, taken when no other outcome's condition matched. It creates a `a2a.tasks.Task`, which starts in `Submitted`. The new instance's identity is published as `task_id` on `a2a.tasks.TaskCreated`. It emits `a2a.tasks.TaskCreated`. It sets `context_id` from `input.message.context_id, else implementation-generated`, `tenant` from `input.tenant` and `status_timestamp` from `implementation-generated`. A test reaches it by constructing an input that satisfies no other outcome's condition.
 
 **`version-not-supported`** — Decided outside the input: the A2A-Version service parameter names a version the agent does not support. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.VersionNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
@@ -658,9 +672,9 @@ It takes:
 - `configuration` — `Optional<a2a.tasks.SendMessageConfiguration>`, which may be absent
 - `metadata` — `Optional<Json>`, which may be absent
 
-It has 11 outcomes.
+It has 13 outcomes.
 
-**`task-not-found`** — Decided outside the input: message.taskId names no task the caller can access (section 3.4.2). No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
+**`task-not-found`** — Decided outside the input: message.taskId names no task the caller can access (section 3.4.2); a task of another tenant is not one (GetTask `other-tenant`). No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`task-terminal`** — Decided outside the input: message.taskId names a task in Completed, Failed, Canceled or Rejected. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.UnsupportedOperation`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
@@ -670,11 +684,15 @@ It has 11 outcomes.
 
 **`content-type-not-supported`** — Decided outside the input: a part's media type is not supported by the agent. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.ContentTypeNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
+**`task-limit`** — Decided outside the input: the message names no task, the agent would create one, and the tenant of the request, or every request without one, already holds as many tasks as the agent keeps. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.ResourceExhausted`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
+
+**`history-limit`** — Decided outside the input: message.taskId names a task whose history already holds as many messages as the agent keeps. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.ResourceExhausted`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
+
 **`continued`** — The agent answers with the task the message continued, in the state it holds. Decided outside the input: message.taskId names a non-terminal task, and the agent takes the message into it. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It emits `a2a.tasks.MessageStreamResponse`. A test reaches it by injecting the declared fault, because no input can.
 
 **`direct-message`** — Decided outside the input: the agent answers with a message and creates no task. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It emits `a2a.tasks.MessageStreamResponse`. A test reaches it by injecting the declared fault, because no input can.
 
-**`task-created`** — A new task in Submitted; the agent works on it after the answer. The default branch, taken when no other outcome's condition matched. It creates a `a2a.tasks.Task`, which starts in `Submitted`. The new instance's identity is published as `task_id` on `a2a.tasks.TaskCreated`. It emits `a2a.tasks.TaskCreated` and `a2a.tasks.MessageStreamResponse`. It sets `context_id` from `input.message.context_id, else implementation-generated` and `status_timestamp` from `implementation-generated`. A test reaches it by constructing an input that satisfies no other outcome's condition.
+**`task-created`** — A new task in Submitted; the agent works on it after the answer. The default branch, taken when no other outcome's condition matched. It creates a `a2a.tasks.Task`, which starts in `Submitted`. The new instance's identity is published as `task_id` on `a2a.tasks.TaskCreated`. It emits `a2a.tasks.TaskCreated` and `a2a.tasks.MessageStreamResponse`. It sets `context_id` from `input.message.context_id, else implementation-generated`, `tenant` from `input.tenant` and `status_timestamp` from `implementation-generated`. A test reaches it by constructing an input that satisfies no other outcome's condition.
 
 **`version-not-supported`** — Decided outside the input: the A2A-Version service parameter names a version the agent does not support. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. No entity in this specification changes. It reports `a2a.tasks.VersionNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
@@ -708,7 +726,7 @@ It takes:
 - `tenant` — `Optional<String>`, which may be absent
 - `id` — `a2a.tasks.TaskId`
 
-It has six outcomes.
+It has seven outcomes.
 
 **`version-not-supported`** — Decided outside the input: the A2A-Version service parameter names a version the agent does not support. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.VersionNotSupported`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
@@ -717,6 +735,8 @@ It has six outcomes.
 **`streaming-not-supported`** — Decided outside the input: the agent card does not declare capabilities.streaming. No predicate over the input reaches this branch, and saying `when: false` instead would have claimed it is unreachable, which is a different and false statement. It is decided before the addressed row is read, among the input-guarded refusals: before existence and the held state. No entity in this specification changes. It reports `a2a.tasks.UnsupportedOperation`. It emits nothing. A test reaches it by injecting the declared fault, because no input can.
 
 **`not-found`** — Taken when the identity the command names is one no record carries, before any other answer for it. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test reaches it by sending an identity no record carries, arranging nothing.
+
+**`other-tenant`** — Taken when the existing subject's stored fields satisfy `((defined(tenant) and defined(input.tenant) and tenant != input.tenant) or (defined(tenant) and not (defined(input.tenant))) or (not (defined(tenant)) and defined(input.tenant)))`. No entity in this specification changes. It reports `a2a.tasks.TaskNotFound`. It emits nothing. A test establishes and independently observes the subject enum fact before selecting this branch.
 
 **`task-terminal`** — Taken when the existing subject's stored fields satisfy `state in [Completed, Failed, Canceled, Rejected]`. No entity in this specification changes. It reports `a2a.tasks.UnsupportedOperation`. It emits nothing. A test establishes and independently observes the subject enum fact before selecting this branch.
 
@@ -932,6 +952,18 @@ Reported by `a2a.tasks.GetTaskPushNotificationConfig` on its `push-not-supported
 
 Reported by `a2a.tasks.ListTaskPushNotificationConfigs` on its `push-not-supported` outcome.
 
+### `ResourceExhausted`
+
+Not an A2A error (gRPC RESOURCE_EXHAUSTED, HTTP 429): the agent already holds as many tasks per tenant, messages per task history, or push-notification configurations per task as it keeps, so the request stored nothing.
+
+It carries nothing beyond its name, so a caller can tell what went wrong and not which value caused it.
+
+Reported by `a2a.tasks.CreateTaskPushNotificationConfig` on its `config-limit` outcome.
+
+Reported by `a2a.tasks.SendMessage` on its `task-limit` and `history-limit` outcomes.
+
+Reported by `a2a.tasks.SendStreamingMessage` on its `task-limit` and `history-limit` outcomes.
+
 ### `TaskNotCancelable`
 
 TaskNotCancelableError (JSON-RPC -32002, gRPC FAILED_PRECONDITION, HTTP 400): the task is not in a cancelable state.
@@ -946,7 +978,7 @@ TaskNotFoundError (JSON-RPC -32001, gRPC NOT_FOUND, HTTP 404): the task, or the 
 
 It carries nothing beyond its name, so a caller can tell what went wrong and not which value caused it.
 
-Reported by `a2a.tasks.CancelTask` on its `not-found` outcome.
+Reported by `a2a.tasks.CancelTask` on its `not-found` and `other-tenant` outcomes.
 
 Reported by `a2a.tasks.CompleteTask` on its `not-found` outcome.
 
@@ -956,11 +988,11 @@ Reported by `a2a.tasks.DeleteTaskPushNotificationConfig` on its `task-not-found`
 
 Reported by `a2a.tasks.FailTask` on its `not-found` outcome.
 
-Reported by `a2a.tasks.GetTask` on its `not-found` outcome.
+Reported by `a2a.tasks.GetTask` on its `not-found` and `other-tenant` outcomes.
 
 Reported by `a2a.tasks.GetTaskPushNotificationConfig` on its `not-found` and `config-not-found` outcomes.
 
-Reported by `a2a.tasks.ListTaskPushNotificationConfigs` on its `task-not-found` outcome.
+Reported by `a2a.tasks.ListTaskPushNotificationConfigs` on its `task-not-found` and `other-tenant` outcomes.
 
 Reported by `a2a.tasks.RejectTask` on its `not-found` outcome.
 
@@ -974,7 +1006,7 @@ Reported by `a2a.tasks.SendStreamingMessage` on its `task-not-found` outcome.
 
 Reported by `a2a.tasks.StartWorking` on its `not-found` outcome.
 
-Reported by `a2a.tasks.SubscribeToTask` on its `not-found` outcome.
+Reported by `a2a.tasks.SubscribeToTask` on its `not-found` and `other-tenant` outcomes.
 
 Reported by `a2a.tasks.UpdateArtifact` on its `not-found` outcome.
 
@@ -1057,4 +1089,4 @@ It may read [`TaskPushNotificationConfigs`](#taskpushnotificationconfigs) and [`
 
 ---
 
-Generated from a2a v1 · model digest `d675090b4779d71e3671099ac4d5efbaa17d7a58ae4e0ddaa6cafd8d5a23f002` · contract digest `slice-sha256/2:ee6e79d147037205ba70d3218c8e0ae946a996eaf10b7d12ca3ff892fedebc18`. Do not edit this file; change the specification and regenerate it with `task docs-generate`.
+Generated from a2a v1 · model digest `d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d` · contract digest `slice-sha256/2:39d2980958db819d7af6d720b817d22838cd5e91ffba5e71d5b0d6d4c525605b`. Do not edit this file; change the specification and regenerate it with `task docs-generate`.
