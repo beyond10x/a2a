@@ -1,0 +1,17 @@
+[package]
+name = "a2a-testkit"
+description = "Checks any A2A endpoint from outside: runs the conformance scenarios observable over the HTTP+JSON binding against a base URL through a2a-client, and assertion helpers that name what an endpoint answered instead of panicking."
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+a2a = { path = "../../generated/rust/a2a", features = ["server"] }
+a2a-client = { path = "../a2a-client" }
+a2a-conformance = { path = "../a2a-conformance" }
+clap = { workspace = true }
+
+[dev-dependencies]
+a2a-server = { path = "../a2a-server" }
