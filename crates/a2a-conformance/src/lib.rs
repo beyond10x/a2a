@@ -19,7 +19,7 @@ mod value;
 
 pub use a2a::json::Value;
 pub use results::{RESULTS_FORMAT, Results, ScenarioResult, Status};
-pub use server::ServerTarget;
+pub use server::{ACROSS_TENANTS, ServerTarget, across_tenants};
 pub use suite::{SUITE_VERSION, Suite};
 pub use target::{Answer, Awaited, Event, Reader, Target, TargetError};
 

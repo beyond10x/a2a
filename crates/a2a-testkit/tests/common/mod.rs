@@ -11,7 +11,7 @@ use std::process::{Command, Output};
 use std::sync::{Arc, Mutex};
 
 use a2a::json::{self, Value};
-use a2a::tasks::{Message, Part, Role, SendMessage, SendStreamingMessage};
+use a2a::tasks::{Message, Part, Role, SendMessage, SendStreamingMessage, TaskSnapshot};
 use a2a_client::Client;
 use a2a_conformance::Results;
 use a2a_server::{EchoAgent, Settings};
@@ -19,6 +19,32 @@ use a2a_server::{EchoAgent, Settings};
 /// The repository's root.
 pub fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+}
+
+/// An agent that takes every message into a task and asks for no step, as `task conform`'s
+/// in-process target runs `a2a-server`: a task stays in the state the scenario's own commands
+/// leave it in.
+struct Idle;
+
+impl a2a_server::Agent for Idle {
+    fn turn(&mut self, _message: &Message, _task: Option<&TaskSnapshot>) -> a2a_server::Turn {
+        a2a_server::Turn::Steps(Vec::new())
+    }
+}
+
+/// `a2a-server` with an agent that asks for no step ([`Idle`]) behind its built-in card, on
+/// port 0.
+pub fn idle() -> Endpoint {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind port 0");
+    let address = listener.local_addr().expect("bound address");
+    let settings = Settings {
+        card: a2a_server::default_card(),
+        extended_card: None,
+    };
+    std::thread::spawn(move || {
+        let _ = a2a_server::serve(listener, settings, Box::new(Idle));
+    });
+    Endpoint { address }
 }
 
 /// An endpoint on a local port.
@@ -200,6 +226,33 @@ pub fn recording(answer: String) -> (Endpoint, Arc<Mutex<Vec<Seen>>>) {
             let target = words.next().unwrap_or_default().to_owned();
             kept.lock().expect("the list").push(Seen { method, target });
             let _ = stream.write_all(answer.as_bytes());
+        }
+    });
+    (Endpoint { address }, seen)
+}
+
+/// How a recording stub answers a request, from its method and target.
+pub type Answering = Arc<dyn Fn(&str, &str) -> String + Send + Sync>;
+
+/// A socket that answers each request with what `answers` makes of its method and target, and
+/// records each request line.
+pub fn answering(answers: Answering) -> (Endpoint, Arc<Mutex<Vec<Seen>>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind port 0");
+    let address = listener.local_addr().expect("bound address");
+    let seen = Arc::new(Mutex::new(Vec::new()));
+    let kept = Arc::clone(&seen);
+    std::thread::spawn(move || {
+        for stream in listener.incoming() {
+            let Ok(mut stream) = stream else { continue };
+            let Some((head, _)) = read_request(&mut stream) else {
+                continue;
+            };
+            let mut words = head.lines().next().unwrap_or_default().split(' ');
+            let method = words.next().unwrap_or_default().to_owned();
+            let target = words.next().unwrap_or_default().to_owned();
+            let written = answers(&method, &target);
+            kept.lock().expect("the list").push(Seen { method, target });
+            let _ = stream.write_all(written.as_bytes());
         }
     });
     (Endpoint { address }, seen)
