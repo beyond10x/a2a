@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "a2a-client"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "a2a",
  "a2a-server",
@@ -21,7 +21,7 @@ dependencies = [
 
 [[package]]
 name = "a2a-conformance"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "a2a",
  "a2a-server",
@@ -30,7 +30,7 @@ dependencies = [
 
 [[package]]
 name = "a2a-docs"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -42,7 +42,7 @@ dependencies = [
 
 [[package]]
 name = "a2a-server"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "a2a",
  "clap",
@@ -52,7 +52,7 @@ dependencies = [
 
 [[package]]
 name = "a2a-testkit"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "a2a",
  "a2a-client",
@@ -63,7 +63,7 @@ dependencies = [
 
 [[package]]
 name = "a2a-xtask"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "clap",
 ]

@@ -8,6 +8,8 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-29
+
 ### Added
 
 - `crates/a2a-client`: a typed client of A2A's HTTP+JSON binding over the generated crate. One
@@ -68,6 +70,11 @@ under `[Unreleased]` until the next release.
   `expect_push_config_roundtrip` answer a `Mismatch` naming the expected and the observed value
   instead of panicking. They check the task's id, the mapped status of an error, that a stream
   starts with its task and carries updates of that task only, and a push config's authentication.
+
+### Changed
+
+- `Taskfile.yml` no longer points every checkout at one shared `CARGO_TARGET_DIR`; each checkout
+  builds into its own `target/`.
 
 ## [0.4.0] - 2026-10-29
 
@@ -215,7 +222,8 @@ ESS specification of A2A v1.0.1 and the artifacts generated from it.
 - Release assets: `a2a.proto`, both OpenAPI documents, the AsyncAPI document, the JSON Schema
   archive and the specification bundle, with `SHA256SUMS`.
 
-[Unreleased]: https://github.com/beyond10x/a2a/compare/0.4.0...HEAD
+[Unreleased]: https://github.com/beyond10x/a2a/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/beyond10x/a2a/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/beyond10x/a2a/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/beyond10x/a2a/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/beyond10x/a2a/compare/0.1.0...0.2.0
