@@ -1,0 +1,55 @@
+# a2a.proto GetTaskRequest.history_length: "The maximum number of most recent messages from the
+# task's history to retrieve. ... The server MUST NOT return more messages than the provided value,
+# but MAY apply a lower limit." (A2A v1.0.1 section 3.1.3.) The task is set up with two messages
+# in its history and a known identity, so the direct response can be claimed whole: GetTask with
+# history_length 1 answers the task with the most recent message only.
+type: ess-scenario/4
+domain: a2a.tasks
+scenario: get-task-history-length
+summary: GetTask with history_length 1 answers only the most recent message of a two-message history.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+    setup:
+      identity: task-history
+      state: Working
+      fields:
+        context_id: ctx-history
+        status_timestamp: "2026-03-05T09:00:00Z"
+        history:
+          - message_id: msg-1
+            context_id: ctx-history
+            task_id: task-history
+            role: ROLE_USER
+            parts:
+              - text: first
+          - message_id: msg-2
+            context_id: ctx-history
+            task_id: task-history
+            role: ROLE_AGENT
+            parts:
+              - text: second
+
+timeline:
+  - at: 2026-03-05T09:00:01Z
+    command: a2a.tasks.GetTask
+    actor: a2a.tasks.Client
+    input:
+      id: {$instance: task}
+      history_length: 1
+    outcome: found
+    response:
+      task:
+        id: task-history
+        context_id: ctx-history
+        status:
+          state: TASK_STATE_WORKING
+          timestamp: "2026-03-05T09:00:00Z"
+        history:
+          - message_id: msg-2
+            context_id: ctx-history
+            task_id: task-history
+            role: ROLE_AGENT
+            parts:
+              - text: second

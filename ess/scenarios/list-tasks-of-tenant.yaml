@@ -1,0 +1,41 @@
+# A2A v1.0.1 section 13.1: "Implementations MUST scope results to the caller's authorized access
+# boundaries". ListTasks is the view a2a.tasks.Tasks; its `tenant` parameter lists a task only
+# under the tenant it was created under, and a task created under one only with that tenant
+# (domains/tasks.yaml, a2a.tasks.Tasks filter). So a task of one tenant is listed under it, and
+# neither under another tenant nor without one.
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: list-tasks-of-tenant
+summary: ListTasks lists a task under the tenant it was created under, and not under another tenant or none.
+
+timeline:
+  - at: 2026-03-03T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      tenant: tenant-a
+      message:
+        message_id: msg-1
+        context_id: ctx-tenant-a
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+
+assert:
+  - view: a2a.tasks.Tasks
+    params:
+      tenant: tenant-a
+      context_id: ctx-tenant-a
+    contains:
+      context_id: ctx-tenant-a
+  - view: a2a.tasks.Tasks
+    params:
+      tenant: tenant-b
+    counts:
+      at_most: 0
+  - view: a2a.tasks.Tasks
+    params:
+      context_id: ctx-tenant-a
+    counts:
+      at_most: 0

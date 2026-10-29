@@ -20,14 +20,14 @@ use std::net::TcpListener;
 use std::sync::mpsc::{self, RecvTimeoutError};
 use std::time::Duration;
 
-use a2a::actor::{Actor, Caller};
+use a2a::actor::Caller;
 use a2a::behaviour::{Context, Generated, PushNotificationConfigStorage, TaskStorage};
 use a2a::discovery::AgentCard;
 use a2a::discovery::obligations::GetExtendedAgentCardBehavior;
-use a2a::json::{self, Value};
+use a2a::json::Value;
 use a2a::ports::a2a_agent::A2aAgent;
+use a2a::server::a2a_agent;
 use a2a::server::entry::Refused;
-use a2a::server::{a2a_agent, wire};
 use a2a::system::{System, SystemEvent};
 use a2a::tasks::obligations::{
     CancelTaskBehavior, CreateTaskPushNotificationConfigBehavior,
@@ -36,7 +36,7 @@ use a2a::tasks::obligations::{
     SendMessageBehavior, SendStreamingMessageBehavior, SubscribeToTaskBehavior,
     TaskPushNotificationConfigsQuery, TasksQuery,
 };
-use a2a::tasks::{Artifact, Message, TaskId, TaskState};
+use a2a::tasks::{TaskEntitySnapshot, TaskId};
 
 /// How long the server waits for a request before it looks for streams whose client hung up.
 const TICK: Duration = Duration::from_millis(250);
@@ -261,15 +261,26 @@ impl<P> Obligations for P where
 }
 
 /// The server without its HTTP binding: the generated system over [`ServerPorts`], driven call by
-/// call in this process. It decides every command as [`serve_with`] does, and issues the steps an
-/// agent asks for after the call that asked, as the server loop does; what it publishes is read
-/// off the system's log.
+/// call in this process. It decides every command as [`serve_with`] does, checks the bearer token
+/// for `GetExtendedAgentCard` as the binary checks the `Authorization` header (with the [`Access`]
+/// of [`InProcess::with_access`]), and issues the steps an agent asks for after the call that
+/// asked, through the same code as the server loop; what it publishes is read off the system's
+/// log.
+///
+/// A trusted harness entry, not a serving surface: it runs any command or view of the generated
+/// layer for any actor a grant names, the binary's caller being fixed per route
+/// (`a2a.discovery.Client` for the extended card, `a2a.tasks.Client` otherwise). So it answers what
+/// the binary serves on no route: the `TaskPushNotificationConfigs` view is read for any task
+/// id, whatever tenant the task was created under, with each configuration's token and
+/// authentication. It is for conformance runs and tests; never put it behind a network or hand
+/// it input from an untrusted caller.
 ///
 /// The generated system runs over `P`: [`ServerPorts`] itself, or a wrapper of them
 /// ([`InProcess::wrapped`]).
 pub struct InProcess<P = ServerPorts> {
     system: System<Generated<P>>,
     ports: ServerPorts,
+    access: Access,
 }
 
 /// What one call or issued step came to.
@@ -279,15 +290,25 @@ pub struct Called {
     /// outcome it took, under `outcome`, with what it published under `published`, its declared
     /// error under `error` or its response under `response`, wire-named; for a view its rows,
     /// under `rows`. Or why it answered no declared outcome.
+    ///
+    /// One answer is [`InProcess`]'s own: `{"outcome": "unauthenticated", "published": []}`, for
+    /// a `GetExtendedAgentCard` that presented no token [`Access`] admits where the server serves
+    /// an extended card, which the binary answers `401 UNAUTHENTICATED`. The specification
+    /// declares no such outcome: an actor grant names who may run a command, and no construct
+    /// authenticates the caller as that actor (`ess/domains/discovery.yaml`).
     pub answer: Result<Value, Refused>,
     /// Every event the system published while the call ran, in log order: the command's own,
     /// then those of the steps it left the agent to ask for.
     pub events: Vec<SystemEvent>,
 }
 
+/// The outcome of a `GetExtendedAgentCard` without the token, where an extended card is served.
+const UNAUTHENTICATED: &str = "unauthenticated";
+
 impl InProcess<ServerPorts> {
     /// A server with no task and no configuration, deciding by `settings` and within `limits`,
-    /// whose messages `agent` answers.
+    /// whose messages `agent` answers, and with no extended card token: as [`serve`], it serves
+    /// the extended card to nobody.
     pub fn new(settings: Settings, agent: Box<dyn Agent>, limits: Limits) -> Self {
         Self::wrapped(settings, agent, limits, |ports| ports)
     }
@@ -303,7 +324,20 @@ impl<P: Obligations> InProcess<P> {
     ) -> Self {
         let ports = ServerPorts::new(settings, agent, limits);
         let system = System::new(A2aAgent::new(Generated::new(wrap(ports.clone()))));
-        Self { system, ports }
+        Self {
+            system,
+            ports,
+            access: Access::default(),
+        }
+    }
+
+    /// The server admitting the callers `access` admits, as [`serve_with`] does: a
+    /// `GetExtendedAgentCard` is served the extended card only for the token it holds
+    /// ([`InProcess::call_presenting`]).
+    #[must_use]
+    pub fn with_access(mut self, access: Access) -> Self {
+        self.access = access;
+        self
     }
 
     /// Decides every later call by `settings` and within `limits`; what is stored stays.
@@ -311,9 +345,20 @@ impl<P: Obligations> InProcess<P> {
         self.ports.reconfigure(settings, limits);
     }
 
+    /// Stores `task` as the server's task store holds a task, replacing one of the same id: no
+    /// command runs, nothing is published and no limit is checked. For a harness that sets up a
+    /// task it then reads (an authored scenario's `setup:`).
+    pub fn establish_task(&mut self, task: TaskEntitySnapshot) {
+        let mut ports = self.ports.clone();
+        TaskStorage::put(&mut ports, task);
+    }
+
     /// Runs the command or view `name` as `caller` with `input`, wire-named as its route reads
-    /// it, under the `A2A-Version` `version` and the `A2A-Extensions` `extensions`; then issues
-    /// every step the agent asked for, in order.
+    /// it, under the `A2A-Version` `version` and the `A2A-Extensions` `extensions`, presenting no
+    /// bearer token; then issues every step the agent asked for, in order. See
+    /// [`InProcess::call_presenting`].
+    ///
+    /// The caller is whoever the harness names: this entry is trusted ([`InProcess`]).
     pub fn call(
         &mut self,
         caller: Option<&Caller>,
@@ -322,96 +367,77 @@ impl<P: Obligations> InProcess<P> {
         name: &str,
         input: Value,
     ) -> Called {
+        self.call_presenting(caller, None, version, extensions, name, input)
+    }
+
+    /// As [`InProcess::call`], presenting the bearer token `presented`, as a request's
+    /// `Authorization: Bearer <token>`. Where `name` is `GetExtendedAgentCard`, `caller` is
+    /// granted it and the server serves an extended card (the card declares one and one is
+    /// configured), the call is answered `unauthenticated` ([`Called::answer`]) before it runs
+    /// unless the [`Access`] token admits `presented`, as the binary answers `401` before the
+    /// route runs.
+    ///
+    /// The caller is whoever the harness names: this entry is trusted ([`InProcess`]).
+    pub fn call_presenting(
+        &mut self,
+        caller: Option<&Caller>,
+        presented: Option<&str>,
+        version: Option<String>,
+        extensions: Vec<String>,
+        name: &str,
+        input: Value,
+    ) -> Called {
+        if name == "a2a.discovery.GetExtendedAgentCard"
+            && a2a_agent::admit(caller, name).is_ok()
+            && !self.authenticated(presented)
+        {
+            return Called {
+                answer: Ok(Value::Object(vec![
+                    (
+                        "outcome".to_owned(),
+                        Value::Text(UNAUTHENTICATED.to_owned()),
+                    ),
+                    ("published".to_owned(), Value::Array(Vec::new())),
+                ])),
+                events: Vec::new(),
+            };
+        }
         self.ports.negotiate(version, extensions);
         self.ports.next_command();
         let (answer, mut events) =
             a2a_agent::handle_with_events(&mut self.system, caller, name, input);
         for work in self.ports.take_work() {
-            for step in work.steps {
-                if let Some((_, issued)) = self.issue(&work.task, step) {
-                    events.extend(issued.events);
-                }
-            }
+            events.extend(steps::run(&mut self.system, &self.ports, work));
         }
         Called { answer, events }
     }
 
-    /// Issues `step` on `task` as the server loop issues an agent's step: as its
-    /// `a2a.tasks.Agent` command through the generated system, keeping what the generated
+    /// Whether a `GetExtendedAgentCard` presenting `presented` is served: the server serves no
+    /// extended card, so the command decides, or the [`Access`] token admits `presented`.
+    fn authenticated(&self, presented: Option<&str>) -> bool {
+        if !self.ports.serves_extended_card() {
+            return true;
+        }
+        match (&self.access.extended_card_token, presented) {
+            (Some(token), Some(presented)) => token.admits(presented),
+            _ => false,
+        }
+    }
+
+    /// Issues `step` on `task` as the server loop issues an agent's step, through the same code:
+    /// as its `a2a.tasks.Agent` command through the generated system, keeping what the generated
     /// behaviour leaves to the server (a status message it moved the task with, in the history;
     /// an artifact it updated, on the task). `None`, issuing nothing, where the task is gone or
     /// in a terminal state, or the step is `Work` and the task is working. Answers the input the
     /// command was issued with, wire-named, and what it came to.
     pub fn issue(&mut self, task: &TaskId, step: Step) -> Option<(Value, Called)> {
-        let (state, context) = self.ports.state_of(task)?;
-        if ports::terminal(state) || (matches!(step, Step::Work(_)) && state == TaskState::Working)
-        {
-            return None;
-        }
-        let mut input = String::from("{");
-        json::member(&mut input, "id");
-        json::push_text(&mut input, &task.0);
-        let (command, kept) = match step {
-            Step::Emit {
-                artifact,
-                append,
-                last_chunk,
-            } => {
-                json::member(&mut input, "artifact");
-                wire::encode_a2a_tasks_artifact(&artifact, &mut input);
-                json::member(&mut input, "append");
-                json::push_bool(&mut input, append);
-                json::member(&mut input, "last_chunk");
-                json::push_bool(&mut input, last_chunk);
-                ("a2a.tasks.UpdateArtifact", Kept::Artifact(artifact, append))
-            }
-            Step::Work(message) => ("a2a.tasks.StartWorking", Kept::Status(message)),
-            Step::Complete(message) => ("a2a.tasks.CompleteTask", Kept::Status(message)),
-            Step::Fail(message) => ("a2a.tasks.FailTask", Kept::Status(message)),
-            Step::Reject(message) => ("a2a.tasks.RejectTask", Kept::Status(message)),
-            Step::RequireInput(message) => ("a2a.tasks.RequireInput", Kept::Status(message)),
-            Step::RequireAuth(message) => ("a2a.tasks.RequireAuth", Kept::Status(message)),
-        };
-        let kept = match kept {
-            Kept::Status(message) => {
-                let message = ports::attached(message, task, &context);
-                if let Some(message) = &message {
-                    json::member(&mut input, "status_message");
-                    wire::encode_a2a_tasks_message(message, &mut input);
-                }
-                Kept::Status(message)
-            }
-            artifact @ Kept::Artifact(..) => artifact,
-        };
-        input.push('}');
-        let input = json::parse_written(&input).ok()?;
-        self.ports.next_command();
-        let agent = Caller {
-            actor: Actor::TasksAgent,
-        };
-        let (answer, events) =
-            a2a_agent::handle_with_events(&mut self.system, Some(&agent), command, input.clone());
-        let outcome = match answer
-            .as_ref()
-            .ok()
-            .and_then(|answer| answer.member("outcome"))
-        {
-            Some(Value::Text(outcome)) => outcome.as_str(),
-            _ => "",
-        };
-        match (kept, outcome) {
-            (Kept::Artifact(artifact, append), "updated") => {
-                self.ports.keep_artifact(task, artifact, append);
-            }
-            (Kept::Status(Some(message)), "moved") => self.ports.record(task, message),
-            _ => {}
-        }
-        Some((input, Called { answer, events }))
+        let issued = steps::issue(&mut self.system, &self.ports, task, step)?;
+        Some((
+            issued.input,
+            Called {
+                answer: issued.answer,
+                events: issued.events,
+            },
+        ))
     }
-}
-
-/// What the server keeps of a step once its command took effect.
-enum Kept {
-    Artifact(Artifact, bool),
-    Status(Option<Message>),
 }

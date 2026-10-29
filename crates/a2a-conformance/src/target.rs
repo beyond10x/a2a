@@ -24,6 +24,29 @@ pub trait Target {
     /// The context cannot be opened.
     fn begin(&mut self, scenario: &str) -> Result<(), TargetError>;
 
+    /// Makes the implementation hold an instance of `entity` (an authored `setup:`): the identity
+    /// `identity`, the fields of the object `fields`, ESS-named, and the lifecycle state `state`,
+    /// with no history of how it got there. The scenario names the instance by `identity` once
+    /// this answers.
+    ///
+    /// The default answers that the target cannot hold state it is handed.
+    ///
+    /// # Errors
+    ///
+    /// The target cannot hold the instance.
+    fn establish(
+        &mut self,
+        entity: &str,
+        identity: &Value,
+        fields: &Value,
+        state: &str,
+    ) -> Result<(), TargetError> {
+        let _ = (identity, fields, state);
+        Err(TargetError::Unsupported(format!(
+            "the target cannot be handed an instance of {entity} to hold: it is set up only through the commands it serves"
+        )))
+    }
+
     /// Runs `command` as `actor` (`None`: as no actor) with `input`, an object of the command's
     /// input fields.
     ///

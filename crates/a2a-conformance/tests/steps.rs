@@ -23,6 +23,7 @@ struct Stub {
     size: u32,
     forced: Option<String>,
     pending: Vec<Event>,
+    held: Vec<Value>,
 }
 
 impl Stub {
@@ -120,13 +121,36 @@ impl Target for Stub {
             self.size
         ));
         let wanted = params.member("state");
-        Ok(
-            if wanted.is_none_or(|state| row.member("state") == Some(state)) {
-                vec![row]
-            } else {
-                Vec::new()
-            },
-        )
+        Ok(std::iter::once(row)
+            .chain(self.held.iter().cloned())
+            .filter(|row| wanted.is_none_or(|state| row.member("state") == Some(state)))
+            .collect())
+    }
+
+    fn establish(
+        &mut self,
+        entity: &str,
+        identity: &Value,
+        fields: &Value,
+        state: &str,
+    ) -> Result<(), TargetError> {
+        if entity != "t.Item" {
+            return Err(TargetError::Unsupported(format!(
+                "the stub holds no {entity}"
+            )));
+        }
+        let mut row = String::from("{");
+        a2a::json::member(&mut row, "id");
+        a2a::json::push_value(&mut row, identity);
+        a2a::json::member(&mut row, "state");
+        a2a::json::push_text(&mut row, state);
+        if let Some(size) = fields.member("size") {
+            a2a::json::member(&mut row, "size");
+            a2a::json::push_value(&mut row, size);
+        }
+        row.push('}');
+        self.held.push(json(&row));
+        Ok(())
     }
 
     fn force(&mut self, command: &str, outcome: &str) -> Result<(), TargetError> {
@@ -346,6 +370,52 @@ fn capture_instance_binds_the_published_identity_or_errs() {
             "fail":{{"steps":[{CREATE},{{"step":"capture_instance","instance":"item","entity":"t.Item","event":"t.Closed","field":"task_id"}}]}}"#
         ),
         &[("pass", Status::Passed), ("fail", Status::Error)],
+    );
+}
+
+#[test]
+fn establish_entity_hands_the_target_the_instance_and_binds_its_identity_once() {
+    let setup = |instance: &str, entity: &str, identity: &str| {
+        format!(
+            r#"{{"step":"establish_entity","instance":"{instance}","entity":"{entity}","identity":"{identity}","fields":{{"size":7}},"state":"Closed"}}"#
+        )
+    };
+    let held = r#"{"step":"expect_view","view":"t.Items","expectation":{"expect":"contains","fields":{"id":{"kind":"instance","instance":"item"},"state":{"kind":"literal","value":"Closed"},"size":{"kind":"literal","value":7}}}}"#;
+    let item = setup("item", "t.Item", "x-5");
+    let results = expect(
+        &format!(
+            r#""held":{{"steps":[{item},{ITEMS},{held}]}},
+            "unread":{{"steps":[{ITEMS},{item},{held}]}},
+            "same-instance":{{"steps":[{item},{}]}},
+            "same-identity":{{"steps":[{item},{}]}},
+            "other-entity":{{"steps":[{}]}}"#,
+            setup("item", "t.Item", "x-6"),
+            setup("again", "t.Item", "x-5"),
+            setup("item", "t.Other", "x-5"),
+        ),
+        &[
+            ("held", Status::Passed),
+            ("unread", Status::Error),
+            ("same-instance", Status::Error),
+            ("same-identity", Status::Error),
+            ("other-entity", Status::Unsupported),
+        ],
+    );
+    for id in ["same-instance", "same-identity"] {
+        let message = results
+            .get(id)
+            .and_then(|result| result.message.clone())
+            .unwrap_or_default();
+        assert!(
+            message.contains("duplicate instance or qualified entity identity"),
+            "{id}: {message}"
+        );
+    }
+    assert_eq!(
+        results
+            .get("other-entity")
+            .and_then(|result| result.message.as_deref()),
+        Some("the stub holds no t.Other")
     );
 }
 

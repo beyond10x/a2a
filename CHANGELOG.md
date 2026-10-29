@@ -27,11 +27,27 @@ under `[Unreleased]` until the next release.
   `a2a-server` through the generated `System`. `task conform`, now in `task check`, synthesizes the
   suite, runs it, reports with `ess verify conform report` and fails unless 0 failed, 0 error and
   every `unsupported` scenario is listed with its reason in `crates/a2a-conformance/unsupported.tsv`.
-  On ESS 0.75.0: 163 of 177 pass, 14 unsupported (11 on push configs across tenants, whose tenant
+  On ESS 0.75.0: 169 of 182 pass, 13 unsupported (10 on push configs across tenants, whose tenant
   guard `ess/domains/tasks.yaml` leaves `UNMAPPED`; 3 authored claims whose `status` literal leaves
-  out the `timestamp` the server stamps).
+  out the `timestamp` the server stamps). An unsupported scenario's reason joins every distinct
+  reason its checks gave. A configuration that only arranges what a later step reads, on a task of
+  another tenant and naming no tenant, is created under the task's tenant, so the step the
+  scenario is about runs. The extended card the target serves differs from the public card and is
+  read with a bearer token, as an authenticated client sends it. A scenario's `arrange` setup of an
+  `a2a.tasks.Task` (`establish_entity`) is stored in the server as given; another target answers
+  it `unsupported`.
+- Authored scenarios under `ess/scenarios/`: the `TaskPushNotificationConfigs` view of a task
+  under its own tenant answers its url and token; `Tasks` under another tenant, or with no tenant,
+  leaves out a tenant's task; `Tasks` with a `status` leaves out a task in another state; `GetTask`
+  with `history_length: 1` answers the last message only; `ListTaskPushNotificationConfigs` with
+  `page_size: 1` answers the first configuration only.
 - `a2a-server` exports `InProcess`, `Obligations` and `ServerPorts`: the server's obligations run
-  without HTTP, settings and limits reconfigurable between calls.
+  without HTTP, settings and limits reconfigurable between calls. `InProcess` is a trusted harness
+  entry: it runs a command for whatever caller it is handed, and reads the
+  `TaskPushNotificationConfigs` view, which has no tenant scope and which the binary serves on no
+  route, for any task. `with_access` gives it the extended card's bearer token, which
+  `call_presenting` checks as the binary does; the agent's steps run through the code the server
+  loop runs them with.
 - `crates/a2a-testkit`: checks any A2A endpoint from outside. `WireTarget` is a `Target` of
   `a2a-conformance` over `a2a-client`, each command sent as the operation `OPERATIONS` binds it to
   (the routes of `ess/http.yaml` plus the two `ess/http-unmapped.tsv` names), the tenant taken from
@@ -41,7 +57,7 @@ under `[Unreleased]` until the next release.
   reset, are `unsupported` with that reason. `a2a-testkit run --url <base> --suite <suite.json>
   [--results <out>]` prints one line per scenario and the counts, writes `ess-conformance-results/1`
   with `--results`, and exits 0 only when no scenario is failed or error; against `a2a-server` 7 of
-  177 pass and 170 are unsupported. The helpers `expect_card`, `expect_task_state`,
+  182 pass and 175 are unsupported. The helpers `expect_card`, `expect_task_state`,
   `expect_error_reason`, `expect_stream_states` and `expect_push_config_roundtrip` answer a
   `Mismatch` naming the expected and the observed value instead of panicking.
 

@@ -5,7 +5,9 @@
 //!
 //! Every step records checks. A scenario's status is the worst of them, `failed` over `error` over
 //! `unsupported` over `passed`; a failed check lets the scenario go on, an error or an unsupported
-//! step stops it.
+//! step stops it. A failed or error scenario gives the message of its first such check; an
+//! unsupported one gives every distinct reason its unsupported checks gave, in order, so a reason
+//! that only a later check gives still reaches the result.
 //!
 //! One departure, for an ESS 0.75.0 gap: an authored claim whose struct literal leaves out members
 //! the target carries is `unsupported` and lets the scenario go on (`Run::expect_payload`).
@@ -28,6 +30,9 @@ enum Flow {
     Continue,
     Stop,
 }
+
+/// What separates the distinct reasons of an unsupported scenario in its message.
+const UNSUPPORTED_REASONS: &str = " | ";
 
 /// One check a step recorded.
 struct Check {
@@ -90,6 +95,8 @@ struct EventValues {
 struct Run {
     checks: Vec<Check>,
     instances: BTreeMap<String, Value>,
+    /// Every instance an entity setup established: its entity and identity.
+    established: Vec<(String, Value)>,
     /// Every event observed with a command, once each.
     seen: Vec<Event>,
     /// Every event the target published in this scenario, in order.
@@ -161,14 +168,23 @@ pub(crate) fn scenario<T: Target + ?Sized>(
         .map(|check| check.status)
         .max()
         .unwrap_or(Status::Passed);
-    let message = (status != Status::Passed)
-        .then(|| {
-            run.checks
-                .iter()
-                .find(|check| check.status == status)
-                .map(|check| check.message.clone())
-        })
-        .flatten();
+    let message = match status {
+        Status::Passed => None,
+        Status::Unsupported => {
+            let mut reasons: Vec<&str> = Vec::new();
+            for check in run.checks.iter().filter(|check| check.status == status) {
+                if !reasons.contains(&check.message.as_str()) {
+                    reasons.push(&check.message);
+                }
+            }
+            Some(reasons.join(UNSUPPORTED_REASONS))
+        }
+        _ => run
+            .checks
+            .iter()
+            .find(|check| check.status == status)
+            .map(|check| check.message.clone()),
+    };
     ScenarioResult {
         scenario_id: id.to_owned(),
         status,
@@ -349,6 +365,13 @@ impl Run {
 
     fn step<T: Target + ?Sized>(&mut self, step: &Step, target: &mut T) -> Flow {
         match step {
+            Step::EstablishEntity {
+                instance,
+                entity,
+                identity,
+                fields,
+                state,
+            } => self.establish_entity(instance, entity, identity, fields, state, target),
             Step::ExecuteCommand {
                 command,
                 actor,
@@ -700,6 +723,43 @@ impl Run {
             not_granted_seen(actor)
         ));
         Flow::Continue
+    }
+
+    /// An authored `setup:`, as the runner's `establish_entity`: the target is handed the
+    /// instance, and its identity is bound to `instance` only once the target holds it. An
+    /// instance named, or an identity of `entity` established, earlier in the scenario is not
+    /// established twice: the scenario is in error, as the runner records it, not unsupported.
+    fn establish_entity<T: Target + ?Sized>(
+        &mut self,
+        instance: &str,
+        entity: &str,
+        identity: &Value,
+        fields: &Value,
+        state: &str,
+        target: &mut T,
+    ) -> Flow {
+        let established = (entity.to_owned(), identity.clone());
+        if self.instances.contains_key(instance) || self.established.contains(&established) {
+            self.target_failure(
+                "establishing entity state",
+                &TargetError::Failed(
+                    "entity setup: duplicate instance or qualified entity identity".to_owned(),
+                ),
+            );
+            return Flow::Stop;
+        }
+        match target.establish(entity, identity, fields, state) {
+            Ok(()) => {
+                self.established.push(established);
+                self.instances.insert(instance.to_owned(), identity.clone());
+                self.last_view = None;
+                Flow::Continue
+            }
+            Err(error) => {
+                self.target_failure(&format!("establishing `{entity}` as `{instance}`"), &error);
+                Flow::Stop
+            }
+        }
     }
 
     fn capture_instance(&mut self, instance: &str, entity: &str, event: &str, field: &str) -> Flow {
