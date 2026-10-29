@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:conformance-gate
 kind: story
-status: active
+status: implemented
 title: Run the synthesized conformance suite against a2a-server in task check
 summary: crates/a2a-conformance interprets the ESS-synthesized suite against a2a-server's own obligation implementation; task check fails on any failed, errored or unlisted unsupported scenario, and a planted defect turns it red.
 relations:
@@ -25,10 +25,11 @@ scope:
   path: crates/a2a-server/src/lib.rs
 - confidence: cited
   path: crates/a2a-server/src/ports.rs
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T11:21:59Z", actor: "human:timo", revision: 6}
 - {from: "proposed", to: "active", at: "2026-10-29T11:21:59Z", actor: "human:timo", revision: 7}
+- {from: "active", to: "implemented", at: "2026-10-29T14:04:08Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Outcome
 

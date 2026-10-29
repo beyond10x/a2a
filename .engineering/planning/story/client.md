@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:client
 kind: story
-status: active
+status: implemented
 title: 'a2a-client: typed Rust client'
 summary: 'crates/a2a-client: one typed method per A2A HTTP+JSON operation over the generated types, every google.rpc.Status error decoded to a typed reason; tested against a2a-server.'
 relations:
@@ -19,10 +19,11 @@ scope:
   path: README.md
 - confidence: cited
   path: crates/a2a-client
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T11:21:59Z", actor: "human:timo", revision: 6}
 - {from: "proposed", to: "active", at: "2026-10-29T11:21:59Z", actor: "human:timo", revision: 7}
+- {from: "active", to: "implemented", at: "2026-10-29T14:04:07Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Outcome
 

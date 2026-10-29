@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-29T14:04:07Z",
+  "actor": "human:timo",
+  "artifact": "story:conformance-gate",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:security-conformance-gate-pass-1",
+    "review": "review-result:security-conformance-gate-pass-1",
+    "outcome": "fixed"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-29T14:04:07Z",
+  "actor": "human:timo",
+  "artifact": "story:conformance-gate",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "task conform (ess 0.75.0 suite against a2a-server in process) on wave/4-int 8b1cd83: 182 scenarios, 169 passed, 0 failed, 0 error, 13 unsupported, each named in unsupported.tsv",
+    "reference": "8b1cd83"
+  }
+}

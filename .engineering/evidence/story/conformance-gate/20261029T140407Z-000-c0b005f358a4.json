@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-29T14:04:07Z",
+  "actor": "human:timo",
+  "artifact": "story:conformance-gate",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check on wave/4-int 8b1cd83 (cargo test --workspace: 364 passed, 0 failed; exit 0)",
+    "reference": "8b1cd83"
+  }
+}

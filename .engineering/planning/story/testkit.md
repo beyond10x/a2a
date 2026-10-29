@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:testkit
 kind: story
-status: active
+status: implemented
 title: 'a2a-testkit: assertions harness for any A2A endpoint'
 summary: 'crates/a2a-testkit: CLI and library that run the wire-observable conformance scenarios and assertion helpers against an A2A endpoint by URL through a2a-client; green on a2a-server, red on a planted defect.'
 relations:
@@ -20,10 +20,11 @@ scope:
   path: README.md
 - confidence: cited
   path: crates/a2a-testkit
-revision: 9
+revision: 10
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T11:22:00Z", actor: "human:timo", revision: 8}
 - {from: "proposed", to: "active", at: "2026-10-29T11:22:00Z", actor: "human:timo", revision: 9}
+- {from: "active", to: "implemented", at: "2026-10-29T14:04:08Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Outcome
 
