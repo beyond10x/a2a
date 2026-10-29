@@ -36,6 +36,7 @@ scenarios:
   - scenarios/adv-create-get-before-task-lookup.yaml
   - scenarios/push-config-view-of-task.yaml
   - scenarios/push-config-view-other-tenant.yaml
+  - scenarios/push-config-view-without-tenant.yaml
   - scenarios/list-tasks-of-tenant.yaml
   - scenarios/list-tasks-by-status.yaml
   - scenarios/get-task-history-length.yaml
