@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-29T11:06:24Z",
+  "actor": "human:timo",
+  "artifact": "story:server",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check steps on wave/3-int 429b83d (cargo test --workspace: 165 passed, 0 failed; exit 0)",
+    "reference": "429b83d"
+  }
+}

@@ -40,7 +40,7 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 | `task docs-generate` | Rewrite `website/docs/reference/` and `website/static/downloads/`; `task docs-check` (in `task check`) fails on a missing, stale or hand-edited file there, and on any file there it does not generate |
 | `task website` | `npm ci` and `npm run build` in `website/`, as `.github/workflows/pages.yml` does. Not in `task check` |
 | `cargo run -p a2a-server -- --listen 127.0.0.1:8080 [--card <json>] [--extended-card <json> --extended-card-token-file <path>] [--max-connections 256] [--request-timeout 10] [--max-subscribers-per-task 16] [--max-subscribers <half of --max-connections>] [--max-tasks 10000] [--max-history 1000] [--max-push-configs 16]` | Serve the echo agent; the card at `/.well-known/agent-card.json`. Over the connection cap a connection is closed; a request not in within the timeout (seconds) is answered 408. A stream, task, history message or push config over its bound is answered 429 and nothing is kept. `GET /extendedAgentCard` answers 401 without `Authorization: Bearer <token>` (the token file's content), and `--extended-card` requires the token file. The token is never logged |
-| `task conform-interpreted` | Synthesized suite on the ESS interpreted target. Not a gate: 16 of 177 scenarios error on ESS defects |
+| `task conform-interpreted` | Synthesized suite on the ESS interpreted target. Not a gate; on ESS 0.75.0, 177 of 177 scenarios pass |
 | `task upstream` | Fetch the pinned tarball, verify sha256, refresh `upstream/`. Needs `buf`, `protoc-gen-openapiv2`, `npx` |
 | `task plan` | `aep plan artifact validate` |
 
