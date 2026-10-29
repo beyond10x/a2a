@@ -1,8 +1,5 @@
 version: '3'
 
-env:
-  CARGO_TARGET_DIR: '{{.HOME}}/.cache/b10x-target/a2a'
-
 vars:
   A2A_VERSION: v1.0.1
   A2A_SHA256: a148fb439ca2c37e12c10e5f0cfdd2d08f9ee5b1ec96f44593edd05a68bead96
