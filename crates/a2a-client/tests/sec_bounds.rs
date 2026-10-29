@@ -42,7 +42,11 @@ fn hostile(first: &'static [u8], next: fn() -> Vec<u8>, pause: Duration) -> Sock
         }
         let started = Instant::now();
         while started.elapsed() < SERVER_GIVES_UP {
-            if stream.write_all(&next()).and_then(|()| stream.flush()).is_err() {
+            if stream
+                .write_all(&next())
+                .and_then(|()| stream.flush())
+                .is_err()
+            {
                 return;
             }
             if !pause.is_zero() {
@@ -71,7 +75,11 @@ fn within_bound(call: impl FnOnce() -> String + Send + 'static) -> Result<Durati
 
 #[test]
 fn a_call_ends_within_a_bound_against_a_server_that_trickles_its_answer() {
-    let address = hostile(b"HTTP/1.1 200 OK\r\nX-Slow: ", || b"a".to_vec(), TIMEOUT / 5);
+    let address = hostile(
+        b"HTTP/1.1 200 OK\r\nX-Slow: ",
+        || b"a".to_vec(),
+        TIMEOUT / 5,
+    );
     let took = within_bound(move || {
         let answered = client_of(address)
             .with_timeout(Some(TIMEOUT))
@@ -122,12 +130,16 @@ fn hostile_answers_are_errors_and_never_panics() {
         numbers.len()
     );
     let code = "{\"error\":{\"code\":99999999999999999999999,\"details\":[{\"@type\":7}]}}";
-    let code = format!("HTTP/1.1 400 X\r\nContent-Length: {}\r\n\r\n{code}", code.len());
+    let code = format!(
+        "HTTP/1.1 400 X\r\nContent-Length: {}\r\n\r\n{code}",
+        code.len()
+    );
     let answers: Vec<Vec<u8>> = vec![
         b"HTTP/1.1 200 OK\r\nContent-Length: 99999999999999999999999\r\n\r\n{}".to_vec(),
         b"HTTP/1.1 200 OK\r\nContent-Length: 18446744073709551615\r\n\r\n{}".to_vec(),
         b"HTTP/1.1 200 OK\r\nContent-Length: -1\r\n\r\n{}".to_vec(),
-        b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nffffffffffffffffffff\r\nabc".to_vec(),
+        b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nffffffffffffffffffff\r\nabc"
+            .to_vec(),
         b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nffffffffffffffff\r\nabc".to_vec(),
         b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n2\r\nabcdef\r\n0\r\n\r\n".to_vec(),
         b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\n\xff\xfe\xfd\xfc\xfb".to_vec(),
