@@ -90,7 +90,7 @@ const ALL_TASKS: &str = "a2a.tasks.AllTasks";
 // names a tenant keeps it: the configuration would store another tenant than the one it names,
 // which a later claim reads (the PushNotificationConfigs rows of the TaskPushNotificationConfigs
 // grant scenarios claim `tenant`). Except in the scenarios of [`REARRANGED`].
-const ACROSS_TENANTS: [&str; 3] = [
+pub const ACROSS_TENANTS: [&str; 3] = [
     "a2a.tasks.CreateTaskPushNotificationConfig",
     "a2a.tasks.GetTaskPushNotificationConfig",
     "a2a.tasks.DeleteTaskPushNotificationConfig",
@@ -109,8 +109,9 @@ const ACROSS_TENANTS: [&str; 3] = [
 // claims the PushNotificationConfigs rows' tenant, and its guard stays measured without it.
 const REARRANGED: [&str; 1] = ["a2a.tasks.GetTaskPushNotificationConfig"];
 
-/// The reason a run of an [`ACROSS_TENANTS`] command on another tenant's task is unsupported.
-fn across_tenants(command: &str) -> String {
+/// The reason a run of an [`ACROSS_TENANTS`] command on another tenant's task is unsupported, which
+/// a target over the wire (`a2a-testkit`) gives as well.
+pub fn across_tenants(command: &str) -> String {
     format!(
         "{command} on a task of another tenant: a2a-server answers TaskNotFound (A2A v1.0.1 section 13.1), a guard ess/domains/tasks.yaml leaves UNMAPPED, so the synthesized scenario expects the command to act across tenants"
     )

@@ -8,6 +8,21 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+### Changed
+
+- `a2a-testkit` reads the events a command published from what the endpoint answered:
+  `TaskCreated` from a message answered with a task the scenario had not seen,
+  `MessageStreamResponse` from a message stream's first element, `TaskStatusUpdated` from the task
+  a cancel answers, and `TaskStatusUpdated` or `TaskArtifactUpdated` for each status or artifact
+  element of a message or task stream, followed until it closes or is quiet for 2 seconds. It
+  answers `AllTasks` with the scenario's tasks, each read back with `GetTask` under the tenant it
+  was created under, and `Tasks` with `ListTasks` under the parameters' tenant, keeping the
+  scenario's tasks. An event no answer carries, a task the agent moved by steps of its own, a view
+  read before the scenario created a task, and a push notification config command on a task of
+  another tenant stay `unsupported` with their reasons. Against `a2a-server` on loopback with an
+  agent that takes no step the suite now gives 20 passed, 0 failed, 0 error, 164 unsupported; the
+  binary's echo agent still gives 7 passed, 177 unsupported, since it moves each task it creates.
+
 ### Fixed
 
 - The `a2a.tasks.TaskPushNotificationConfigs` view takes a `tenant` parameter and answers a push

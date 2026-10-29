@@ -2,7 +2,9 @@
 //! endpoint given by base URL. The caller's tenant comes from the scenario's input. A step the wire
 //! cannot observe (a published event, a forced external outcome, a command or read by an actor
 //! other than the client, a view A2A has no operation for) answers `TargetError::Unsupported` with
-//! that reason, and so does a read of state the wire cannot reset.
+//! that reason. story:testkit-wire-events: an event is observed where the answer carries it, and
+//! the task views are read where the scenario created a task (`tests/wire_events.rs`); a task the
+//! agent moved, and a view read before the scenario created a task, stay unsupported.
 
 mod common;
 
@@ -79,8 +81,10 @@ fn an_accepting_answer_reads_as_its_outcome_with_its_response_spelled_as_ess_spe
     assert_eq!(target.published(), Ok(Vec::new()));
 }
 
+/// story:testkit-wire-events: the echo agent moves the task it created before SendMessage
+/// answers, so what `task-created` publishes is not what the answer carries.
 #[test]
-fn what_an_accepting_outcome_publishes_is_unsupported() {
+fn what_an_accepting_outcome_publishes_is_unsupported_where_the_agent_moved_its_task() {
     let server = echo();
     let mut target = target_of(&server);
     let answer = target
@@ -95,7 +99,9 @@ fn what_an_accepting_outcome_publishes_is_unsupported() {
     assert_eq!(answer.outcome, "task-created");
     let reason = unsupported(target.published());
     assert!(
-        reason.contains("a2a.tasks.SendMessage") && reason.contains("task-created"),
+        reason.contains("a2a.tasks.SendMessage")
+            && reason.contains("task-created")
+            && reason.contains("the agent moved it"),
         "{reason}"
     );
 }
@@ -161,12 +167,13 @@ fn a_command_by_an_actor_other_than_the_client_is_unsupported() {
     assert!(reason.contains("a2a.tasks.Agent"), "{reason}");
 }
 
+/// story:testkit-wire-events: `a2a.tasks.AllTasks` is read back with GetTask
+/// (`tests/wire_events.rs`), so it is no longer among these views.
 #[test]
 fn a_view_a2a_has_no_operation_for_is_unsupported() {
     let server = echo();
     let mut target = target_of(&server);
     for view in [
-        "a2a.tasks.AllTasks",
         "a2a.tasks.PushNotificationConfigs",
         "a2a.tasks.TaskPushNotificationConfigs",
     ] {
@@ -192,8 +199,11 @@ fn a_read_by_an_actor_other_than_the_client_is_unsupported() {
     }
 }
 
+/// story:testkit-wire-events: the endpoint holds tasks no scenario created and cannot be reset, so
+/// `a2a.tasks.Tasks` keeps the scenario's tasks only; before the scenario created one, the read
+/// observes nothing the endpoint answered.
 #[test]
-fn a_view_over_state_the_wire_cannot_reset_is_unsupported() {
+fn a_view_read_before_the_scenario_created_a_task_is_unsupported() {
     let server = echo();
     let mut target = target_of(&server);
     let reason = unsupported(target.query(
@@ -202,7 +212,7 @@ fn a_view_over_state_the_wire_cannot_reset_is_unsupported() {
         &value(r#"{"context_id":"ctx-1"}"#),
     ));
     assert!(
-        reason.contains("a2a.tasks.Tasks") && reason.contains("reset"),
+        reason.contains("a2a.tasks.Tasks") && reason.contains("created no task"),
         "{reason}"
     );
 }

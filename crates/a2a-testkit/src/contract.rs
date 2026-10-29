@@ -32,6 +32,9 @@ pub(crate) struct Outcome {
     pub(crate) error: Option<String>,
     /// Whether it may publish an event.
     pub(crate) publishes: bool,
+    /// The qualified names of the events it publishes, in publication order: the `event` of each
+    /// `published.prefixItems` entry of its response schema.
+    pub(crate) events: Vec<String>,
     /// Whether the specification leaves it to circumstances outside the request.
     pub(crate) external: bool,
     /// Whether it is taken for an identity no record carries.
@@ -161,6 +164,25 @@ impl Contract {
                     .and_then(|published| published.member("maxItems")),
                 Some(Value::Number(most)) if most == "0"
             );
+            let events = match properties
+                .member("published")
+                .and_then(|published| published.member("prefixItems"))
+            {
+                Some(Value::Array(items)) => items
+                    .iter()
+                    .filter_map(|item| {
+                        match item
+                            .member("properties")
+                            .and_then(|properties| properties.member("event"))
+                            .and_then(|event| event.member("const"))
+                        {
+                            Some(Value::Text(event)) => Some(event.clone()),
+                            _ => None,
+                        }
+                    })
+                    .collect(),
+                _ => Vec::new(),
+            };
             let description = match schema.member("description") {
                 Some(Value::Text(description)) => description.as_str(),
                 _ => "",
@@ -172,6 +194,7 @@ impl Contract {
                     name: name.clone(),
                     error,
                     publishes,
+                    events,
                     external: description.contains(EXTERNAL),
                     unknown_identity: description.contains(UNKNOWN_IDENTITY),
                 });
@@ -267,6 +290,32 @@ mod tests {
             named("a2a.tasks.SendMessage", |outcome| outcome.publishes),
             ["task-created"]
         );
+    }
+
+    #[test]
+    fn outcomes_name_the_events_they_publish_in_order() {
+        let events = |command: &str, outcome: &str| {
+            Contract::get()
+                .outcomes(command)
+                .iter()
+                .find(|held| held.name == outcome)
+                .map(|held| held.events.clone())
+                .unwrap_or_else(|| panic!("{command} {outcome}"))
+        };
+        assert_eq!(
+            events("a2a.tasks.SendStreamingMessage", "task-created"),
+            ["a2a.tasks.TaskCreated", "a2a.tasks.MessageStreamResponse"]
+        );
+        assert_eq!(
+            events("a2a.tasks.SendMessage", "task-created"),
+            ["a2a.tasks.TaskCreated"]
+        );
+        assert_eq!(
+            events("a2a.tasks.CancelTask", "canceled"),
+            ["a2a.tasks.TaskStatusUpdated"]
+        );
+        assert!(events("a2a.tasks.GetTask", "found").is_empty());
+        assert!(events("a2a.tasks.SubscribeToTask", "subscribed").is_empty());
     }
 
     #[test]

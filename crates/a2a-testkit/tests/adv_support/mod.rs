@@ -1,5 +1,6 @@
 //! Adversary support: a suite synthesized once per test binary, a proxy that rewrites the answer
-//! to chosen requests the upstream answered `404`, and a stub endpoint that answers each request
+//! to chosen requests the upstream answered `404`, a proxy that changes one member of the JSON
+//! the upstream answered `200` to chosen requests, and a stub endpoint that answers each request
 //! from a function of its method and target.
 
 #![allow(dead_code)]
@@ -155,6 +156,82 @@ fn relay(mut client: TcpStream, upstream: SocketAddr, matches: Matches, rewritte
         answered
     };
     let _ = client.write_all(&written);
+}
+
+/// One member a rewriting mutant changes in a JSON answer: its dotted path, and the text it
+/// carries instead.
+pub type Change = (&'static str, &'static str);
+
+/// A proxy in front of `upstream`: in the `200` answer with a JSON body to a request `matches`
+/// selects, the member at the dotted path of `change` carries its text instead, and
+/// `Content-Length` counts the body written. Every other exchange passes as it is.
+pub fn rewriting(upstream: SocketAddr, matches: Matches, change: Change) -> Endpoint {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind port 0");
+    let address = listener.local_addr().expect("bound address");
+    std::thread::spawn(move || {
+        for stream in listener.incoming() {
+            let Ok(stream) = stream else { continue };
+            std::thread::spawn(move || rewrite(stream, upstream, matches, change));
+        }
+    });
+    Endpoint { address }
+}
+
+fn rewrite(mut client: TcpStream, upstream: SocketAddr, matches: Matches, change: Change) {
+    let Some((head, body)) = read_request(&mut client) else {
+        return;
+    };
+    let Ok(mut server) = TcpStream::connect(upstream) else {
+        return;
+    };
+    if server.write_all(head.as_bytes()).is_err() || server.write_all(&body).is_err() {
+        return;
+    }
+    let (method, target) = request_line(&head);
+    if !matches(&method, &target) {
+        let _ = std::io::copy(&mut server, &mut client);
+        return;
+    }
+    let mut answered = Vec::new();
+    let _ = server.read_to_end(&mut answered);
+    let written = changed(&answered, change).unwrap_or(answered);
+    let _ = client.write_all(&written);
+}
+
+/// `answered` with `change` made, where it is a `200` answer whose body is a JSON object holding
+/// the member's parent.
+fn changed(answered: &[u8], (path, text): Change) -> Option<Vec<u8>> {
+    let answered = std::str::from_utf8(answered).ok()?;
+    if !answered.starts_with("HTTP/1.1 200") {
+        return None;
+    }
+    let (head, body) = answered.split_once("\r\n\r\n")?;
+    let mut value = a2a::json::parse(body).ok()?;
+    let mut at = &mut value;
+    let (parents, member) = path.rsplit_once('.').unwrap_or(("", path));
+    for parent in parents.split('.').filter(|parent| !parent.is_empty()) {
+        let a2a::json::Value::Object(members) = at else {
+            return None;
+        };
+        at = &mut members.iter_mut().find(|(name, _)| name == parent)?.1;
+    }
+    let a2a::json::Value::Object(members) = at else {
+        return None;
+    };
+    let held = &mut members.iter_mut().find(|(name, _)| name == member)?.1;
+    *held = a2a::json::Value::Text(text.to_owned());
+    let mut written = String::new();
+    a2a::json::push_value(&mut written, &value);
+    let head: Vec<String> = head
+        .split("\r\n")
+        .map(|line| match line.split_once(':') {
+            Some((name, _)) if name.eq_ignore_ascii_case("content-length") => {
+                format!("{name}: {}", written.len())
+            }
+            _ => line.to_owned(),
+        })
+        .collect();
+    Some(format!("{}\r\n\r\n{written}", head.join("\r\n")).into_bytes())
 }
 
 /// How a stub answers a request, from its method and target.
