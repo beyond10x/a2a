@@ -16,7 +16,7 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 
 | Path | What it is | Who writes it |
 |---|---|---|
-| `ess/` | ESS source (`ess/29`), listed in `ess/ess-inputs.yaml`, pinned to `ess 0.75.0` | authored |
+| `ess/` | ESS source (`ess/29`), listed in `ess/ess-inputs.yaml`, pinned to `ess 0.76.0` | authored |
 | `ess/http.yaml`, `ess/http-unmapped.tsv` | `ess-http/1` binding of A2A's HTTP+JSON paths, pinned to the specification's digest; the (method, path) differences from `upstream/openapi/` it cannot close, each with its reason | authored |
 | `upstream/a2a.proto` | Normative A2A source, verbatim from tag v1.0.1 | `task upstream` |
 | `upstream/openapi/a2a.openapi.yaml` | OpenAPI 3.0 of A2A's HTTP+JSON binding, derived from the proto. Upstream publishes none | `task upstream` |
@@ -45,7 +45,7 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 | `task website` | `npm ci` and `npm run build` in `website/`, as `.github/workflows/pages.yml` does. Not in `task check` |
 | `cargo run -p a2a-server -- --listen 127.0.0.1:8080 [--card <json>] [--extended-card <json> --extended-card-token-file <path>] [--max-connections 256] [--request-timeout 10] [--max-subscribers-per-task 16] [--max-subscribers <half of --max-connections>] [--max-tasks 10000] [--max-history 1000] [--max-push-configs 16]` | Serve the echo agent; the card at `/.well-known/agent-card.json`. Over the connection cap a connection is closed; a request not in within the timeout (seconds) is answered 408. A stream, task, history message or push config over its bound is answered 429 and nothing is kept. `GET /extendedAgentCard` answers 401 without `Authorization: Bearer <token>` (the token file's content), and `--extended-card` requires the token file. The token is never logged |
 | `task conform` | Synthesize the suite into `~/.cache/a2a-gen/conform/` (removed first), run it against `a2a-server`'s obligations in process (`cargo run -p a2a-conformance -- run`), write `report.json` with `ess verify conform report`, then `a2a-conformance gate`: fails unless 0 failed, 0 error and the unsupported scenarios are exactly those `crates/a2a-conformance/unsupported.tsv` names, with their reasons. In `task check` |
-| `task conform-interpreted` | Synthesized suite on the ESS interpreted target. Not a gate; on ESS 0.75.0, 180 of 182 scenarios pass. The 2 failed are the authored `get-task-history-length` and `list-configs-page-size`: the model leaves `history_length` and `page_size` UNMAPPED, so the interpreter answers every message and every configuration |
+| `task conform-interpreted` | Synthesized suite on the ESS interpreted target. Not a gate; on ESS 0.76.0, 182 of 184 scenarios pass. The 2 failed are the authored `get-task-history-length` and `list-configs-page-size`: the model leaves `history_length` and `page_size` UNMAPPED, so the interpreter answers every message and every configuration |
 | `task upstream` | Fetch the pinned tarball, verify sha256, refresh `upstream/`. Needs `buf`, `protoc-gen-openapiv2`, `npx` |
 | `task plan` | `aep plan artifact validate` |
 

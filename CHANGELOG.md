@@ -10,6 +10,8 @@ under `[Unreleased]` until the next release.
 
 ### Changed
 
+- The ESS pin moves from 0.75.0 to 0.76.0 (`ess/ess-inputs.yaml`, `check.yml`, `pages.yml`); the
+  generated crate, projections and conformance suite are unchanged by it.
 - `a2a-testkit` reads the events a command published from what the endpoint answered:
   `TaskCreated` from a message answered with a task the scenario had not seen,
   `MessageStreamResponse` from a message stream's first element, `TaskStatusUpdated` from the task
