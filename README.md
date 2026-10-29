@@ -8,7 +8,7 @@ specification in [ESS](https://github.com/beyond10x/ess), and the Rust that is g
 | `ess/` | The specification: task lifecycle, messages, push-notification configs, the extended Agent Card |
 | `upstream/` | The pinned upstream `a2a.proto`, its licence, and an OpenAPI 3.0 document derived from it |
 | `generated/` | OpenAPI, AsyncAPI and JSON Schema projections, and the synthesized Rust crate |
-| `crates/` | Hand-written Rust: repository checks and the documentation generator today; server, client and test kit to follow |
+| `crates/` | Hand-written Rust: repository checks, the documentation generator, the server and the client; test kit to follow |
 | `website/` | The documentation site (Docusaurus) |
 
 ```console
@@ -21,6 +21,11 @@ validates the specification and fails when anything generated from it has drifte
 binding. An extended Agent Card given with `--extended-card` is served only to requests carrying
 `Authorization: Bearer <token>`, the token read from `--extended-card-token-file`, which
 `--extended-card` requires.
+
+`crates/a2a-client` is a typed Rust client of that binding: one method per A2A operation over the
+generated types, a request's `tenant` selecting the `/{tenant}/` route, every `google.rpc.Status`
+error decoded with its `ErrorInfo` reason, and streams read as iterators of server-sent events. It
+speaks HTTP/1.1 to `http://` URLs only; TLS and the JSON-RPC binding are not yet supported.
 
 ## Documentation
 

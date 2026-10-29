@@ -8,6 +8,19 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+### Added
+
+- `crates/a2a-client`: a typed client of A2A's HTTP+JSON binding over the generated crate. One
+  method per operation (the public card, `SendMessage`, `SendStreamingMessage`, `GetTask`,
+  `ListTasks`, `CancelTask`, `SubscribeToTask`, the four push notification config operations and
+  `GetExtendedAgentCard`); a request's `tenant` selects the `/{tenant}/` route. Error answers are
+  `Error::Status` with the HTTP status, the `google.rpc.Status` code, status and message, and the
+  `ErrorInfo` reason as a `Reason`; an answer that is not the binding's is `Error::Protocol`.
+  Streams are iterators of typed stream responses. HTTP/1.1 over `std::net::TcpStream` to
+  `http://` URLs; `https://` is refused with `Error::UnsupportedScheme`. It declares no model
+  type of the generated crate; `ListTasksRequest` and `ListTasksResponse` are its own, since the
+  generated crate has none.
+
 ## [0.4.0] - 2026-10-29
 
 ### Added

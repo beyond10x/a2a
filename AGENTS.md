@@ -27,6 +27,7 @@ Running code is Rust with clap derive. The documentation site is the only Node.
 | `crates/a2a-xtask/` | Repository checks (generated-crate drift, HTTP path parity) | authored |
 | `crates/a2a-docs/` | Generator of the site's reference pages and downloads, and the build's provenance | authored |
 | `crates/a2a-server/` | A2A's HTTP+JSON binding over `generated/rust/a2a` (`server` feature): the 12 obligations in memory, every upstream route, SSE streams, and the `a2a-server` echo agent. Declares no type under a name the generated crate exports, at any visibility or qualifier; `tests/defines_none.rs` fails if it does | authored |
+| `crates/a2a-client/` | Typed client of A2A's HTTP+JSON binding over `generated/rust/a2a` (`server` feature codecs): one method per operation, `tenant` selecting the `/{tenant}/` route, `google.rpc.Status` errors as `Error::Status` with a `Reason`, streams as `Events` iterators. HTTP/1.1 over `std::net::TcpStream`, `http://` only. Declares no type under a name the generated crate exports; `tests/defines_none.rs` fails if it does, and `tests/routes.rs` if the (method, path) pairs it sends differ from `upstream/openapi/` | authored |
 | `website/` | Docusaurus site on `@beyond10x/docs-system`; `docs/concepts/`, `docs/guides/`, `docs/index.md` | authored |
 | `website/docs/reference/`, `website/static/downloads/` | Specification pages, routes, marker index, downloads with `SHA256SUMS` | `task docs-generate` |
 | `.engineering/` | AEP planning store; the plan lives here, not in chat or plan files | `aep` |
