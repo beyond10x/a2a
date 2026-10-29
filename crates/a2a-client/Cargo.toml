@@ -1,0 +1,14 @@
+[package]
+name = "a2a-client"
+description = "A typed client of A2A's HTTP+JSON binding over the generated a2a crate: one method per operation, google.rpc.Status errors decoded, server-sent event streams as iterators."
+publish = false
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+a2a = { path = "../../generated/rust/a2a", features = ["server"] }
+
+[dev-dependencies]
+a2a-server = { path = "../a2a-server" }
