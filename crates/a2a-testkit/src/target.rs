@@ -13,7 +13,7 @@
 //! step the wire cannot observe is `TargetError::Unsupported` with the reason, never `passed`.
 //!
 //! The events an outcome publishes are read from what the endpoint answered, never from what the
-//! suite expects: `a2a.tasks.TaskCreated` from a message answered with a task the scenario had
+//! suite expects: `a2a.tasks.TaskCreated` from a message answered with a task the run had
 //! not seen, `a2a.tasks.MessageStreamResponse` from the first element of a message stream,
 //! `a2a.tasks.TaskStatusUpdated` from the task a cancel answers, and one `TaskStatusUpdated` or
 //! `TaskArtifactUpdated` per status or artifact element a stream carries after its first. A stream
@@ -32,6 +32,7 @@
 //! outcome declares, so the scenario fails on it rather than coming out `unsupported` on the
 //! events the outcome would publish.
 
+use std::collections::BTreeSet;
 use std::io::ErrorKind;
 use std::time::Duration;
 
@@ -108,6 +109,9 @@ pub struct WireTarget {
     recorded: bool,
     /// The tasks the open scenario created, in order.
     created: Vec<Created>,
+    /// Every task the endpoint answered in this run, across scenarios: a task an earlier answer
+    /// showed is never one a later message created.
+    answered: BTreeSet<String>,
 }
 
 /// A task the open scenario created: what the answer and the request carried of it, and the state
@@ -115,8 +119,6 @@ pub struct WireTarget {
 #[derive(Debug, Clone)]
 struct Created {
     id: String,
-    /// The answer's context, or the request's where the answer carries none.
-    context: Option<String>,
     /// The request's tenant.
     tenant: Option<String>,
     state: WireTaskState,
@@ -139,6 +141,7 @@ impl WireTarget {
             pending: None,
             recorded: false,
             created: Vec::new(),
+            answered: BTreeSet::new(),
         }
     }
 
@@ -187,6 +190,35 @@ impl WireTarget {
             .iter()
             .find(|created| created.id == id)
             .map(|created| created.state)
+    }
+
+    /// What a success answer holding a task the request did not ask for answered: a task other
+    /// than the one `input` names, or, for a request naming none, a task an earlier scenario's
+    /// answer showed, which no command of this scenario can have reached.
+    fn foreign(&self, input: &Value, carried: &Carried) -> Option<String> {
+        let task = match carried {
+            Carried::Nothing => return None,
+            Carried::Task(task) | Carried::Subscription { task, .. } => task,
+            Carried::Message { first, .. } => first.task.as_ref()?,
+        };
+        let id = task.id.0.as_str();
+        if let Some(asked) = text(input.member("id")) {
+            return (asked != id).then(|| {
+                format!("a success answer holding task `{id}` to a request naming task `{asked}`")
+            });
+        }
+        let named = text(
+            input
+                .member("message")
+                .and_then(|message| message.member("taskId")),
+        );
+        (self.answered.contains(id) && self.left_in(id).is_none() && named.as_deref() != Some(id))
+            .then(|| {
+                format!(
+                    "a success answer holding task `{id}`, which an earlier scenario's answer \
+                     showed"
+                )
+            })
     }
 
     /// Whether `input` of `command` names a task the scenario created under another tenant than
@@ -367,14 +399,15 @@ impl WireTarget {
                 None => left.push(candidate),
             }
         }
-        let taken = match left.as_slice() {
-            [] if ruled_out.is_empty() => Err(format!("no declared outcome: {answered}")),
-            [] => Err(format!(
+        let taken = match (self.foreign(input, &carried), left.as_slice()) {
+            (Some(foreign), _) => Err(foreign),
+            (None, []) if ruled_out.is_empty() => Err(format!("no declared outcome: {answered}")),
+            (None, []) => Err(format!(
                 "no declared outcome: {answered}, whose outcome {} the circumstances rule out",
                 ruled_out.join(" and ")
             )),
-            [only] => Ok(*only),
-            several => {
+            (None, [only]) => Ok(*only),
+            (None, several) => {
                 let unknown: Vec<&&Outcome> = several
                     .iter()
                     .filter(|outcome| outcome.unknown_identity)
@@ -472,6 +505,9 @@ impl WireTarget {
             Carried::Message { first, rest } => (first.task.clone(), Some(first), Some(rest)),
             Carried::Subscription { task, rest } => (Some(task), None, Some(rest)),
         };
+        let earlier = task
+            .as_ref()
+            .is_some_and(|task| !self.answered.insert(task.id.0.clone()));
         let declares = |event: &str| outcome.events.iter().any(|declared| declared == event);
         if let Some(task) = &task {
             let (id, state) = (task.id.0.as_str(), task.status.state);
@@ -490,7 +526,7 @@ impl WireTarget {
         let mut events = Vec::new();
         for event in &outcome.events {
             events.push(match event.as_str() {
-                TASK_CREATED => self.created(&doing, input, task.as_ref())?,
+                TASK_CREATED => self.created(&doing, input, task.as_ref(), earlier)?,
                 MESSAGE_STREAM_RESPONSE => match &first {
                     Some(first) => {
                         event_of(&SystemEvent::MessageStreamResponse((**first).clone()))?
@@ -525,21 +561,25 @@ impl WireTarget {
                     {
                         return Err(moved(&doing, id, update.status.state, left));
                     }
+                    self.answered.insert(update.task_id.0.clone());
                     event_of(&SystemEvent::TaskStatusUpdated(tasks::TaskStatusUpdated {
                         task_id: update.task_id,
                         context_id: update.context_id,
                         status: update.status,
                     }))?
                 }
-                Element::Artifact(update) => event_of(&SystemEvent::TaskArtifactUpdated(
-                    tasks::TaskArtifactUpdated {
-                        task_id: update.task_id,
-                        context_id: update.context_id,
-                        artifact: update.artifact,
-                        append: update.append,
-                        last_chunk: update.last_chunk,
-                    },
-                ))?,
+                Element::Artifact(update) => {
+                    self.answered.insert(update.task_id.0.clone());
+                    event_of(&SystemEvent::TaskArtifactUpdated(
+                        tasks::TaskArtifactUpdated {
+                            task_id: update.task_id,
+                            context_id: update.context_id,
+                            artifact: update.artifact,
+                            append: update.append,
+                            last_chunk: update.last_chunk,
+                        },
+                    ))?
+                }
                 Element::Other(kind) => {
                     return Err(TargetError::Unsupported(format!(
                         "{doing}, and its stream carried {kind} after its first element, which no \
@@ -552,39 +592,28 @@ impl WireTarget {
     }
 
     /// `a2a.tasks.TaskCreated` of `task`, a message's answer, which the scenario then holds with
-    /// the request's tenant.
+    /// the request's tenant; none where an `earlier` answer of the run already showed the task.
     fn created(
         &mut self,
         doing: &str,
         input: &Value,
         task: Option<&TaskSnapshot>,
+        earlier: bool,
     ) -> Result<Event, TargetError> {
         let Some(task) = task else {
             return Err(TargetError::Unsupported(format!(
                 "{doing}, and its answer holds no task to read {TASK_CREATED} from"
             )));
         };
-        if self.left_in(&task.id.0).is_some() {
+        if earlier {
             return Err(TargetError::Unsupported(format!(
-                "{doing}, and its answer holds task `{}`, which the scenario had already seen: it \
-                 carries no new task to read {TASK_CREATED} from",
+                "{doing}, and its answer holds task `{}`, which the endpoint had already answered \
+                 in this run: it carries no new task to read {TASK_CREATED} from",
                 task.id.0
             )));
         }
-        let context = task
-            .context_id
-            .as_ref()
-            .map(|context| context.0.clone())
-            .or_else(|| {
-                text(
-                    input
-                        .member("message")
-                        .and_then(|message| message.member("contextId")),
-                )
-            });
         self.created.push(Created {
             id: task.id.0.clone(),
-            context,
             tenant: text(input.member("tenant")),
             state: task.status.state,
         });
@@ -1108,22 +1137,20 @@ fn unmoved(view: &str, created: &Created, task: &TaskSnapshot) -> Result<(), Tar
     ))
 }
 
-/// The context of a row: the task's as read, or as its creating answer or request carried it.
+/// The context of a row: the task's as read. The scenario's request never stands in for it: a row
+/// whose task was answered without one claims nothing the endpoint answered.
 fn context_of(
     view: &str,
     created: &Created,
     task: &TaskSnapshot,
 ) -> Result<ContextId, TargetError> {
-    task.context_id
-        .clone()
-        .or_else(|| created.context.clone().map(ContextId))
-        .ok_or_else(|| {
-            TargetError::Unsupported(format!(
-                "reading {view}: task `{}` was answered without a contextId, which every row \
+    task.context_id.clone().ok_or_else(|| {
+        TargetError::Unsupported(format!(
+            "reading {view}: task `{}` was answered without a contextId, which every row \
                  carries",
-                created.id
-            ))
-        })
+            created.id
+        ))
+    })
 }
 
 /// Why `view` could not be read: what `operation` answered.
