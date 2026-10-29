@@ -2,17 +2,18 @@
 format: aep.planning-md/3
 id: story:testkit-wire-events
 kind: story
-status: active
+status: implemented
 title: a2a-testkit observes task events over the wire
 summary: The wire target derives task event claims from the answers and streams that carry them, so more than 7 of 177 scenarios run against an endpoint.
 relations:
 - decomposes: epic:a2a-delivery
 - depends_on: story:testkit
 - depends_on: story:view-tenant-scope
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T14:49:09Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-29T14:49:09Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-29T15:54:00Z", actor: "human:timo", revision: 7, decided_on: {"asserted":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Outcome
 

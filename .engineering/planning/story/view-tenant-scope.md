@@ -2,15 +2,16 @@
 format: aep.planning-md/3
 id: story:view-tenant-scope
 kind: story
-status: active
+status: implemented
 title: TaskPushNotificationConfigs view scoped to the caller's tenant
 summary: The push-config view answers a client only its own tenant's configs; found by wave 4 reviews of story:conformance-gate.
 relations:
 - decomposes: epic:a2a-delivery
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T14:49:08Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-29T14:49:08Z", actor: "human:timo", revision: 5}
+- {from: "active", to: "implemented", at: "2026-10-29T15:54:00Z", actor: "human:timo", revision: 7, decided_on: {"asserted":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Outcome
 
