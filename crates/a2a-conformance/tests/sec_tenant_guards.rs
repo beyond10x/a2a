@@ -218,8 +218,9 @@ impl<const G: u8> TaskPushNotificationConfigsQuery for Unguarded<G> {
     fn task_push_notification_configs(
         &self,
         task_id: TaskId,
+        tenant: Option<String>,
     ) -> Result<Vec<TaskPushNotificationConfigs>, UnmetObligation> {
-        self.0.task_push_notification_configs(task_id)
+        self.0.task_push_notification_configs(task_id, tenant)
     }
 }
 

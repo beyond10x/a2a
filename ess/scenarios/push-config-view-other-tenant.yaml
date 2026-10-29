@@ -1,0 +1,57 @@
+# A2A v1.0.1 section 13.1: "Implementations MUST scope results to the caller's authorized access
+# boundaries". The view a2a.tasks.TaskPushNotificationConfigs (domains/tasks.yaml) answers a
+# configuration only under the tenant it was created under: a client reading tenant-a's task under
+# tenant-b, or under no tenant, reads no row, and so neither the url nor the token the agent's
+# webhook is called with (story:view-tenant-scope).
+type: ess-scenario/1
+domain: a2a.tasks
+scenario: push-config-view-other-tenant
+summary: A configuration created under one tenant is no row of the view read under another tenant or under none.
+
+arrange:
+  - instance: task
+    entity: a2a.tasks.Task
+
+timeline:
+  - at: 2026-03-02T09:00:00Z
+    command: a2a.tasks.SendMessage
+    actor: a2a.tasks.Client
+    input:
+      tenant: tenant-a
+      message:
+        message_id: msg-1
+        role: ROLE_USER
+        parts:
+          - text: hello
+    outcome: task-created
+    capture: {instance: task, event: a2a.tasks.TaskCreated, field: task_id}
+
+  - at: 2026-03-02T09:00:01Z
+    command: a2a.tasks.CreateTaskPushNotificationConfig
+    actor: a2a.tasks.Client
+    input:
+      tenant: tenant-a
+      task_id: {$instance: task}
+      id: cfg-a
+      url: https://client.example.test/tenant-a-webhook
+      token: tenant-a-token
+    outcome: created
+
+assert:
+  - view: a2a.tasks.TaskPushNotificationConfigs
+    params:
+      task_id: {$instance: task}
+      tenant: tenant-b
+    counts:
+      at_most: 0
+  - view: a2a.tasks.TaskPushNotificationConfigs
+    params:
+      task_id: {$instance: task}
+    counts:
+      at_most: 0
+  - view: a2a.tasks.TaskPushNotificationConfigs
+    params:
+      task_id: {$instance: task}
+      tenant: tenant-a
+    counts:
+      at_most: 1

@@ -2,8 +2,8 @@
   "provenance": {
     "system": "a2a",
     "specification_version": "v1",
-    "source_digest": "d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d",
-    "contract_digest": "91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a"
+    "source_digest": "911794dff39b27311ddc6db22aa294d7c70c823fd2310684ad996b6eab4c5cdf",
+    "contract_digest": "f3a9f588bb74b749958999da8b7430eaf336cfa0d5e58a72b23699edc898a4dd"
   },
   "scope": {
     "profile": "component-skeletons",
@@ -790,7 +790,7 @@
           "class": "undetermined",
           "construct": "a view parameter (`params:`), which a generated query does not apply"
         },
-        "contract": "a query answering `a2a.tasks.TaskPushNotificationConfigs` with rows projected from `a2a.tasks.PushNotificationConfig` at `read_your_writes` consistency, containing instances where `task_id == param.task_id`"
+        "contract": "a query answering `a2a.tasks.TaskPushNotificationConfigs` with rows projected from `a2a.tasks.PushNotificationConfig` at `read_your_writes` consistency, containing instances where `(task_id == param.task_id and ((defined(param.tenant) and defined(tenant) and tenant == param.tenant) or (not (defined(param.tenant)) and not (defined(tenant)))))`"
       }
     },
     {

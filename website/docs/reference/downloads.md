@@ -15,19 +15,19 @@ The site serves these files as they are on `main`. Each is the repository file n
 |---|---|---|---|
 | [`a2a.proto`](pathname:///a2a/downloads/a2a.proto) | 35.0 KiB | A2A v1.0.1's normative protocol definition, verbatim from the upstream tag. © The A2A Project Authors, Apache-2.0. | [`upstream/a2a.proto`](https://github.com/beyond10x/a2a/blob/main/upstream/a2a.proto) |
 | [`a2a-upstream.openapi.yaml`](pathname:///a2a/downloads/a2a-upstream.openapi.yaml) | 70.1 KiB | OpenAPI 3.0 of A2A's HTTP+JSON binding, derived from `a2a.proto` (upstream publishes none). | [`upstream/openapi/a2a.openapi.yaml`](https://github.com/beyond10x/a2a/blob/main/upstream/openapi/a2a.openapi.yaml) |
-| [`a2a-http.openapi.yaml`](pathname:///a2a/downloads/a2a-http.openapi.yaml) | 233.5 KiB | OpenAPI of the specification through `ess/http.yaml`: A2A's paths where ESS can bind them. | [`generated/openapi-http/openapi/a2a-agent.yaml`](https://github.com/beyond10x/a2a/blob/main/generated/openapi-http/openapi/a2a-agent.yaml) |
-| [`a2a.openapi.yaml`](pathname:///a2a/downloads/a2a.openapi.yaml) | 231.4 KiB | OpenAPI of the specification on ESS's command-shaped routes, not A2A's paths. | [`generated/openapi/openapi/a2a-agent.yaml`](https://github.com/beyond10x/a2a/blob/main/generated/openapi/openapi/a2a-agent.yaml) |
+| [`a2a-http.openapi.yaml`](pathname:///a2a/downloads/a2a-http.openapi.yaml) | 233.9 KiB | OpenAPI of the specification through `ess/http.yaml`: A2A's paths where ESS can bind them. | [`generated/openapi-http/openapi/a2a-agent.yaml`](https://github.com/beyond10x/a2a/blob/main/generated/openapi-http/openapi/a2a-agent.yaml) |
+| [`a2a.openapi.yaml`](pathname:///a2a/downloads/a2a.openapi.yaml) | 231.7 KiB | OpenAPI of the specification on ESS's command-shaped routes, not A2A's paths. | [`generated/openapi/openapi/a2a-agent.yaml`](https://github.com/beyond10x/a2a/blob/main/generated/openapi/openapi/a2a-agent.yaml) |
 | [`a2a.asyncapi.yaml`](pathname:///a2a/downloads/a2a.asyncapi.yaml) | 22.1 KiB | AsyncAPI of the events the agent publishes. | [`generated/asyncapi/asyncapi/a2a-agent.yaml`](https://github.com/beyond10x/a2a/blob/main/generated/asyncapi/asyncapi/a2a-agent.yaml) |
 | [`a2a.schema.json`](pathname:///a2a/downloads/a2a.schema.json) | 288.6 KiB | Every JSON Schema of `generated/schema/schema/` as one JSON Schema 2020-12 document: each file is an embedded resource under `$defs`, keyed `<directory>.<name>`. | [`generated/schema/schema/`](https://github.com/beyond10x/a2a/tree/main/generated/schema/schema) |
 | [`SHA256SUMS`](pathname:///a2a/downloads/SHA256SUMS) | 0.5 KiB | The SHA-256 of every file above, for `sha256sum --check`. | |
 
 ```text title="SHA256SUMS"
-0533c2bd4098e75957ca869a09fafa43c3703f50fdb7a98d8afa8c624f28f115  a2a-http.openapi.yaml
+646c9d876510ed8465e5273a67ea1cbafbd0a42b70a4a8597c2d832b0ac5832b  a2a-http.openapi.yaml
 56412bc86e32392e549b1ec8be2f4355dc362394baddfb0a14e606123683e268  a2a-upstream.openapi.yaml
-1835be44bec31b40377de07911c0a62288fa728afc4d3a0c5998e7726952d738  a2a.asyncapi.yaml
-cd48e274188fa14a0f33939cedb3b9100d17cc6fb89da83bbe1c11fea0ec5b88  a2a.openapi.yaml
+b8fe9dd7a6d5fdee591de8338795ba233004981129ae6803c4c568eeaa2c479c  a2a.asyncapi.yaml
+b673c27b4e7a9793336c4e6bd53ba15e5cd7a40a382ef113f741edf65bf6b8fc  a2a.openapi.yaml
 e195bf96ab630c69797851970203e1b2b6b19528f2e9803b7d904b91a5104016  a2a.proto
-7a20322344ce16edc26b954202d820bceda8295100db06ab959f75b282669363  a2a.schema.json
+501a9ff6d80a6e92b6e33aa1155f06f70ecf9cb28894780f09b1ccf20dcd6bd8  a2a.schema.json
 ```
 
 ## Release 0.5.0

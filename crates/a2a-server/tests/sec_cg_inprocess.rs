@@ -398,9 +398,10 @@ fn sec_cg_the_binary_answers_no_route_for_the_push_config_views() {
     // Tenant scoping of push notification configurations (story:server, A2A v1.0.1 section
     // 13.1): acme's configuration, and the token the agent's webhook is called with, are not
     // answered to a client of another tenant or none. `InProcess` is a trusted harness entry and
-    // runs the `TaskPushNotificationConfigs` view, which has no tenant scope, for any caller its
-    // grant admits; the binary serves that view, and every other view route the generated layer
-    // derives, on no route, under no tenant and with no query.
+    // runs the `TaskPushNotificationConfigs` view, scoped by its `tenant` parameter
+    // (story:view-tenant-scope, `tests/view_tenancy.rs`), for any caller its grant admits; the
+    // binary serves that view, and every other view route the generated layer derives, on no
+    // route, under no tenant and with no query.
     let (_binary, server) = binary();
     let created = server.call(
         "POST",

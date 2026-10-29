@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
-// contract digest 91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a
+// model digest 911794dff39b27311ddc6db22aa294d7c70c823fd2310684ad996b6eab4c5cdf
+// contract digest f3a9f588bb74b749958999da8b7430eaf336cfa0d5e58a72b23699edc898a4dd
 // do not edit: regenerate with `ess synthesize --layout crate`
 
 //! The `a2a-agent` component of `a2a` v1, on the wire.
@@ -61,7 +61,7 @@ pub const ROUTES: &[(&str, &str)] = &[
 /// Everything outside `runtime` is the same in every language this plan is emitted into, and
 /// `cargo xtask synth --check` starts both and compares them.
 pub const STARTUP: &[&str] = &[
-    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"a2a\",\"version\":\"v1\",\"model_digest\":\"d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d\",\"contract_digest\":\"91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a\",\"components\":[\"a2a-agent\"],\"capabilities\":{\"generated\":99,\"obligations\":12,\"refused\":0}",
+    "{\"log\":\"ess/1\",\"event\":\"system.starting\",\"system\":\"a2a\",\"version\":\"v1\",\"model_digest\":\"911794dff39b27311ddc6db22aa294d7c70c823fd2310684ad996b6eab4c5cdf\",\"contract_digest\":\"f3a9f588bb74b749958999da8b7430eaf336cfa0d5e58a72b23699edc898a4dd\",\"components\":[\"a2a-agent\"],\"capabilities\":{\"generated\":99,\"obligations\":12,\"refused\":0}",
     "{\"log\":\"ess/1\",\"event\":\"surface.serving\",\"component\":\"a2a-agent\",\"reached_by\":\"network\",\"transport\":\"http/1.1\",\"routes\":23,\"paths\":[{\"method\":\"GET\",\"path\":\"/docs\",\"serves\":\"documentation\",\"name\":\"docs\"},{\"method\":\"GET\",\"path\":\"/extendedAgentCard\",\"serves\":\"command\",\"name\":\"a2a.discovery.GetExtendedAgentCard\"},{\"method\":\"POST\",\"path\":\"/message:send\",\"serves\":\"command\",\"name\":\"a2a.tasks.SendMessage\"},{\"method\":\"POST\",\"path\":\"/message:stream\",\"serves\":\"command\",\"name\":\"a2a.tasks.SendStreamingMessage\"},{\"method\":\"GET\",\"path\":\"/openapi.json\",\"serves\":\"contract\",\"name\":\"openapi\"},{\"method\":\"GET\",\"path\":\"/tasks\",\"serves\":\"view\",\"name\":\"a2a.tasks.Tasks\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:cancel\",\"serves\":\"command\",\"name\":\"a2a.tasks.CancelTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:complete\",\"serves\":\"command\",\"name\":\"a2a.tasks.CompleteTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:fail\",\"serves\":\"command\",\"name\":\"a2a.tasks.FailTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:reject\",\"serves\":\"command\",\"name\":\"a2a.tasks.RejectTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:require_auth\",\"serves\":\"command\",\"name\":\"a2a.tasks.RequireAuth\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:require_input\",\"serves\":\"command\",\"name\":\"a2a.tasks.RequireInput\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:subscribe\",\"serves\":\"command\",\"name\":\"a2a.tasks.SubscribeToTask\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:update_artifact\",\"serves\":\"command\",\"name\":\"a2a.tasks.UpdateArtifact\"},{\"method\":\"POST\",\"path\":\"/tasks/commands/tasks:work\",\"serves\":\"command\",\"name\":\"a2a.tasks.StartWorking\"},{\"method\":\"GET\",\"path\":\"/tasks/views/allPushNotificationConfigs\",\"serves\":\"view\",\"name\":\"a2a.tasks.PushNotificationConfigs\"},{\"method\":\"GET\",\"path\":\"/tasks/views/allTasks\",\"serves\":\"view\",\"name\":\"a2a.tasks.AllTasks\"},{\"method\":\"GET\",\"path\":\"/tasks/{id}\",\"serves\":\"command\",\"name\":\"a2a.tasks.GetTask\"},{\"method\":\"GET\",\"path\":\"/tasks/{taskId}/pushNotificationConfigs\",\"serves\":\"command\",\"name\":\"a2a.tasks.ListTaskPushNotificationConfigs\"},{\"method\":\"POST\",\"path\":\"/tasks/{taskId}/pushNotificationConfigs\",\"serves\":\"command\",\"name\":\"a2a.tasks.CreateTaskPushNotificationConfig\"},{\"method\":\"DELETE\",\"path\":\"/tasks/{taskId}/pushNotificationConfigs/{id}\",\"serves\":\"command\",\"name\":\"a2a.tasks.DeleteTaskPushNotificationConfig\"},{\"method\":\"GET\",\"path\":\"/tasks/{taskId}/pushNotificationConfigs/{id}\",\"serves\":\"command\",\"name\":\"a2a.tasks.GetTaskPushNotificationConfig\"},{\"method\":\"GET\",\"path\":\"/views/tasks/pushNotificationConfigs\",\"serves\":\"view\",\"name\":\"a2a.tasks.TaskPushNotificationConfigs\"}]",
     "{\"log\":\"ess/1\",\"event\":\"system.ready\",\"system\":\"a2a\",\"surfaces\":1",
 ];
@@ -2856,11 +2856,11 @@ fn run_a2a_tasks_task_push_notification_configs<A2aAgentBehaviors>(system: &crat
 where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
-    let (param0,) = match wire::decode_params_a2a_tasks_task_push_notification_configs(value, "query") {
+    let (param0, param1) = match wire::decode_params_a2a_tasks_task_push_notification_configs(value, "query") {
         Ok(params) => params,
         Err(error) => return Err(entry::Refused::Input(format!("{error}"))),
     };
-    match system.a2a_agent.task_push_notification_configs(param0) {
+    match system.a2a_agent.task_push_notification_configs(param0, param1) {
         Ok(rows) => {
             let mut body = String::from("{");
             json::member(&mut body, "rows");
@@ -2885,7 +2885,7 @@ where
     A2aAgentBehaviors: crate::discovery::obligations::GetExtendedAgentCardBehavior + crate::tasks::obligations::CancelTaskBehavior + crate::tasks::obligations::CompleteTaskBehavior + crate::tasks::obligations::CreateTaskPushNotificationConfigBehavior + crate::tasks::obligations::DeleteTaskPushNotificationConfigBehavior + crate::tasks::obligations::FailTaskBehavior + crate::tasks::obligations::GetTaskBehavior + crate::tasks::obligations::GetTaskPushNotificationConfigBehavior + crate::tasks::obligations::ListTaskPushNotificationConfigsBehavior + crate::tasks::obligations::RejectTaskBehavior + crate::tasks::obligations::RequireAuthBehavior + crate::tasks::obligations::RequireInputBehavior + crate::tasks::obligations::SendMessageBehavior + crate::tasks::obligations::SendStreamingMessageBehavior + crate::tasks::obligations::StartWorkingBehavior + crate::tasks::obligations::SubscribeToTaskBehavior + crate::tasks::obligations::UpdateArtifactBehavior + crate::tasks::obligations::AllTasksQuery + crate::tasks::obligations::PushNotificationConfigsQuery + crate::tasks::obligations::TaskPushNotificationConfigsQuery + crate::tasks::obligations::TasksQuery,
 {
     let read = || -> Result<json::Value, String> {
-        let value = http::query_object(&request.query, &[("task_id", http::Scalar::Text)], "query")?;
+        let value = http::query_object(&request.query, &[("task_id", http::Scalar::Text), ("tenant", http::Scalar::Text)], "query")?;
         http::with_path(value, Vec::new(), "query")
     };
     let value = match read() {

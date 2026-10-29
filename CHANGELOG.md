@@ -8,6 +8,12 @@ under `[Unreleased]` until the next release.
 
 ## [Unreleased]
 
+### Fixed
+
+- The `a2a.tasks.TaskPushNotificationConfigs` view takes a `tenant` parameter and answers a push
+  notification configuration only under the tenant it was created under (A2A v1.0.1 section 13.1);
+  `a2a-server` filters its rows so, and the authored scenario `push-config-view-other-tenant` holds it.
+
 ## [0.5.0] - 2026-10-29
 
 ### Added

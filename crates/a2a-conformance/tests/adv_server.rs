@@ -55,11 +55,12 @@ impl<const K: u8> TaskPushNotificationConfigsQuery for Mutant<K> {
     fn task_push_notification_configs(
         &self,
         task_id: TaskId,
+        tenant: Option<String>,
     ) -> Result<Vec<TaskPushNotificationConfigs>, UnmetObligation> {
         if K == CONFIGS_VIEW_EMPTY {
             return Ok(Vec::new());
         }
-        self.0.task_push_notification_configs(task_id)
+        self.0.task_push_notification_configs(task_id, tenant)
     }
 }
 

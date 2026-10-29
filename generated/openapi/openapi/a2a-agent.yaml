@@ -1,6 +1,6 @@
 # generated from a2a v1
-# model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
-# contract digest slice-sha256/2:2de2936951ce7e4042256d840c7857008955378103fb89a060bb1fc0f028713e
+# model digest 911794dff39b27311ddc6db22aa294d7c70c823fd2310684ad996b6eab4c5cdf
+# contract digest slice-sha256/2:db1692fa8ffc8d64da82c331373706560cd08be45c023138229262246325a277
 # do not edit: regenerate with `ess generate`
 openapi: 3.1.0
 info:
@@ -18,8 +18,8 @@ info:
   x-ess-provenance:
     system: a2a
     specification_version: v1
-    source_digest: d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
-    contract_digest: slice-sha256/2:2de2936951ce7e4042256d840c7857008955378103fb89a060bb1fc0f028713e
+    source_digest: 911794dff39b27311ddc6db22aa294d7c70c823fd2310684ad996b6eab4c5cdf
+    contract_digest: slice-sha256/2:db1692fa8ffc8d64da82c331373706560cd08be45c023138229262246325a277
   x-ess-reached-by: network
 tags:
 - name: discovery
@@ -1521,9 +1521,15 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/a2a.tasks.TaskId'
+      - name: tenant
+        in: query
+        description: Read by the view's filter as `param.tenant`; it selects which rows the view holds.
+        required: false
+        schema:
+          type: string
       responses:
         '200':
-          description: 'Every row of `a2a.tasks.TaskPushNotificationConfigs`, a projection of `a2a.tasks.PushNotificationConfig`. Contains the instances where `task_id == param.task_id` holds. Read-your-writes: a caller that has just issued a command sees its effect here.'
+          description: 'Every row of `a2a.tasks.TaskPushNotificationConfigs`, a projection of `a2a.tasks.PushNotificationConfig`. Contains the instances where `(task_id == param.task_id and ((defined(param.tenant) and defined(tenant) and tenant == param.tenant) or (not (defined(param.tenant)) and not (defined(tenant)))))` holds. Read-your-writes: a caller that has just issued a command sees its effect here.'
           content:
             application/json:
               schema:

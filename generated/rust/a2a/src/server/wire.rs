@@ -1,6 +1,6 @@
 // generated from a2a v1
-// model digest d761a3fbbc9413d58b2073e5f15bbced42229623312d9101f245c68b57f5021d
-// contract digest 91b9b3965c71b5aeb8e0b091924c0a887fe1b698155e248eea0b77ad3859a42a
+// model digest 911794dff39b27311ddc6db22aa294d7c70c823fd2310684ad996b6eab4c5cdf
+// contract digest f3a9f588bb74b749958999da8b7430eaf336cfa0d5e58a72b23699edc898a4dd
 // do not edit: regenerate with `ess synthesize --layout crate`
 //! Every generated declaration, as JSON, in the renderings the published wire contracts fix.
 //!
@@ -3034,12 +3034,19 @@ pub fn encode_view_a2a_tasks_task_push_notification_configs(value: &crate::tasks
 /// # Errors
 ///
 /// [`json::DecodeError`] naming the parameter and what the declaration says belongs there.
-pub fn decode_params_a2a_tasks_task_push_notification_configs(value: &json::Value, at: &str) -> Result<(crate::tasks::TaskId,), json::DecodeError> {
+pub fn decode_params_a2a_tasks_task_push_notification_configs(value: &json::Value, at: &str) -> Result<(crate::tasks::TaskId, Option<String>,), json::DecodeError> {
     Ok((
         {
             let at0 = json::nested(at, "task_id");
             let member0 = json::member_at(value, at, "task_id")?;
             decode_a2a_tasks_task_id(member0, &at0)?
+        },
+        match value.member("tenant") {
+            None | Some(json::Value::Null) => None,
+            Some(member1) => {
+                let at1 = json::nested(at, "tenant");
+                Some(json::text_at(member1, &at1, "a string")?.to_owned())
+            }
         },
     ))
 }
